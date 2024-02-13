@@ -17,7 +17,7 @@ public:
 		return rayDirection;
 	}
 
-	PointVec3 getPointOnRayAt(double t)
+	PointVec3 getPointOnRayAt(double t) const
 	{
 		return rayOrigin + (t * rayDirection);
 	}

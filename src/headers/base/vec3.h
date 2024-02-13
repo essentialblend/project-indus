@@ -50,10 +50,11 @@ private:
 	double member[3];
 };
 
-// Vector utilities.
-
+// Constants
 using PointVec3 = Vec3;
 using ColorVec3 = Vec3;
+
+// Vector utilities.
 
 inline std::ostream& operator<<(std::ostream& outStream, const Vec3& inpV)
 {
