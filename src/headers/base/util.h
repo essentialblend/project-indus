@@ -49,18 +49,23 @@ inline double UGenRNGDouble(double minVal, double maxVal)
 	return uniDist(rngEng);
 }
 
-inline void UPrintSuccessLog(std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<__int64, std::ratio<1, 1000000000>>>& start, std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<__int64, std::ratio<1, 1000000000>>>& end)
+void UWriteToClog(const std::string& outString)
+{
+	std::clog << outString << "\n";
+}
+
+inline void UPrintSuccessLog(std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<__int64, std::ratio<1, 1000000000>>>& start, std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<__int64, std::ratio<1, 1000000000>>>& end, int totalPixels)
 {
 	auto logTotalTimeSeconds = std::chrono::duration_cast<std::chrono::seconds>(end - start);
 	auto logHours = logTotalTimeSeconds.count() / 3600;
 	auto logMinutes = (logTotalTimeSeconds.count() % 3600) / 60;
 	auto logSeconds = logTotalTimeSeconds.count() % 60;
+
+	std::string timeDetails = std::format("Time taken: {}h {}m {}s...", logHours, logMinutes, logSeconds);
+	std::string pixelProcessDetails = std::format("Number of pixels processed per second: {} / {}: {}", totalPixels, logSeconds, totalPixels / logSeconds);
 	
-	std::clog << "Time: " << logHours << "h " << logMinutes << "m " << logSeconds << "s.\n";
+	UWriteToClog("Render complete...");
+	UWriteToClog(timeDetails);
+	UWriteToClog(pixelProcessDetails);
 }
 
-template<typename... Args>
-void UWriteToClog(const Args&... args)
-{
-	std::clog << std::format(args...) << "\n";
-}

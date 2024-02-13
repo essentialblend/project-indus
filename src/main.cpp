@@ -87,7 +87,7 @@ int main()
 	}
 	outPPM.close();
 	auto logTimeEnd = std::chrono::high_resolution_clock::now();
-	UPrintSuccessLog(logTimeStart, logTimeEnd);
+	UPrintSuccessLog(logTimeStart, logTimeEnd, imageWidthPixels * imageHeightPixels);
 	
 
 	return 0;
