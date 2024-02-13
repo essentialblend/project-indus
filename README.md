@@ -9,8 +9,8 @@ Representational image coming soon...
 Current Features:
 - Developed from scratch using C++.
 - Multithreading compatible.
-- Per pixel Multi-sampled AA.
-- Jittered Aliasing.
+- Per pixel MSAA.
+- Jittered MSAA.
 - Gamma Correction.
 - Positionable camera with defocus blur (DOF).
 - Lambertian, Metallic, and Dielectric Materials.
