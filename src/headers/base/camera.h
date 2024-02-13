@@ -2,9 +2,10 @@
 
 class Camera
 {
-public:
+public: 
 	Camera() {};
-	Camera(double aspRatio, unsigned short imgW, const Vec3& focalLength, const PointVec3& cameraCenter, const std::vector<Vec3>& pixelBuffer, bool useMT) : aspectRatio(aspRatio), imageWidthPixels(imgW), focalLength(focalLength), cameraCenter(cameraCenter), pixelBuffer(pixelBuffer), useMT(useMT) {}
+
+	Camera(double aspRatio, unsigned short imgW, const Vec3& focalLength, const PointVec3& cameraCenter, const std::vector<Vec3>& pixelBuffer, bool useMT, int jitterSamples) : aspectRatio(aspRatio), imageWidthPixels(imgW), focalLength(focalLength), cameraCenter(cameraCenter), pixelBuffer(pixelBuffer), useMT(useMT), jitterSamplesAA(jitterSamples) {}
 
 	unsigned short getResolutionWidthPixels() const 
 	{
@@ -79,7 +80,7 @@ public:
 		}
 		outPPM.close();
 		auto logTimeEnd = std::chrono::high_resolution_clock::now();
-		UPrintSuccessLog(logTimeStart, logTimeEnd, imageWidthPixels * imageHeightPixels);
+		UPrintSuccessLog(logTimeStart, logTimeEnd, imageWidthPixels * imageHeightPixels, jitterSamplesAA, useMT);
 
 	}
 
@@ -97,6 +98,8 @@ private:
 	PointVec3 topLeftPixelLocation{ Vec3() };
 	Vec3 viewportDeltaX{ Vec3() };
 	Vec3 viewportDeltaY{ Vec3() };
+	int jitterSamplesAA{ 0 };
+	int jitterSqrt{ 0 };
 
 	void initializeCamera()
 	{
@@ -105,6 +108,7 @@ private:
 		pixelBuffer.resize(static_cast<unsigned long long>(imageWidthPixels * imageHeightPixels));
 		float viewportHeight{ 2.f };
 		float viewportWidth{ viewportHeight * (static_cast<float>(imageWidthPixels) / imageHeightPixels) };
+		jitterSqrt = static_cast<int>(std::sqrt(jitterSamplesAA));
 
 		Vec3 viewportUX{ Vec3(viewportWidth, 0, 0) };
 		Vec3 viewportVY{ Vec3(0, -viewportHeight, 0) };
@@ -136,11 +140,23 @@ private:
 		{
 			for (int i = 0; i < imageWidthPixels; ++i)
 			{
-				PointVec3 pixelCenter = topLeftPixelLocation + (i * viewportDeltaX) + (j * viewportDeltaY);
-				Vec3 rayDirection = pixelCenter - cameraCenter;
-				Ray primaryRay(cameraCenter, rayDirection);
-				ColorVec3 pixelColor{ computePixelColor(primaryRay, mainWorld) };
+				ColorVec3 pixelColor(0.f);
 
+				// Accumulate color from jittered samples (AA).
+				for (int pixelY{ 0 }; pixelY < jitterSqrt; ++pixelY)
+				{
+					for (int pixelX{ 0 }; pixelX < jitterSqrt; ++pixelX)
+					{
+						double offsetX{ (pixelX + UGenRNGDouble()) / jitterSqrt };
+						double offsetY{ (pixelY + UGenRNGDouble()) / jitterSqrt };
+
+						PointVec3 samplePoint{ topLeftPixelLocation + ((i + offsetX) * viewportDeltaX) + ((j + offsetY) * viewportDeltaY) };
+						Vec3 rayDirection = samplePoint - cameraCenter;
+						Ray primaryRay(cameraCenter, rayDirection);
+						pixelColor += computePixelColor(primaryRay, mainWorld);
+					}
+				}
+				pixelColor /= jitterSamplesAA;
 				int bufferIndex = j * imageWidthPixels + i;
 				pixelBuffer[bufferIndex] = ColorVec3(static_cast<int>(255.999 * pixelColor.getX()), static_cast<int>(255.999 * pixelColor.getY()), static_cast<int>(255.999 * pixelColor.getZ()));
 			}

@@ -4,7 +4,8 @@ int main()
 {
 	// Engine init.
 	std::vector<ColorVec3> pixelBuffer;
-	bool useMT{ false };
+	bool useMT{ true };
+	int jitterSamplesAA{ 50 };
 
 	// World-objects init.
 	WorldObjectList mainWorld;
@@ -12,7 +13,7 @@ int main()
 	mainWorld.addToWorld(std::make_shared<WOSphere>(PointVec3(0, -100.5, -1), 100));
 
 	// Camera init.
-	Camera mainCamera((16.0 / 9.0), 400, Vec3(0, 0, 1), Vec3(), pixelBuffer, useMT);
+	Camera mainCamera((16.0 / 9.0), 400, Vec3(0, 0, 1), Vec3(), pixelBuffer, useMT, jitterSamplesAA);
 
 	mainCamera.renderFrame(mainWorld);
 
