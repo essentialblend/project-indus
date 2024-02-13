@@ -9,13 +9,6 @@
 #include <thread>
 #include <format>
 
-#include "vec3.h"
-#include "ray.h"
-#include "worldObject.h"
-#include "worldObjectList.h"
-#include "../world_objects/sphere.h"
-
-
 const double Uinf = std::numeric_limits<double>::infinity();
 const double Upi = std::numbers::pi;
 
@@ -81,3 +74,11 @@ inline void UPrintSuccessLog(std::chrono::time_point<std::chrono::steady_clock, 
 	UWriteToClog(pixelProcessDetails);
 }
 
+// Includes.
+#include "interval.h"
+#include "vec3.h"
+#include "ray.h"
+#include "worldObject.h"
+#include "worldObjectList.h"
+#include "../world_objects/sphere.h"
+#include "camera.h"

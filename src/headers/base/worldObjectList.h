@@ -14,15 +14,15 @@ public:
 	}
 	void clearWorld() { WOList.clear(); };
 
-	virtual bool checkHit(const Ray& inputRay, double rayTMin, double rayTMax, HitRecord& hitRec) const override
+	virtual bool checkHit(const Ray& inputRay, Interval validInterval, HitRecord& hitRec) const override
 	{
 		HitRecord tempRec;
 		bool didItHit{ false };
-		double closestHitPointYet = rayTMax;
+		double closestHitPointYet = validInterval.getIntervalMaxRange();
 
 		for (const std::shared_ptr<WorldObject>& WO : WOList)
 		{
-			if (WO->checkHit(inputRay, rayTMin, closestHitPointYet, tempRec))
+			if (WO->checkHit(inputRay, Interval(validInterval.getIntervalMinRange(), closestHitPointYet), tempRec))
 			{
 				didItHit = true;
 				closestHitPointYet = tempRec.hitRoot;

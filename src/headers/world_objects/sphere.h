@@ -5,7 +5,7 @@ class WOSphere : public WorldObject
 public:
 	WOSphere(PointVec3 sphC, double sphR) : sphereCenter(sphC), sphereRadius(sphR) {}
 
-	virtual bool checkHit(const Ray& inputRay, double rayTMin, double rayTMax, HitRecord& hitRec) const override
+	virtual bool checkHit(const Ray& inputRay, Interval validInterval, HitRecord& hitRec) const override
 	{
 		Vec3 sphereCenterToRayOriginDir = inputRay.getRayOrigin() - sphereCenter;
 		// Quadratic coeffs: a = b . b, b = 2b . (A - C), c = (A - C) . (A - C) - r^2.
@@ -17,10 +17,10 @@ public:
 		if (discr < 0) return false;
 
 		double solutionRoot{ (-half_b - std::sqrt(discr)) / a };
-		if (solutionRoot <= rayTMin || rayTMax <= solutionRoot)
+		if (!validInterval.isWithinInterval(solutionRoot))
 		{
 			solutionRoot = (-half_b + std::sqrt(discr)) / a;
-			if (solutionRoot <= rayTMin || rayTMax <= solutionRoot)
+			if (!validInterval.isWithinInterval(solutionRoot))
 			{
 				return false;
 			}
