@@ -1,14 +1,14 @@
-#include "../src/headers/base/util.h"
+#include "./headers/base/util.h"
 
 static ColorVec3 computePixelColor(const Ray& inputRay, const WorldObject& mainWorld);
 void renderRowSegments(int imageWidth, int startRow, int endRow, const WorldObjectList& mainWorld, std::vector<ColorVec3>& pixelBuffer, const PointVec3& topLeftPixelLoc, const Vec3& viewpDX, const Vec3& viewpDY, const PointVec3& cameraCenter);
 
 int main()
 {
-	// Init.
+	// Engine init.
 	std::vector<ColorVec3> pixelBuffer;
-	// Multi-threading check.
-	bool useMT{ false };
+	bool useMT{ true };
+	unsigned int numAvailableThreads = std::thread::hardware_concurrency();
 
 	// Create world.
 	WorldObjectList mainWorld;
@@ -35,15 +35,14 @@ int main()
 	PointVec3 viewportUpperLeftPoint = cameraCenter - focalLength - (viewportUX / 2) - (viewportVY / 2);
 	PointVec3 topLeftPixelLocation = viewportUpperLeftPoint + (0.5 * (viewportDeltaX + viewportDeltaY));
 
-	// 12 for my 6c12t system.
-	unsigned int numAvailableThreads = std::thread::hardware_concurrency();
-	// Set up MT.
+
+	// Render.
 	unsigned int rowsPerThread = imageHeightPixels / numAvailableThreads;
 	auto logTimeStart = std::chrono::high_resolution_clock::now();
-	// Render.
 	if (useMT)
 	{
-		std::println("Starting multi-threaded rendering with {} threads.", numAvailableThreads);
+		auto coutString = std::format("Starting multi-threaded rendering with {} threads...", numAvailableThreads);
+		UWriteToCout(coutString);
 		std::vector<std::thread> mainThreads;
 
 		for (unsigned short t = 0; t < numAvailableThreads; ++t)
@@ -57,10 +56,13 @@ int main()
 				endRow = imageHeightPixels;
 			}
 
-			std::println("Thread {} processing pixel rows {} to {}...", t, startRow, endRow);
+			coutString = std::format("Thread {} processing pixel rows {} to {}...", t, startRow, endRow);
+			UWriteToCout(coutString);
 
 			mainThreads.emplace_back(renderRowSegments, imageWidthPixels, startRow, endRow, std::cref(mainWorld), std::ref(pixelBuffer), topLeftPixelLocation, viewportDeltaX, viewportDeltaY, cameraCenter);
-			std::println("Thread {} finished!", t);
+
+			coutString = std::format("Thread {} finished...", t);
+			UWriteToCout(coutString);
 		}
 
 		for (auto& thread : mainThreads)

@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{14610d04-3acc-4e59-b559-e49ed097763a}</ProjectGuid>
+    <ProjectGuid>{7175f1ce-f29b-4c2c-a25f-4c08b9c9b7f0}</ProjectGuid>
     <RootNamespace>indus</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -104,11 +104,9 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <EnableModules>true</EnableModules>
-      <BuildStlModules>true</BuildStlModules>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <EnableModules>false</EnableModules>
+      <BuildStlModules>false</BuildStlModules>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -123,11 +121,9 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <EnableModules>true</EnableModules>
-      <BuildStlModules>true</BuildStlModules>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <EnableModules>false</EnableModules>
+      <BuildStlModules>false</BuildStlModules>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -137,9 +133,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="LICENSE.md" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="src\headers\base\ray.h" />
     <ClInclude Include="src\headers\base\util.h" />
     <ClInclude Include="src\headers\base\vec3.h" />
@@ -148,7 +141,12 @@
     <ClInclude Include="src\headers\world_objects\sphere.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\main.cpp">
+      <EnableModules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</EnableModules>
+      <EnableModules Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</EnableModules>
+      <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ConformanceMode>
+      <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ConformanceMode>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

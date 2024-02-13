@@ -15,25 +15,22 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="LICENSE.md" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\headers\base\vec3.h">
+    <ClInclude Include="src\headers\base\ray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\headers\base\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\headers\base\ray.h">
+    <ClInclude Include="src\headers\base\vec3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\headers\base\worldObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\headers\world_objects\sphere.h">
+    <ClInclude Include="src\headers\base\worldObjectList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\headers\base\worldObjectList.h">
+    <ClInclude Include="src\headers\world_objects\sphere.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

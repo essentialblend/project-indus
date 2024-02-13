@@ -1,5 +1,13 @@
 #pragma once
-import std;
+
+#include <iostream>
+#include <vector>
+#include <chrono>
+#include <numbers>
+#include <fstream>
+#include <random>
+#include <thread>
+#include <format>
 
 #include "vec3.h"
 #include "ray.h"
@@ -54,6 +62,11 @@ void UWriteToClog(const std::string& outString)
 	std::clog << outString << "\n";
 }
 
+void UWriteToCout(const std::string& outString)
+{
+	std::cout << outString << "\n";
+}
+
 inline void UPrintSuccessLog(std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<__int64, std::ratio<1, 1000000000>>>& start, std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<__int64, std::ratio<1, 1000000000>>>& end, int totalPixels)
 {
 	auto logTotalTimeSeconds = std::chrono::duration_cast<std::chrono::seconds>(end - start);
@@ -61,10 +74,9 @@ inline void UPrintSuccessLog(std::chrono::time_point<std::chrono::steady_clock, 
 	auto logMinutes = (logTotalTimeSeconds.count() % 3600) / 60;
 	auto logSeconds = logTotalTimeSeconds.count() % 60;
 
-	std::string timeDetails = std::format("Time taken: {}h {}m {}s...", logHours, logMinutes, logSeconds);
-	std::string pixelProcessDetails = std::format("Number of pixels processed per second: {} / {}: {}", totalPixels, logSeconds, totalPixels / logSeconds);
-	
-	UWriteToClog("Render complete...");
+	std::string timeDetails = std::format("\nTime taken: {}h {}m {}s...", logHours, logMinutes, logSeconds);
+	std::string pixelProcessDetails = std::format("Processing speed: {} pixels per second...", totalPixels / logSeconds);
+
 	UWriteToClog(timeDetails);
 	UWriteToClog(pixelProcessDetails);
 }
