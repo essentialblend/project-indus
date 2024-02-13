@@ -8,7 +8,7 @@ Representational image coming soon...
 
 Current Features:
 - Developed from scratch using C++.
-- Multithreading supported.
+- Multithreading compatible.
 - Per pixel Multi-sampled AA.
 - Jittered Aliasing.
 - Gamma Correction.
