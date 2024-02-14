@@ -1,5 +1,7 @@
 #pragma once
 
+class Material;
+
 class HitRecord
 {
 public:
@@ -7,6 +9,7 @@ public:
 	Vec3 normalVec;
 	double hitRoot{ 0 };
 	bool frontFace{ false };
+	std::shared_ptr<Material> hitMaterial;
 
 	void setFaceNormal(const Ray& inputRay, const Vec3& outwardNormal)
 	{

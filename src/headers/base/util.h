@@ -60,23 +60,36 @@ void UWriteToCout(const std::string& outString)
 	std::cout << outString << "\n";
 }
 
-inline void UPrintSuccessLog(std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<__int64, std::ratio<1, 1000000000>>>& start, std::chrono::time_point<std::chrono::steady_clock, std::chrono::duration<__int64, std::ratio<1, 1000000000>>>& end, int totalPixels, int jitterAA, bool useMT)
+inline void UPrintSuccessLog(
+    const std::chrono::time_point<std::chrono::steady_clock>& start,
+    const std::chrono::time_point<std::chrono::steady_clock>& end,
+    int totalPixels,
+    int jitterAA,
+    bool useMT, int maxBounces)
 {
-	auto logTotalTimeSeconds = std::chrono::duration_cast<std::chrono::seconds>(end - start);
-	auto logHours = logTotalTimeSeconds.count() / 3600;
-	auto logMinutes = (logTotalTimeSeconds.count() % 3600) / 60;
-	auto logSeconds = logTotalTimeSeconds.count() % 60;
-
-	std::string timeDetails = std::format("Time taken: {}h {}m {}s...", logHours, logMinutes, logSeconds);
-	std::string graphicsDetails = std::format("\nJittered aliasing with {} spp...", jitterAA);
-	std::string pixelProcessDetails = std::format("Processing speed: {} pixels per second...", totalPixels / logSeconds);
-	std::string renderingModeDetails = std::format("Rendering mode: {} ", useMT ? "Multi-threaded" : "Single-threaded");
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    auto logTotalTimeSeconds = duration.count() / 1000.0; // Convert to seconds as a floating-point.
+    auto logHours = static_cast<int>(logTotalTimeSeconds / 3600);
+    auto logMinutes = static_cast<int>((logTotalTimeSeconds / 60)) % 60;
 
 
-	UWriteToClog(renderingModeDetails);
-	UWriteToClog(timeDetails);
-	UWriteToClog(graphicsDetails);
-	UWriteToClog(pixelProcessDetails);
+    std::string timeDetails = std::format("Time taken: {}h {}m {:.2f}s...", logHours, logMinutes, logTotalTimeSeconds - logHours * 3600 - logMinutes * 60);
+    std::string graphicsDetails = std::format("Jittered aliasing with {} spp and {} max. ray bounces...", jitterAA, maxBounces);
+    std::string pixelProcessDetails;
+    if (logTotalTimeSeconds > 0) {
+        double pixelsPerSecond = totalPixels / logTotalTimeSeconds;
+        pixelProcessDetails = std::format("Processing speed: {:.2f} pixels per second...", pixelsPerSecond);
+    }
+    else {
+        pixelProcessDetails = "Processing speed: Calculation not possible due to short duration...";
+    }
+    std::string renderingModeDetails = std::format("\nRendering mode: {}", useMT ? "Multi-threaded..." : "Single-threaded...");
+
+    // Assuming UWriteToClog is defined elsewhere and is thread-safe.
+    UWriteToClog(renderingModeDetails);
+    UWriteToClog(timeDetails);
+    UWriteToClog(graphicsDetails);
+    UWriteToClog(pixelProcessDetails);
 }
 
 // Includes.
@@ -86,4 +99,6 @@ inline void UPrintSuccessLog(std::chrono::time_point<std::chrono::steady_clock, 
 #include "worldObject.h"
 #include "worldObjectList.h"
 #include "../world_objects/sphere.h"
+#include "material.h"
+#include "materials/lambertian.h"
 #include "camera.h"

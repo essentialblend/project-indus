@@ -3,7 +3,7 @@
 class WOSphere : public WorldObject
 {
 public:
-	WOSphere(PointVec3 sphC, double sphR) : sphereCenter(sphC), sphereRadius(sphR) {}
+	WOSphere(PointVec3 sphC, double sphR, std::shared_ptr<Material> assignMat) : sphereCenter(sphC), sphereRadius(sphR), sphereMaterial(assignMat) {}
 
 	virtual bool checkHit(const Ray& inputRay, Interval validInterval, HitRecord& hitRec) const override
 	{
@@ -29,6 +29,7 @@ public:
 		hitRec.hitPoint = inputRay.getPointOnRayAt(hitRec.hitRoot);
 		Vec3 outwardNormal = (hitRec.hitPoint - sphereCenter) / sphereRadius;
 		hitRec.setFaceNormal(inputRay, outwardNormal);
+		hitRec.hitMaterial = sphereMaterial;
 		
 		return true;
 	}
@@ -37,4 +38,5 @@ public:
 private:
 	PointVec3 sphereCenter;
 	double sphereRadius;
+	std::shared_ptr<Material> sphereMaterial;
 };

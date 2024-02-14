@@ -46,6 +46,23 @@ public:
 	{
 		return (member[0] * member[0]) + (member[1] * member[1]) + (member[2] * member[2]);
 	}
+
+	static Vec3 genRandomVec3()
+	{
+		return Vec3(UGenRNGDouble(), UGenRNGDouble(), UGenRNGDouble());
+	}
+
+	static Vec3 genRandomVec3(double minV, double maxV)
+	{
+		return Vec3(UGenRNGDouble(minV, maxV), UGenRNGDouble(minV, maxV), UGenRNGDouble(minV, maxV));
+	}
+
+	bool checkNearZero() const
+	{
+		auto nearInf = 1e-8;
+		return((std::fabs(member[0]) < nearInf) && (std::fabs(member[1]) < nearInf) && (std::fabs(member[2]) < nearInf));
+	}
+
 private:
 	double member[3];
 };
@@ -104,4 +121,29 @@ inline Vec3 computeCrossProduct(const Vec3& f, const Vec3& s)
 inline Vec3 computeUnitVector(const Vec3& f)
 {
 	return f / f.computeMagnitude();
+}
+
+inline Vec3 genRandVec3UnitSphere()
+{
+	while (true)
+	{
+		Vec3 test = Vec3::genRandomVec3(-1, 1);
+		if (test.computeMagnitudeSquared() < 1) return test;
+	}
+}
+
+inline Vec3 genNormalizedRandVec3UnitSphere()
+{
+	return computeUnitVector(genRandVec3UnitSphere());
+}
+
+inline Vec3 genNormalizedRandVec3OnHemisphere(const Vec3& surfaceNormal)
+{
+	Vec3 randUnitSph = genNormalizedRandVec3UnitSphere();
+	if (computeDotProduct(randUnitSph, surfaceNormal) > 0.0f)
+	{
+		return randUnitSph;
+	}
+	else
+		return -randUnitSph;
 }

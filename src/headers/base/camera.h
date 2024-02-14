@@ -5,7 +5,7 @@ class Camera
 public: 
 	Camera() {};
 
-	Camera(double aspRatio, unsigned short imgW, const Vec3& focalLength, const PointVec3& cameraCenter, const std::vector<Vec3>& pixelBuffer, bool useMT, int jitterSamples) : aspectRatio(aspRatio), imageWidthPixels(imgW), focalLength(focalLength), cameraCenter(cameraCenter), pixelBuffer(pixelBuffer), useMT(useMT), jitterSamplesAA(jitterSamples) {}
+	Camera(double aspRatio, unsigned short imgW, const Vec3& focalLength, const PointVec3& cameraCenter, const std::vector<Vec3>& pixelBuffer, bool useMT, int jitterSamples, int maxDepth) : aspectRatio(aspRatio), imageWidthPixels(imgW), focalLength(focalLength), cameraCenter(cameraCenter), pixelBuffer(pixelBuffer), useMT(useMT), jitterSamplesAA(jitterSamples), maxRayBouncesDepth(maxDepth) {}
 
 	unsigned short getResolutionWidthPixels() const 
 	{
@@ -80,7 +80,7 @@ public:
 		}
 		outPPM.close();
 		auto logTimeEnd = std::chrono::high_resolution_clock::now();
-		UPrintSuccessLog(logTimeStart, logTimeEnd, imageWidthPixels * imageHeightPixels, jitterSamplesAA, useMT);
+		UPrintSuccessLog(logTimeStart, logTimeEnd, imageWidthPixels * imageHeightPixels, jitterSamplesAA, useMT, maxRayBouncesDepth);
 
 	}
 
@@ -100,6 +100,7 @@ private:
 	Vec3 viewportDeltaY{ Vec3() };
 	int jitterSamplesAA{ 0 };
 	int jitterSqrt{ 0 };
+	int maxRayBouncesDepth{ 0 };
 
 	void initializeCamera()
 	{
@@ -120,12 +121,25 @@ private:
 		topLeftPixelLocation = viewportUpperLeftPoint + (0.5 * (viewportDeltaX + viewportDeltaY));
 	}
 
-	ColorVec3 computePixelColor(const Ray& inputRay, const WorldObject& mainWorld) const
+	ColorVec3 computePixelColor(const Ray& inputRay, int bounceDepthParam, const WorldObject& mainWorld) const
 	{
 		HitRecord tempRec;
-		if (mainWorld.checkHit(inputRay, Interval(0, +Uinf), tempRec))
+
+		if (bounceDepthParam <= 0)
 		{
-			return (0.5 * (tempRec.normalVec + ColorVec3(1.f)));
+			return ColorVec3(0.f);
+		}
+
+		if (mainWorld.checkHit(inputRay, Interval(0.001, +Uinf), tempRec))
+		{
+			Ray scatteredRay;
+			ColorVec3 attenuationValue;
+
+			if (tempRec.hitMaterial->handleRayScatter(inputRay, scatteredRay, tempRec, attenuationValue))
+			{
+				return attenuationValue * computePixelColor(scatteredRay, bounceDepthParam - 1, mainWorld);
+			}
+			return ColorVec3(0.f);
 		}
 
 		Vec3 unitDirection = computeUnitVector(inputRay.getRayDirection());
@@ -153,13 +167,20 @@ private:
 						PointVec3 samplePoint{ topLeftPixelLocation + ((i + offsetX) * viewportDeltaX) + ((j + offsetY) * viewportDeltaY) };
 						Vec3 rayDirection = samplePoint - cameraCenter;
 						Ray primaryRay(cameraCenter, rayDirection);
-						pixelColor += computePixelColor(primaryRay, mainWorld);
+						pixelColor += computePixelColor(primaryRay, maxRayBouncesDepth, mainWorld);
 					}
 				}
 				pixelColor /= jitterSamplesAA;
+				Vec3 gammaCorrected{ linearToGamma(pixelColor) };
+
 				int bufferIndex = j * imageWidthPixels + i;
-				pixelBuffer[bufferIndex] = ColorVec3(static_cast<int>(255.999 * pixelColor.getX()), static_cast<int>(255.999 * pixelColor.getY()), static_cast<int>(255.999 * pixelColor.getZ()));
+				pixelBuffer[bufferIndex] = ColorVec3(static_cast<int>(256 * std::clamp(gammaCorrected.getX(), 0.000, 0.999)), static_cast<int>(256 * std::clamp(gammaCorrected.getY(), 0.000, 0.999)), static_cast<int>(256 * std::clamp(gammaCorrected.getZ(), 0.000, 0.999)));
 			}
 		}
+	}
+
+	Vec3 linearToGamma(const Vec3& linearColorComp) const
+	{
+		return Vec3(std::pow(linearColorComp.getX(), 1 / 2.2f), std::pow(linearColorComp.getY(), 1 / 2.2f), std::pow(linearColorComp.getZ(), 1 / 2.2f));
 	}
 };
