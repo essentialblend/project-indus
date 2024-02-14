@@ -6,7 +6,7 @@ class HitRecord
 {
 public:
 	PointVec3 hitPoint;
-	Vec3 normalVec;
+	Vec3 hitNormalVec;
 	double hitRoot{ 0 };
 	bool frontFace{ false };
 	std::shared_ptr<Material> hitMaterial;
@@ -14,7 +14,7 @@ public:
 	void setFaceNormal(const Ray& inputRay, const Vec3& outwardNormal)
 	{
 		frontFace = computeDotProduct(inputRay.getRayDirection(), outwardNormal) < 0;
-		normalVec = frontFace ? outwardNormal : -outwardNormal;
+		hitNormalVec = frontFace ? outwardNormal : -outwardNormal;
 	}
 };
 

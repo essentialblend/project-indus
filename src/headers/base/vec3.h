@@ -147,3 +147,8 @@ inline Vec3 genNormalizedRandVec3OnHemisphere(const Vec3& surfaceNormal)
 	else
 		return -randUnitSph;
 }
+
+inline Vec3 computeReflectionDirection(const Vec3& inputVec, const Vec3& hitNormalVec)
+{
+	return inputVec - (2 * computeDotProduct(inputVec, hitNormalVec) * hitNormalVec);
+}

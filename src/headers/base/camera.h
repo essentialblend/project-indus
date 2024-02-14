@@ -80,6 +80,21 @@ public:
 		}
 		outPPM.close();
 		auto logTimeEnd = std::chrono::high_resolution_clock::now();
+
+		// Using ImageMagick CLI to convert to PNG and delete PPM.
+		bool failConvertPPM_PNG = std::system("magick convert image.ppm render.png");
+		if (failConvertPPM_PNG)
+		{
+			std::cerr << "Error: PPM to PNG conversion failed!\n";
+			return;
+		}
+		bool failDeletePPM = static_cast<bool>(std::system("del image.ppm"));
+		if (failDeletePPM)
+		{
+			std::cerr << "Error: Conversion to PNG succesful, but PPM deletion failed!\n";
+			return;
+		}
+
 		UPrintSuccessLog(logTimeStart, logTimeEnd, imageWidthPixels * imageHeightPixels, jitterSamplesAA, useMT, maxRayBouncesDepth);
 
 	}

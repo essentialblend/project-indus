@@ -101,4 +101,5 @@ inline void UPrintSuccessLog(
 #include "../world_objects/sphere.h"
 #include "material.h"
 #include "materials/lambertian.h"
+#include "materials/metal.h"
 #include "camera.h"

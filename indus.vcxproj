@@ -137,6 +137,7 @@
     <ClInclude Include="src\headers\base\interval.h" />
     <ClInclude Include="src\headers\base\material.h" />
     <ClInclude Include="src\headers\base\materials\lambertian.h" />
+    <ClInclude Include="src\headers\base\materials\metal.h" />
     <ClInclude Include="src\headers\base\ray.h" />
     <ClInclude Include="src\headers\base\util.h" />
     <ClInclude Include="src\headers\base\vec3.h" />

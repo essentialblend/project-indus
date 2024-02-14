@@ -8,8 +8,8 @@ public:
 
 	bool handleRayScatter(const Ray& inputRay, Ray& scatteredRay, const HitRecord& hitRec, ColorVec3& colorAttenuation) const override
 	{
-		Vec3 newReflRayDir{ hitRec.normalVec + genNormalizedRandVec3UnitSphere() };
-		if (newReflRayDir.checkNearZero()) { newReflRayDir = hitRec.normalVec; }
+		Vec3 newReflRayDir{ hitRec.hitNormalVec + genNormalizedRandVec3UnitSphere() };
+		if (newReflRayDir.checkNearZero()) { newReflRayDir = hitRec.hitNormalVec; }
 		scatteredRay = Ray(hitRec.hitPoint, newReflRayDir);
 		colorAttenuation = albedoValue;
 		return true;
