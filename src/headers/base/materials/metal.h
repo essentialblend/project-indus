@@ -4,7 +4,7 @@
 class MMetal : public Material
 {
 public:
-	MMetal(const ColorVec3& albedo, double fuzzFactor) : albedoValue(albedo), fuzzFactor(fuzzFactor < 1 ? 1 : fuzzFactor) {}
+	MMetal(const ColorVec3& albedo, double fuzzFactor) : albedoValue(albedo), fuzzFactor(fuzzFactor < 1 ? fuzzFactor : 1) {}
 
 	bool handleRayScatter(const Ray& inputRay, Ray& scatteredRay, const HitRecord& hitRec, ColorVec3& colorAttenuation) const override
 	{

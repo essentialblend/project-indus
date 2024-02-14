@@ -152,3 +152,12 @@ inline Vec3 computeReflectionDirection(const Vec3& inputVec, const Vec3& hitNorm
 {
 	return inputVec - (2 * computeDotProduct(inputVec, hitNormalVec) * hitNormalVec);
 }
+
+inline Vec3 computeRefractionDirection(const Vec3& inputVec, const Vec3& normalVec, double etaByEtaPrime)
+{
+	double cosineTheta{ std::fmin(computeDotProduct(-inputVec, normalVec), 1.f) };
+
+	Vec3 rOutPerp{ etaByEtaPrime * (inputVec + (cosineTheta * normalVec)) };
+	Vec3 rOutPar{ -std::sqrt(std::fabs(1.f - rOutPerp.computeMagnitudeSquared())) * normalVec };
+	return rOutPerp + rOutPar;
+}
