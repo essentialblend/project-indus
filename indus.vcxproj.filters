@@ -42,13 +42,13 @@
     <ClInclude Include="src\headers\base\material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\headers\base\materials\lambertian.h">
+    <ClInclude Include="src\headers\materials\lambertian.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\headers\base\materials\metal.h">
+    <ClInclude Include="src\headers\materials\metal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\headers\base\materials\dielectric.h">
+    <ClInclude Include="src\headers\materials\dielectric.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

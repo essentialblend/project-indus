@@ -66,34 +66,11 @@ public:
 			renderRowSegments(0, imageHeightPixels, mainWorld);
 		}
 
-		// Write to image file.
-		std::ofstream outPPM("image.ppm");
-		if (!outPPM)
-		{
-			std::cerr << "Error: Could not open output image." << std::endl;
-			return;
-		}
-		outPPM << "P3\n" << imageWidthPixels << " " << imageHeightPixels << "\n255\n";
-		for (const auto& pixel : pixelBuffer)
-		{
-			outPPM << pixel.getX() << " " << pixel.getY() << " " << pixel.getZ() << "\n";
-		}
-		outPPM.close();
-		auto logTimeEnd = std::chrono::high_resolution_clock::now();
+		bool retFlag;
+		handlePostRenderImageUtils(retFlag);
+		if (retFlag) return;
 
-		// Using ImageMagick CLI to convert to PNG and delete PPM.
-		bool failConvertPPM_PNG = std::system("magick convert image.ppm render.png");
-		if (failConvertPPM_PNG)
-		{
-			std::cerr << "Error: PPM to PNG conversion failed!\n";
-			return;
-		}
-		bool failDeletePPM = static_cast<bool>(std::system("del image.ppm"));
-		if (failDeletePPM)
-		{
-			std::cerr << "Error: Conversion to PNG succesful, but PPM deletion failed!\n";
-			return;
-		}
+		auto logTimeEnd = std::chrono::high_resolution_clock::now();
 
 		UPrintSuccessLog(logTimeStart, logTimeEnd, imageWidthPixels * imageHeightPixels, jitterSamplesAA, useMT, maxRayBouncesDepth);
 
@@ -198,4 +175,41 @@ private:
 	{
 		return Vec3(std::pow(linearColorComp.getX(), 1 / 2.2f), std::pow(linearColorComp.getY(), 1 / 2.2f), std::pow(linearColorComp.getZ(), 1 / 2.2f));
 	}
+
+	void handlePostRenderImageUtils(bool& retFlag)
+	{
+		retFlag = true;
+		// Write to image file.
+		std::ofstream outPPM("image.ppm");
+		if (!outPPM)
+		{
+			std::cerr << "Error: Could not open output image." << std::endl;
+			return;
+		}
+		outPPM << "P3\n" << imageWidthPixels << " " << imageHeightPixels << "\n255\n";
+		for (const auto& pixel : pixelBuffer)
+		{
+			outPPM << pixel.getX() << " " << pixel.getY() << " " << pixel.getZ() << "\n";
+		}
+		outPPM.close();
+
+		// Using ImageMagick CLI to convert to PNG and delete PPM.
+		bool failConvertPPM_PNG = std::system("magick convert image.ppm render.png");
+		if (failConvertPPM_PNG)
+		{
+			std::cerr << "Error: PPM to PNG conversion failed!\n";
+			return;
+		}
+		bool failDeletePPM = static_cast<bool>(std::system("del image.ppm"));
+		if (failDeletePPM)
+		{
+			std::cerr << "Error: Conversion to PNG succesful, but PPM deletion failed!\n";
+			return;
+		}
+		retFlag = false;
+	}
 };
+
+
+
+

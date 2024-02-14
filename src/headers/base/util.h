@@ -50,12 +50,12 @@ inline double UGenRNGDouble(double minVal, double maxVal)
 	return uniDist(rngEng);
 }
 
-void UWriteToClog(const std::string& outString)
+inline void UWriteToClog(const std::string& outString)
 {
 	std::clog << outString << "\n";
 }
 
-void UWriteToCout(const std::string& outString)
+inline void UWriteToCout(const std::string& outString)
 {
 	std::cout << outString << "\n";
 }
@@ -100,7 +100,7 @@ inline void UPrintSuccessLog(
 #include "worldObjectList.h"
 #include "../world_objects/sphere.h"
 #include "material.h"
-#include "materials/lambertian.h"
-#include "materials/metal.h"
-#include "materials/dielectric.h"
+#include "../materials/lambertian.h"
+#include "../materials/metal.h"
+#include "../materials/dielectric.h"
 #include "camera.h"
