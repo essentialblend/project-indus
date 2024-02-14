@@ -5,7 +5,7 @@ class Camera
 public: 
 	Camera() {};
 
-	Camera(double aspRatio, unsigned short imgW, const Vec3& focalLength, const PointVec3& cameraCenter, const std::vector<Vec3>& pixelBuffer, bool useMT, int jitterSamples, int maxDepth) : aspectRatio(aspRatio), imageWidthPixels(imgW), focalLength(focalLength), cameraCenter(cameraCenter), pixelBuffer(pixelBuffer), useMT(useMT), jitterSamplesAA(jitterSamples), maxRayBouncesDepth(maxDepth) {}
+	Camera(double aspRatio, unsigned short imgW, const std::vector<Vec3>& pixelBuffer, bool useMT, int jitterSamples, int maxDepth, double vFOV, PointVec3& lookF, PointVec3& lookAt, Vec3& camVUP) : aspectRatio(aspRatio), imageWidthPixels(imgW), pixelBuffer(pixelBuffer), useMT(useMT), jitterSamplesAA(jitterSamples), maxRayBouncesDepth(maxDepth), verticalFOV(vFOV), camLookFromPoint(lookF), camLookAtPoint(lookAt), camVUP(camVUP) {}
 
 	unsigned short getResolutionWidthPixels() const 
 	{
@@ -93,23 +93,40 @@ private:
 	int jitterSamplesAA{ 0 };
 	int jitterSqrt{ 0 };
 	int maxRayBouncesDepth{ 0 };
+	double verticalFOV{ 0 };
+	PointVec3 camLookFromPoint{ PointVec3(0, 0, -1) };
+	PointVec3 camLookAtPoint{ PointVec3(0, 0, 0) };
+	Vec3 camVUP{ 0, 1, 0 };
+	Vec3 camUVec, camVVec, camWVec;
 
 	void initializeCamera()
 	{
+		jitterSqrt = static_cast<int>(std::round(std::sqrt(jitterSamplesAA)));
+		
 		imageHeightPixels = static_cast<unsigned short>(imageWidthPixels / aspectRatio);
 		imageHeightPixels = imageHeightPixels < 1 ? 1 : imageHeightPixels;
 		pixelBuffer.resize(static_cast<unsigned long long>(imageWidthPixels * imageHeightPixels));
-		float viewportHeight{ 2.f };
-		float viewportWidth{ viewportHeight * (static_cast<float>(imageWidthPixels) / imageHeightPixels) };
-		jitterSqrt = static_cast<int>(std::sqrt(jitterSamplesAA));
+		cameraCenter = camLookFromPoint;
+		focalLength = (camLookFromPoint - camLookAtPoint).computeMagnitude();
+		
+		camWVec = computeUnitVector(camLookFromPoint - camLookAtPoint);
+		camUVec = computeUnitVector(computeCrossProduct(camVUP, camWVec));
+		camVVec = computeCrossProduct(camWVec, camUVec);
 
-		Vec3 viewportUX{ Vec3(viewportWidth, 0, 0) };
-		Vec3 viewportVY{ Vec3(0, -viewportHeight, 0) };
+
+		double theta = UDegreesToRadians(verticalFOV);
+		double h = std::tan(theta / 2);
+
+		Vec3 viewportHeight{ (2.f * h * focalLength) };
+		Vec3 viewportWidth{ viewportHeight * (static_cast<float>(imageWidthPixels) / imageHeightPixels) };
+
+		Vec3 viewportUX{ viewportWidth * camUVec };
+		Vec3 viewportVY{ viewportHeight * -camVVec };
 
 		viewportDeltaX = viewportUX / imageWidthPixels;
 		viewportDeltaY = viewportVY / imageHeightPixels;
 
-		PointVec3 viewportUpperLeftPoint = cameraCenter - focalLength - (viewportUX / 2) - (viewportVY / 2);
+		PointVec3 viewportUpperLeftPoint = cameraCenter - (focalLength * camWVec) - (viewportUX / 2) - (viewportVY / 2);
 		topLeftPixelLocation = viewportUpperLeftPoint + (0.5 * (viewportDeltaX + viewportDeltaY));
 	}
 

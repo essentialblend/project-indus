@@ -80,7 +80,8 @@ inline void UPrintSuccessLog(
         double pixelsPerSecond = totalPixels / logTotalTimeSeconds;
         pixelProcessDetails = std::format("Processing speed: {:.2f} pixels per second...", pixelsPerSecond);
     }
-    else {
+    else 
+    {
         pixelProcessDetails = "Processing speed: Calculation not possible due to short duration...";
     }
     std::string renderingModeDetails = std::format("\nRendering mode: {}", useMT ? "Multi-threaded..." : "Single-threaded...");
