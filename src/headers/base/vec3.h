@@ -161,3 +161,15 @@ inline Vec3 computeRefractionDirection(const Vec3& inputVec, const Vec3& normalV
 	Vec3 rOutPar{ -std::sqrt(std::fabs(1.f - rOutPerp.computeMagnitudeSquared())) * normalVec };
 	return rOutPerp + rOutPar;
 }
+
+inline Vec3 genRandVec3UnitDisk()
+{
+	while (true)
+	{
+		Vec3 resultVec(UGenRNGDouble(-1, 1), UGenRNGDouble(-1, 1), 0);
+		if (resultVec.computeMagnitudeSquared() < 1)
+		{
+			return resultVec;
+		}
+	}
+}

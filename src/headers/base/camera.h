@@ -5,17 +5,7 @@ class Camera
 public: 
 	Camera() {};
 
-	Camera(double aspRatio, unsigned short imgW, const std::vector<Vec3>& pixelBuffer, bool useMT, int jitterSamples, int maxDepth, double vFOV, PointVec3& lookF, PointVec3& lookAt, Vec3& camVUP) : aspectRatio(aspRatio), imageWidthPixels(imgW), pixelBuffer(pixelBuffer), useMT(useMT), jitterSamplesAA(jitterSamples), maxRayBouncesDepth(maxDepth), verticalFOV(vFOV), camLookFromPoint(lookF), camLookAtPoint(lookAt), camVUP(camVUP) {}
-
-	unsigned short getResolutionWidthPixels() const 
-	{
-		return imageWidthPixels;
-	}
-
-	unsigned short getResolutionHeightPixels() const
-	{
-		return imageHeightPixels;
-	}
+	Camera(double aspRatio, unsigned short imgW, const std::vector<Vec3>& pixelBuffer, bool useMT, int jitterSamples, int maxDepth, double vFOV, PointVec3& lookF, PointVec3& lookAt, Vec3& camVUP, double defocusAngle, double focusDist) : aspectRatio(aspRatio), imageWidthPixels(imgW), pixelBuffer(pixelBuffer), useMT(useMT), jitterSamplesAA(jitterSamples), maxRayBouncesDepth(maxDepth), verticalFOV(vFOV), camLookFromPoint(lookF), camLookAtPoint(lookAt), camVUP(camVUP), defocusAngle(defocusAngle), focusDist(focusDist) {}
 
 	const std::vector<Vec3>& getPixelBuffer() const
 	{
@@ -83,7 +73,6 @@ private:
 	double aspectRatio{ 0 };
 	unsigned short imageWidthPixels{ 0 };
 	unsigned short imageHeightPixels{ 0 };
-	Vec3 focalLength{ Vec3() };
 	PointVec3 cameraCenter{ PointVec3() };
 	std::vector<Vec3> pixelBuffer{ 0 };
 	bool useMT{ false };
@@ -98,6 +87,10 @@ private:
 	PointVec3 camLookAtPoint{ PointVec3(0, 0, 0) };
 	Vec3 camVUP{ 0, 1, 0 };
 	Vec3 camUVec, camVVec, camWVec;
+	double defocusAngle{ 0 };
+	double focusDist{ 10 };
+	Vec3 defocusDiskUX;
+	Vec3 defocusDiskVY;
 
 	void initializeCamera()
 	{
@@ -107,7 +100,6 @@ private:
 		imageHeightPixels = imageHeightPixels < 1 ? 1 : imageHeightPixels;
 		pixelBuffer.resize(static_cast<unsigned long long>(imageWidthPixels * imageHeightPixels));
 		cameraCenter = camLookFromPoint;
-		focalLength = (camLookFromPoint - camLookAtPoint).computeMagnitude();
 		
 		camWVec = computeUnitVector(camLookFromPoint - camLookAtPoint);
 		camUVec = computeUnitVector(computeCrossProduct(camVUP, camWVec));
@@ -117,8 +109,8 @@ private:
 		double theta = UDegreesToRadians(verticalFOV);
 		double h = std::tan(theta / 2);
 
-		Vec3 viewportHeight{ (2.f * h * focalLength) };
-		Vec3 viewportWidth{ viewportHeight * (static_cast<float>(imageWidthPixels) / imageHeightPixels) };
+		double viewportHeight{ (2.f * h * focusDist) };
+		double viewportWidth{ viewportHeight * (static_cast<double>(imageWidthPixels) / imageHeightPixels) };
 
 		Vec3 viewportUX{ viewportWidth * camUVec };
 		Vec3 viewportVY{ viewportHeight * -camVVec };
@@ -126,8 +118,13 @@ private:
 		viewportDeltaX = viewportUX / imageWidthPixels;
 		viewportDeltaY = viewportVY / imageHeightPixels;
 
-		PointVec3 viewportUpperLeftPoint = cameraCenter - (focalLength * camWVec) - (viewportUX / 2) - (viewportVY / 2);
+		PointVec3 viewportUpperLeftPoint = cameraCenter - (focusDist * camWVec) - (viewportUX / 2) - (viewportVY / 2);
 		topLeftPixelLocation = viewportUpperLeftPoint + (0.5 * (viewportDeltaX + viewportDeltaY));
+
+		// Defocus basis vectors.
+		Vec3 defocusRadius{ focusDist * std::tan(UDegreesToRadians(defocusAngle / 2)) };
+		defocusDiskUX = camUVec * defocusRadius;
+		defocusDiskVY = camVVec * defocusRadius;
 	}
 
 	ColorVec3 computePixelColor(const Ray& inputRay, int bounceDepthParam, const WorldObject& mainWorld) const
@@ -174,8 +171,9 @@ private:
 						double offsetY{ (pixelY + UGenRNGDouble()) / jitterSqrt };
 
 						PointVec3 samplePoint{ topLeftPixelLocation + ((i + offsetX) * viewportDeltaX) + ((j + offsetY) * viewportDeltaY) };
-						Vec3 rayDirection = samplePoint - cameraCenter;
-						Ray primaryRay(cameraCenter, rayDirection);
+						Vec3 rayOrigin = (defocusAngle <= 0) ? cameraCenter : defocusDiskSample();
+						Vec3 rayDirection = samplePoint - rayOrigin;
+						Ray primaryRay(rayOrigin, rayDirection);
 						pixelColor += computePixelColor(primaryRay, maxRayBouncesDepth, mainWorld);
 					}
 				}
@@ -224,6 +222,12 @@ private:
 			return;
 		}
 		retFlag = false;
+	}
+
+	PointVec3 defocusDiskSample() const
+	{
+		Vec3 randV{ genRandVec3UnitDisk() };
+		return cameraCenter + (randV[0] * defocusDiskUX) + (randV[1] * defocusDiskVY);
 	}
 };
 
