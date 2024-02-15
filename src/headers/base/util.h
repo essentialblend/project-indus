@@ -86,7 +86,6 @@ inline void UPrintSuccessLog(
     }
     std::string renderingModeDetails = std::format("\nRendering mode: {}", useMT ? "Multi-threaded..." : "Single-threaded...");
 
-    // Assuming UWriteToClog is defined elsewhere and is thread-safe.
     UWriteToClog(renderingModeDetails);
     UWriteToClog(timeDetails);
     UWriteToClog(graphicsDetails);
@@ -105,3 +104,16 @@ inline void UPrintSuccessLog(
 #include "../materials/metal.h"
 #include "../materials/dielectric.h"
 #include "camera.h"
+
+// CONSTS
+constexpr bool USE_MT{ true };
+constexpr int AA_NUM_SAMPLES{ 10 };
+constexpr int MAX_RAY_BOUNCES{ 10 };
+constexpr double VERTICAL_FOV{ 90 };
+constexpr int RES_WIDTH_PIXELS{ 400 };
+constexpr double CAM_DEFOCUS_ANGLE{ 5 };
+constexpr double CAM_FOCUS_DIST{ 2 };
+
+const Vec3 CAM_LOOKFROM_VEC(0, 0, 1);
+const Vec3 CAM_LOOKAT_VEC(0, 0, 0);
+const Vec3 WORLD_UP(0, 1, 0);
