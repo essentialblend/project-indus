@@ -4,8 +4,6 @@ Project Indus
 Indus is a multithreaded brute-force path-traced renderer. It is my first attempt at fleshing out and applying concepts I learn from various reference texts on graphics, programming, and math.
 Presently, it serves as a revision playground which I aim to update immediately upon reaching a learning checkpoint.
 
-Representational image coming soon...
-
 Current Features:
 - Developed from scratch using C++.
 - Multithreading compatible.
