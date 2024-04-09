@@ -18,6 +18,14 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\base\image\image.cppm" />
+    <ClCompile Include="src\base\image\image.ixx" />
+    <ClCompile Include="src\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\dep\stb_image_write.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -104,9 +112,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <EnableModules>false</EnableModules>
-      <BuildStlModules>false</BuildStlModules>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnableModules>true</EnableModules>
+      <BuildStlModules>true</BuildStlModules>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
+      <TranslateIncludes>false</TranslateIncludes>
+      <AdditionalModuleDependencies>
+      </AdditionalModuleDependencies>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -132,28 +146,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="src\headers\base\camera.h" />
-    <ClInclude Include="src\headers\base\interval.h" />
-    <ClInclude Include="src\headers\base\material.h" />
-    <ClInclude Include="src\headers\materials\dielectric.h" />
-    <ClInclude Include="src\headers\materials\lambertian.h" />
-    <ClInclude Include="src\headers\materials\metal.h" />
-    <ClInclude Include="src\headers\base\ray.h" />
-    <ClInclude Include="src\headers\base\util.h" />
-    <ClInclude Include="src\headers\base\vec3.h" />
-    <ClInclude Include="src\headers\base\worldObject.h" />
-    <ClInclude Include="src\headers\base\worldObjectList.h" />
-    <ClInclude Include="src\headers\world_objects\sphere.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\main.cpp">
-      <EnableModules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</EnableModules>
-      <EnableModules Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</EnableModules>
-      <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ConformanceMode>
-      <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ConformanceMode>
-    </ClCompile>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
