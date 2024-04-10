@@ -24,6 +24,21 @@
     <ClCompile Include="src\base\image\image.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\base\vec3\vec3.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\vec3\vec3.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\core_util.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\color\color.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\color\color.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dep\stb_image_write.h">

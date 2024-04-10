@@ -1,6 +1,6 @@
 export module image;
-
-export import std;
+import std;
+import color;
 
 export class Image abstract
 {
@@ -14,13 +14,15 @@ public:
 export class PNGImage : public Image
 {
 public:
-	explicit PNGImage() noexcept = delete;
-	explicit PNGImage(int w, int h, std::span<const std::uint8_t> pixelBuffer) noexcept : m_imageWidthPixels(w), m_imageHeightPixels(h), m_pixelBuffer(pixelBuffer) {}
+	explicit PNGImage() noexcept = default;
+	explicit PNGImage(int w, int h, int numChannels, std::span<Color const> pixelBuffer) noexcept;
 
 	virtual void createImage() const override;
 
 private:
 	int m_imageWidthPixels{};
 	int m_imageHeightPixels{};
-	std::span<const std::uint8_t> m_pixelBuffer;
+	int m_numImgChannels{};
+	std::span<Color const> m_pixelBuffer{};
+
 };

@@ -19,8 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\base\color\color.cppm" />
+    <ClCompile Include="src\base\color\color.ixx" />
+    <ClCompile Include="src\base\core_util.ixx" />
     <ClCompile Include="src\base\image\image.cppm" />
     <ClCompile Include="src\base\image\image.ixx" />
+    <ClCompile Include="src\base\vec3\vec3.cppm" />
+    <ClCompile Include="src\base\vec3\vec3.ixx" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
