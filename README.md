@@ -1,7 +1,6 @@
-Project Indus
-====================================================================================================
+# Project Indus
 
-Indus is a multithreaded brute-force path-traced renderer. It is my first attempt at fleshing out and applying concepts I learn from various reference texts on graphics, programming, and math.
+Indus is a multithreaded path-tracer. It is my first attempt at fleshing out and applying concepts I learn from various reference texts on graphics, programming, and math.
 Presently, it serves as a revision playground which I aim to update immediately upon reaching a learning checkpoint.
 
 Current Features:
@@ -13,8 +12,11 @@ Current Features:
 - Positionable camera with defocus blur (DOF).
 - Lambertian, Metallic, and Dielectric Materials.
 
-Directory Structure
--------------------
+# Status
+
+[Actively being re-written.](https://github.com/essentialblend/project-indus/issues) 
+
+# Directory Structure
   - `src/` --
     Main source folder.
 
@@ -30,6 +32,8 @@ Directory Structure
   - `src/headers/world_objects` --
     Contains all derived world-object classes.
 
-Acknowledgements
+Credit
 --------------------
-WIP
+Third party libraries: 
+- [Simple and Fast Multimedia Library (SFML)](https://www.sfml-dev.org/).
+- [STB](https://github.com/nothings/stb).
