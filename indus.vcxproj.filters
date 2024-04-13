@@ -39,6 +39,18 @@
     <ClCompile Include="src\base\color\color.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\base\ray\ray.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\ray\ray.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\core_constructs\core_constructs.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\camera\camera.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dep\stb_image_write.h">

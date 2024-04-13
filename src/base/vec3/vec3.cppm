@@ -1,15 +1,18 @@
 import vec3;
 
-constexpr Vec3::Vec3(double x) noexcept : m_vec{ x, x, x } {}
-constexpr Vec3::Vec3(double x, double y, double z) noexcept : m_vec{ x, y, z } {}
+import <iostream>;
 
-constexpr double Vec3::getX() const noexcept { return m_vec[0]; }
-constexpr double Vec3::getY() const noexcept { return m_vec[1]; }
-constexpr double Vec3::getZ() const noexcept { return m_vec[2]; }
+
+Vec3::Vec3(double x) noexcept : m_Vec{ x, x, x } {}
+Vec3::Vec3(double x, double y, double z) noexcept : m_Vec{ x, y, z } {}
+
+double Vec3::getX() const noexcept { return m_Vec[0]; }
+double Vec3::getY() const noexcept { return m_Vec[1]; }
+double Vec3::getZ() const noexcept { return m_Vec[2]; }
 
 const double& Vec3::operator[](const std::size_t index) const noexcept
 {
-	return m_vec[index];
+	return m_Vec[index];
 }
 
 double& Vec3::operator[](std::size_t index) noexcept {
@@ -19,18 +22,18 @@ double& Vec3::operator[](std::size_t index) noexcept {
 
 Vec3& Vec3::operator+=(const Vec3& otherVec) noexcept
 {
-	m_vec[0] += otherVec[0];
-	m_vec[1] += otherVec[1];
-	m_vec[2] += otherVec[2];
+	m_Vec[0] += otherVec[0];
+	m_Vec[1] += otherVec[1];
+	m_Vec[2] += otherVec[2];
 
 	return *this;
 }
 
 Vec3& Vec3::operator*=(double scalar) noexcept
 {
-	m_vec[0] *= scalar;
-	m_vec[1] *= scalar;
-	m_vec[2] *= scalar;
+	m_Vec[0] *= scalar;
+	m_Vec[1] *= scalar;
+	m_Vec[2] *= scalar;
 
 	return *this;
 }
@@ -40,14 +43,14 @@ Vec3& Vec3::operator/=(double scalar) noexcept
 	return ((*this) *= (1 / scalar));
 }
 
-constexpr Vec3 Vec3::operator-() const noexcept
+Vec3 Vec3::operator-() const noexcept
 {
-	return Vec3(-m_vec[0], -m_vec[1], -m_vec[2]);
+	return Vec3(-m_Vec[0], -m_Vec[1], -m_Vec[2]);
 }
 
-constexpr double Vec3::getMagnitudeSq() const noexcept
+double Vec3::getMagnitudeSq() const noexcept
 {
-	return m_vec[0] * m_vec[0] + m_vec[1] * m_vec[1] + m_vec[2] * m_vec[2];
+	return m_Vec[0] * m_Vec[0] + m_Vec[1] * m_Vec[1] + m_Vec[2] * m_Vec[2];
 }
 
 double Vec3::getMagnitude() const noexcept
@@ -61,32 +64,32 @@ std::ostream& operator<<(std::ostream& outStream, const Vec3& outVec)
 	return outStream << outVec[0] << " " << outVec[1] << " " << outVec[2] << "\n";
 }
 
-constexpr Vec3 operator+(const Vec3& f, const Vec3& s) noexcept
+Vec3 operator+(const Vec3& f, const Vec3& s) noexcept
 {
 	return Vec3(f[0] + s[0], f[1] + s[1], f[2] + s[2]);
 }
 
-constexpr Vec3 operator-(const Vec3& f, const Vec3& s) noexcept
+Vec3 operator-(const Vec3& f, const Vec3& s) noexcept
 {
 	return Vec3(f[0] - s[0], f[1] - s[1], f[2] - s[2]);
 }
 
-constexpr Vec3 operator*(const Vec3& f, const Vec3& s) noexcept
+Vec3 operator*(const Vec3& f, const Vec3& s) noexcept
 {
 	return Vec3(f[0] * s[0], f[1] * s[1], f[2] * s[2]);
 }
 
-constexpr Vec3 operator*(double t, const Vec3& s) noexcept
+Vec3 operator*(double t, const Vec3& s) noexcept
 {
 	return Vec3(t * s[0], t * s[1], t * s[2]);
 }
 
-constexpr Vec3 operator*(const Vec3& f, double t) noexcept
+Vec3 operator*(const Vec3& f, double t) noexcept
 {
 	return t * f;
 }
 
-constexpr Vec3 operator/(const Vec3& f, double t) noexcept
+Vec3 operator/(const Vec3& f, double t) noexcept
 {
 	return (1 / t) * f;
 }
