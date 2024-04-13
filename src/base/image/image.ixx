@@ -1,6 +1,8 @@
 export module image;
+
 import <vector>;
 import <span>;
+
 import color;
 import core_constructs;
 

@@ -28,6 +28,7 @@
     <ClCompile Include="src\base\image\image.ixx" />
     <ClCompile Include="src\base\ray\ray.cppm" />
     <ClCompile Include="src\base\ray\ray.ixx" />
+    <ClCompile Include="src\base\renderer\renderer.ixx" />
     <ClCompile Include="src\base\vec3\vec3.cppm" />
     <ClCompile Include="src\base\vec3\vec3.ixx" />
     <ClCompile Include="src\main.cpp" />

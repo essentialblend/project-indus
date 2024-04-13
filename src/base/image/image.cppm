@@ -15,5 +15,5 @@ void PNGImage::createImage()
 		m_finalBuffer.push_back(static_cast<std::uint8_t>(converted.getBaseVec()[1]));
 		m_finalBuffer.push_back(static_cast<std::uint8_t>(converted.getBaseVec()[2]));
 	}
-	stbi_write_png("output.png", m_imageProperties.resolutionInPixels.widthInPixels, m_imageProperties.resolutionInPixels.heightInPixels, m_imageProperties.numColorChannels, m_finalBuffer.data(), m_imageProperties.resolutionInPixels.widthInPixels * m_imageProperties.numColorChannels);
+	stbi_write_png("output.png", m_imageProperties.pixelResolutionObj.widthInPixels, m_imageProperties.pixelResolutionObj.heightInPixels, m_imageProperties.numColorChannels, m_finalBuffer.data(), m_imageProperties.pixelResolutionObj.widthInPixels * m_imageProperties.numColorChannels);
 }

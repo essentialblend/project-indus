@@ -1,4 +1,5 @@
 export module core_constructs;
+
 import color;
 import vec3;
 
@@ -10,32 +11,38 @@ export struct PixelResolution
 
 export struct AspectRatio
 {
-	double widthInAbsoluteValue{};
-	double heightInAbsoluteValue{};
-	double absoluteWidthByHeightARValue{ widthInAbsoluteValue / heightInAbsoluteValue };
+	double widthInAbsVal{};
+	double heightInAbsVal{};
 };
 
-export struct ViewportDimension
+export struct ViewportProperties
 {
 	double widthInWorldSpaceUnits{};
 	double heightInWorldSpaceUnits{};
+	Vec3 horizontalPixelSpan{};
+	Vec3 verticalPixelSpan{};
 };
 
 export struct ImageProperties
 {
-	PixelResolution resolutionInPixels{};
-	AspectRatio aspectRatioInAbsoluteValue{};
-	int numColorChannels{};
+	PixelResolution pixelResolutionObj{};
+	AspectRatio aspectRatioObj{};
+	int numColorChannels{3};
 };
 
 export struct PixelDimension
 {
-	Vec3 lateralSpanInAbsoluteValue{};
-	Vec3 verticalSpanInAbsoluteValue{};
-	Point centerPoint{};
+	Vec3 lateralSpanInAbsVal{};
+	Vec3 verticalSpanInAbsVal{};
+	Point pixelCenter{};
 };
 
 export struct CameraProperties
 {
+	ImageProperties camImgPropsObj{};
+	ViewportProperties camViewportPropsObj{};
+	PixelDimension camPixelDimObj{};
 
+	Point camCenter{ 0.0, 0.0, 0.0 };
+	Vec3 camFocalLength{};
 };

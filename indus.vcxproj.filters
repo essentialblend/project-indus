@@ -51,6 +51,9 @@
     <ClCompile Include="src\base\camera\camera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\base\renderer\renderer.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dep\stb_image_write.h">
