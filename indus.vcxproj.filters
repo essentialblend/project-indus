@@ -54,6 +54,15 @@
     <ClCompile Include="src\base\renderer\renderer.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\utilities\timer\timer.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\window\window.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\overlay\overlay.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dep\stb_image_write.h">

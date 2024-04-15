@@ -39,9 +39,9 @@ private:
 
 void Camera::setupCamera() 
 {
-    const auto localPixelResProps { m_cameraProps.camImgPropsObj.pixelResolutionObj };
-    const auto localViewportProps{ m_cameraProps.camViewportPropsObj };
-    const auto localARProps{ m_cameraProps.camImgPropsObj.aspectRatioObj };
+    const auto& localPixelResProps { m_cameraProps.camImgPropsObj.pixelResolutionObj };
+    const auto& localViewportProps{ m_cameraProps.camViewportPropsObj };
+    const auto& localARProps{ m_cameraProps.camImgPropsObj.aspectRatioObj };
 
     m_cameraProps.camImgPropsObj.pixelResolutionObj.heightInPixels = std::max(1, static_cast<int>(localPixelResProps.widthInPixels / (localARProps.widthInAbsVal / localARProps.heightInAbsVal)));
 

@@ -31,7 +31,10 @@
     <ClCompile Include="src\base\renderer\renderer.ixx" />
     <ClCompile Include="src\base\vec3\vec3.cppm" />
     <ClCompile Include="src\base\vec3\vec3.ixx" />
+    <ClCompile Include="src\base\window\window.ixx" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\utilities\overlay\overlay.ixx" />
+    <ClCompile Include="src\utilities\timer\timer.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dep\stb_image_write.h" />

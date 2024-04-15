@@ -17,7 +17,7 @@ int main()
 
 	Renderer mainRenderer{ mainCamera };
 
-	mainRenderer.renderFrame();
+	mainRenderer.renderSFMLWindow();
 
 	return 0;
 }

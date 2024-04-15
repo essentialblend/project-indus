@@ -2,16 +2,18 @@ export module renderer;
 
 import <iostream>;
 import <vector>;
+import <print>;
 
 import core_constructs;
 import color;
 import ray;
 import camera;
 import vec3;
+import window;
+import overlay;
+import timer;
 
 import <SFML/Graphics.hpp>;
-
-
 
 export class Renderer
 {
@@ -19,13 +21,16 @@ public:
 	explicit Renderer() noexcept = default;
     explicit Renderer(const Camera& cameraObj) noexcept : m_rendererCam{ cameraObj } {}
 
-	void renderFrame();
-    
+    void renderSFMLWindow();
+
+    void renderFrame(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& localPixelBuffer, const Timer& timerObj);
 
 private:
     Camera m_rendererCam{};
-    
-    Color computeRayColor(const Ray& inputRay) const;
+    SFMLWindow m_sfmlWindow{};
+    Overlay m_statsOverlay{};   
+
+    [[nodiscard]] Color computeRayColor(const Ray& inputRay) const;
 };
 
 Color Renderer::computeRayColor(const Ray& inputRay) const
@@ -41,72 +46,76 @@ Color Renderer::computeRayColor(const Ray& inputRay) const
     return finalReturnColor;
 }
 
-
-void Renderer::renderFrame()
+void Renderer::renderSFMLWindow()
 {
-    PixelResolution tempPixelRes{ m_rendererCam.getCameraProperties().camImgPropsObj.pixelResolutionObj };
-    PixelDimension tempPixelDim{ m_rendererCam.getCameraProperties().camPixelDimObj };
-    Point tempCamCenter{ m_rendererCam.getCameraProperties().camCenter };
+    Timer renderTimer;
 
-    std::vector<Color> localPixelBuffer{};
+    auto& renderWindowObj = m_sfmlWindow.getWindowProperties().renderWindowObj;
+    const auto& pixResObj = m_rendererCam.getCameraProperties().camImgPropsObj.pixelResolutionObj;
+    const auto& pixDimObj = m_rendererCam.getCameraProperties().camPixelDimObj;
+    const auto& camCenter = m_rendererCam.getCameraProperties().camCenter;
 
-    // Render.
-    sf::RenderWindow window(sf::VideoMode(tempPixelRes.widthInPixels / 2, tempPixelRes.heightInPixels / 2), "indus_prelim");
-    window.setFramerateLimit(30);
-    sf::View mainView{ sf::FloatRect(0, 0, static_cast<float>(tempPixelRes.widthInPixels), static_cast<float>(tempPixelRes.heightInPixels)) };
-    window.setView(mainView);
+    std::vector<Color> localPixelBuffer;
+    localPixelBuffer.reserve(static_cast<long long>(pixResObj.widthInPixels * pixResObj.heightInPixels));
 
-    // Primary frame texture.
-    sf::Texture mainFrameTexture{};
-    mainFrameTexture.create(tempPixelRes.widthInPixels, tempPixelRes.heightInPixels);
+    bool hasRenderCompleted{ false };
 
-    sf::Sprite mainFrameSprite{};
-    mainFrameSprite.setTexture(mainFrameTexture);
+    m_sfmlWindow = SFMLWindow(m_rendererCam.getCameraProperties(), "indus prelim");
+    m_sfmlWindow.setupWindow();
 
-    bool shouldUpdateTex{ true };
+    m_statsOverlay.setupOverlay();
 
-    while (window.isOpen())
+    renderTimer.startTimer();
+
+    while (renderWindowObj->isOpen())
     {
-        sf::Event event;
-        while (window.pollEvent(event))
+        sf::Event event{};
+        while (renderWindowObj->pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
-                window.close();
+                renderWindowObj->close();
         }
 
-        if (shouldUpdateTex)
+        while (!hasRenderCompleted)
         {
-            for (int i = 0; i < tempPixelRes.heightInPixels; ++i) {
-                for (int j = 0; j < tempPixelRes.widthInPixels; ++j) {
+            renderFrame(pixResObj, pixDimObj, camCenter, localPixelBuffer, renderTimer);
+            
+            renderTimer.endTimer();
 
-                    const Point currentPixelCenter{ tempPixelDim.pixelCenter + (j * tempPixelDim.lateralSpanInAbsVal) + (i * tempPixelDim.verticalSpanInAbsVal)};
-                    const Ray currentPixelRay{ tempCamCenter, currentPixelCenter - tempCamCenter };
-
-                    const Color normCurrentPixelColor{ computeRayColor(currentPixelRay) };
-
-                    localPixelBuffer.push_back(normCurrentPixelColor);
-
-                    sf::Uint8 pixelData[4] =
-                    {
-                        static_cast<sf::Uint8>(normCurrentPixelColor.getBaseVec().getX() * 255),
-                        static_cast<sf::Uint8>(normCurrentPixelColor.getBaseVec().getY() * 255),
-                        static_cast<sf::Uint8>(normCurrentPixelColor.getBaseVec().getZ() * 255),
-                        255
-                    };
-
-                    mainFrameTexture.update(pixelData, 1, 1, j, i);
-                }
-
-                window.clear();
-                window.draw(mainFrameSprite);
-                window.display();
-            }
+            hasRenderCompleted = true;
+            m_statsOverlay.setRenderingStatus(!hasRenderCompleted);
         }
 
-        shouldUpdateTex = false;
-        window.clear();
-        window.draw(mainFrameSprite);
-        window.display();
+        //m_sfmlWindow.displayWindow(m_statsOverlay, renderTimer);
+    }
+
+        renderTimer.resetTimer();
+}
+
+void Renderer::renderFrame(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& localPixelBuffer, const Timer& timerObj)
+{
+    for (int i = 0; i < pixResObj.heightInPixels; ++i) {
+        for (int j = 0; j < pixResObj.widthInPixels; ++j) {
+
+            const Point currentPixelCenter{ pixDimObj.pixelCenter + (j * pixDimObj.lateralSpanInAbsVal) + (i * pixDimObj.verticalSpanInAbsVal) };
+            const Ray currentPixelRay{ camCenter, currentPixelCenter - camCenter };
+
+            const Color normCurrentPixelColor{ computeRayColor(currentPixelRay) };
+
+            sf::Uint8 pixelData[4] =
+            {
+                static_cast<sf::Uint8>(normCurrentPixelColor.getBaseVec().getX() * 255),
+                static_cast<sf::Uint8>(normCurrentPixelColor.getBaseVec().getY() * 255),
+                static_cast<sf::Uint8>(normCurrentPixelColor.getBaseVec().getZ() * 255),
+                255
+            };
+
+            localPixelBuffer.push_back(std::move(normCurrentPixelColor));
+
+            m_sfmlWindow.getWindowProperties().texObj->update(pixelData, 1, 1, j, i);
+        }
+
+        m_sfmlWindow.displayWindow(m_statsOverlay, timerObj);
     }
 }
 
