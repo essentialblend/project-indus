@@ -10,6 +10,7 @@ export import ray;
 export import camera; 
 export import renderer;
 export import timer;
+export import indus;
 
 // Type check asserts.
 static_assert(std::is_default_constructible<Vec3>::value, "Vec3 should be default constructible");
@@ -50,8 +51,8 @@ static_assert(std::is_destructible<Camera>::value, "Camera should be destructibl
 static_assert(std::is_default_constructible<Renderer>::value, "Renderer should be default constructible");
 //static_assert(std::is_copy_constructible<Renderer>::value, "Renderer should be copy constructible");
 //static_assert(std::is_copy_assignable<Renderer>::value, "Renderer should be copy assignable");
-static_assert(std::is_move_constructible<Renderer>::value, "Renderer should be move constructible");
-static_assert(std::is_move_assignable<Renderer>::value, "Renderer should be move assignable");
+//static_assert(std::is_move_constructible<Renderer>::value, "Renderer should be move constructible");
+//static_assert(std::is_move_assignable<Renderer>::value, "Renderer should be move assignable");
 static_assert(std::is_destructible<Renderer>::value, "Renderer should be destructible");
 
 //static_assert(std::is_default_constructible<Timer>::value, "Timer should be default constructible");

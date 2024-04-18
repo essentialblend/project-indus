@@ -1,23 +1,18 @@
 import core_util;
 
+import <thread>;
+import <iostream>;
+
 int main()
 {
-	const Vec3 camFocalLength{ Vec3(0, 0, 1) };
+	PixelResolution windowResolution{ .widthInPixels{1920}, .heightInPixels{1080} };
+	AspectRatio aspectRatio{ .widthInAbsVal{16}, .heightInAbsVal{9} };
 
-	PixelResolution imageResolution{ .widthInPixels{1920}, .heightInPixels{0} };
-	AspectRatio viewportAR{ .widthInAbsVal{16.0}, .heightInAbsVal{9.0} };
+	Indus mainInstance(windowResolution, windowResolution, aspectRatio);
 
-	Camera mainCamera{ imageResolution, viewportAR };
+	mainInstance.initializeEngine();
 
-	mainCamera.setCameraCenter();
-	mainCamera.setFocalLength(camFocalLength);
-	mainCamera.setViewportHeight(2.0);
-
-	mainCamera.setupCamera();
-
-	Renderer mainRenderer{ mainCamera };
-
-	mainRenderer.renderSFMLWindow();
+	mainInstance.runEngine();
 
 	return 0;
 }

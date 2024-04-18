@@ -7,67 +7,29 @@ import timer;
 
 import <SFML/Graphics.hpp>;
 
-export class Overlay
+
+
+export class Overlay abstract
 {
 public:
 	explicit Overlay() noexcept = default;
 
-	void setupOverlay();
+	virtual void setupOverlay() = 0;
 
-	//void showOverlay(sf::RenderWindow& renderWindowObj, const PixelResolution& pixResObj, const Timer& timerObj);
+	virtual void setDefaultDisplayedText() = 0;
+	virtual void setSFMLTextProperties() = 0;
+	virtual void setRenderingStatus(bool hasRenderCompleted) noexcept = 0;
+	virtual void setOverlayVisibility(bool shouldDisplayOverlay) noexcept = 0;
 
-    void setRenderingStatus(bool isRendering) noexcept
-	{
-		m_isCurrentlyRendering = isRendering;
-	}
+	virtual bool getOverlayVisibility() const noexcept = 0;
 
-private:
-    OverlayProperties m_overlayProps{};
-    sf::Font m_overlayFont{};
-	bool m_isOverlayEnabled{ true };
-	bool m_isCurrentlyRendering{ true };
+	virtual void showOverlay(sf::RenderWindow& renderWindowObj, const PixelResolution& pixResObj, const Timer& timerObj) = 0;
+	
+	virtual ~Overlay() noexcept = default;
 };
 
-void Overlay::setupOverlay()
-{
-	if (!m_overlayFont.loadFromFile("src/dep/CourierPrime-Regular.ttf"))
-	{
-		m_isOverlayEnabled = false;
-		return;
-	}
 
-	std::vector<std::reference_wrapper<OverlayStatistic>> localStatsCollection{ m_overlayProps.getStatsCollection() };
 
-	for (auto& stat : localStatsCollection)
-	{
-		stat.get().statTitleObj.setFont(m_overlayFont);
-		stat.get().statTitleObj.setCharacterSize(25);
-		stat.get().statTitleObj.setColor(sf::Color::White);
 
-		stat.get().statResultObj.setFont(m_overlayFont);
-		stat.get().statResultObj.setCharacterSize(25);
-		stat.get().statResultObj.setColor(sf::Color::White);
-	}
 
-	 m_overlayProps.modeObj.statTitleObj.setString("Mode: ");
-	 m_overlayProps.timeObj.statTitleObj.setString("Time: ");
-	 m_overlayProps.renderObj.statTitleObj.setString("Status: ");
-	 m_overlayProps.GUIObj.statTitleObj.setString("GUI Status: ");
-}
 
-//void Overlay::showOverlay(sf::RenderWindow& renderWindowObj, const PixelResolution& pixResObj, const Timer& timerObj)
-//{
-//    if (!m_isOverlayEnabled)
-//    {
-//        return;
-//    }
-//
-//    if (m_isRendering)
-//    {
-//
-//    }
-//    else
-//    {
-//
-//    }
-//}

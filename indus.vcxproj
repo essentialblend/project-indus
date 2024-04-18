@@ -19,21 +19,28 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\base\camera\camera.cppm" />
     <ClCompile Include="src\base\camera\camera.ixx" />
     <ClCompile Include="src\base\color\color.cppm" />
     <ClCompile Include="src\base\color\color.ixx" />
     <ClCompile Include="src\base\core_constructs\core_constructs.ixx" />
     <ClCompile Include="src\base\core_util.ixx" />
+    <ClCompile Include="src\base\engine\indus.cppm" />
+    <ClCompile Include="src\base\engine\indus.ixx" />
     <ClCompile Include="src\base\image\image.cppm" />
     <ClCompile Include="src\base\image\image.ixx" />
     <ClCompile Include="src\base\ray\ray.cppm" />
     <ClCompile Include="src\base\ray\ray.ixx" />
+    <ClCompile Include="src\base\renderer\renderer.cppm" />
     <ClCompile Include="src\base\renderer\renderer.ixx" />
     <ClCompile Include="src\base\vec3\vec3.cppm" />
     <ClCompile Include="src\base\vec3\vec3.ixx" />
+    <ClCompile Include="src\base\window\window.cppm" />
     <ClCompile Include="src\base\window\window.ixx" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\utilities\overlay\overlay.ixx" />
+    <ClCompile Include="src\utilities\overlay\stats\stats_overlay.cppm" />
+    <ClCompile Include="src\utilities\overlay\stats\stats_overlay.ixx" />
     <ClCompile Include="src\utilities\timer\timer.ixx" />
   </ItemGroup>
   <ItemGroup>

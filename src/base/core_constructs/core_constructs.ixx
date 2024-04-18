@@ -21,7 +21,7 @@ export struct AspectRatio
 export struct ViewportProperties
 {
 	double widthInWorldSpaceUnits{};
-	double heightInWorldSpaceUnits{};
+	double heightInWorldSpaceUnits{ 2.0 };
 	Vec3 horizontalPixelSpan{};
 	Vec3 verticalPixelSpan{};
 };
@@ -47,15 +47,15 @@ export struct CameraProperties
 	PixelDimension camPixelDimObj{};
 
 	Point camCenter{ 0.0, 0.0, 0.0 };
-	Vec3 camFocalLength{};
+	Vec3 camFocalLength{0, 0, 1};
 };
 
 export struct SFMLWindowProperties
 {
-	std::unique_ptr<sf::RenderWindow> renderWindowObj{};
-	std::unique_ptr<sf::View> viewObj{};
-	std::unique_ptr<sf::Texture> texObj{};
-	std::unique_ptr<sf::Sprite> spriteObj{};
+	sf::RenderWindow renderWindowObj{};
+	sf::View viewObj{};
+	sf::Texture texObj{};
+	sf::Sprite spriteObj{};
 	unsigned int prefFPSInIntegral{ 30 };
 	float windowedResScale{ 0.5 };
 };
@@ -68,6 +68,7 @@ export struct OverlayStatistic
 
 export struct OverlayProperties
 {
+	OverlayStatistic titleObj{};
 	OverlayStatistic modeObj{};
 	OverlayStatistic renderObj{};
 	OverlayStatistic timeObj{};
@@ -75,7 +76,7 @@ export struct OverlayProperties
 
 	std::vector<std::reference_wrapper<OverlayStatistic>> getStatsCollection()
 	{
-		return { std::ref(modeObj), std::ref(renderObj), std::ref(timeObj), std::ref(GUIObj) };
+		return { std::ref(titleObj), std::ref(modeObj), std::ref(renderObj), std::ref(timeObj), std::ref(GUIObj) };
 	}
 };
 
