@@ -16,6 +16,7 @@ void Indus::initializeEngine()
 
 void Indus::setGlobalFunctors()
 {
+	// Window functors.
 	const std::function<void()> renderFrameFunctor = [&]()
 		{
 			auto localProps = m_mainRenderer.getRendererCameraProps();
@@ -25,12 +26,22 @@ void Indus::setGlobalFunctors()
 	m_mainWindow.setRenderFrameFunctor(renderFrameFunctor);
 
 
+	// Renderer functors
+	RendererFunctors localCopy{};
 	auto& mainDisplayTexObj{ m_mainWindow.getSFMLWindowProperties().texObj };
-	const std::function<void(const sf::Uint8*, unsigned int, unsigned int, unsigned int, unsigned int)> drawTextureFunctor = [&mainDisplayTexObj](const sf::Uint8* pixelData, unsigned int widthRegionInPixels, unsigned int heightRegionInPixels, unsigned int xCoord, unsigned int yCoord)
+	
+	localCopy.sfmlTextureUpdateFunctor = [&mainDisplayTexObj](const sf::Uint8* pixelData, unsigned int widthRegionInPixels, unsigned int heightRegionInPixels, unsigned int xCoord, unsigned int yCoord)
 		{
 			mainDisplayTexObj.update(pixelData, widthRegionInPixels, heightRegionInPixels, xCoord, yCoord);
 		};
-	m_mainRenderer.setTextureUpdateFunctor(drawTextureFunctor);
+	localCopy.sfmlClearWindowFunctor = [this]() {m_mainWindow.getSFMLWindowProperties().renderWindowObj.clear(); };
+	localCopy.sfmlDisplayWindowFunctor = [this]() {m_mainWindow.getSFMLWindowProperties().renderWindowObj.display(); };
+	localCopy.sfmlDrawSpriteFunctor = [this]()
+		{
+			const auto& tempSprite = m_mainWindow.getSFMLWindowProperties().spriteObj;
+			m_mainWindow.getSFMLWindowProperties().renderWindowObj.draw(tempSprite);
+		};
+	m_mainRenderer.setRendererFunctors(localCopy);
 }
 
 void Indus::runEngine()

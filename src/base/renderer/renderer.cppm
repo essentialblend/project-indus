@@ -31,61 +31,10 @@ void Renderer::setupRenderer(const PixelResolution& pixResObj, const AspectRatio
     m_mainCamera = Camera{ pixResObj, aspectRatioObj };
     m_mainCamera.setupCamera();
 }
-//void Renderer::renderSFMLWindow()
-//{
-//    Timer renderTimer;
-//
-//    auto& renderWindowObj = m_sfmlWindow.getWindowProperties().renderWindowObj;
-//    const auto& pixResObj = m_rendererCam.getCameraProperties().camImgPropsObj.pixelResolutionObj;
-//    const auto& pixDimObj = m_rendererCam.getCameraProperties().camPixelDimObj;
-//    const auto& camCenter = m_rendererCam.getCameraProperties().camCenter;
-//
-//    std::vector<Color> localPixelBuffer;
-//    localPixelBuffer.reserve(static_cast<long long>(pixResObj.widthInPixels * pixResObj.heightInPixels));
-//
-//    bool hasRenderCompleted{ false };
-//
-//    m_sfmlWindow.setupWindow();
-//
-//    m_statsOverlay.setupOverlay();
-//
-//    renderTimer.startTimer();
-//
-//    while (renderWindowObj.isOpen())
-//    {
-//        sf::Event event{};
-//        while (renderWindowObj.pollEvent(event))
-//        {
-//            if (event.type == sf::Event::Closed)
-//                renderWindowObj.close();
-//
-//            if (event.type == sf::Event::KeyPressed)
-//            {
-//                if (event.key.code == sf::Keyboard::BackSpace)
-//                {
-//                    m_statsOverlay.setOverlayVisibility(!m_statsOverlay.getOverlayVisibility());
-//                }
-//            }
-//        }
-//
-//        while (!hasRenderCompleted)
-//        {
-//            renderFrame(pixResObj, pixDimObj, camCenter, localPixelBuffer, renderTimer);
-//
-//            renderTimer.endTimer();
-//
-//            hasRenderCompleted = true;
-//            m_statsOverlay.setRenderingStatus(hasRenderCompleted);
-//        }
-//
-//        m_sfmlWindow.displayWindow(m_statsOverlay, renderTimer);
-//    }
-//    renderTimer.resetTimer();
-//}
 
 void Renderer::renderFrame(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer)
 {
-    int numRowsPerTexUpdateBatch{ 5 };
+    int numRowsPerTexUpdateBatch{ 20 };
     int currentNumRowsParsed{ 0 };
 
     std::vector<sf::Uint8> tempTexUpdateBuffer;
@@ -97,23 +46,28 @@ void Renderer::renderFrame(const PixelResolution& pixResObj, const PixelDimensio
             const Point currentPixelCenter{ pixDimObj.pixelCenter + (j * pixDimObj.lateralSpanInAbsVal) + (i * pixDimObj.verticalSpanInAbsVal) };
             const Ray currentPixelRay{ camCenter, currentPixelCenter - camCenter };
 
-            const Color normCurrentPixelColor{ computeRayColor(currentPixelRay) };
+            // Prime candidate for parallelization.
+            const Color normCurrPixColor{ computeRayColor(currentPixelRay) };
 
-            tempTexUpdateBuffer.push_back(static_cast<sf::Uint8>(normCurrentPixelColor.getBaseVec().getX() * 255));
-            tempTexUpdateBuffer.push_back(static_cast<sf::Uint8>(normCurrentPixelColor.getBaseVec().getY() * 255));
-            tempTexUpdateBuffer.push_back(static_cast<sf::Uint8>(normCurrentPixelColor.getBaseVec().getZ() * 255));
+            tempTexUpdateBuffer.push_back(static_cast<sf::Uint8>(normCurrPixColor.getBaseVec().getX() * 255));
+            tempTexUpdateBuffer.push_back(static_cast<sf::Uint8>(normCurrPixColor.getBaseVec().getY() * 255));
+            tempTexUpdateBuffer.push_back(static_cast<sf::Uint8>(normCurrPixColor.getBaseVec().getZ() * 255));
             tempTexUpdateBuffer.push_back(255);
 
-            primaryPixelBuffer.push_back(std::move(normCurrentPixelColor));
+            primaryPixelBuffer.push_back(std::move(normCurrPixColor));
         }
         ++currentNumRowsParsed;
 
         if (currentNumRowsParsed == numRowsPerTexUpdateBatch)
         {
             unsigned int startYCoord = i - numRowsPerTexUpdateBatch + 1;
-            m_textureUpdateFunctor(tempTexUpdateBuffer.data(), pixResObj.widthInPixels, currentNumRowsParsed, 0, startYCoord);
+            m_rendererFunctors.sfmlTextureUpdateFunctor(tempTexUpdateBuffer.data(), pixResObj.widthInPixels, currentNumRowsParsed, 0, startYCoord);
             tempTexUpdateBuffer.clear();
             currentNumRowsParsed = 0;
+
+            m_rendererFunctors.sfmlClearWindowFunctor();
+            m_rendererFunctors.sfmlDrawSpriteFunctor();
+            m_rendererFunctors.sfmlDisplayWindowFunctor();
         }
     }
 
@@ -121,14 +75,14 @@ void Renderer::renderFrame(const PixelResolution& pixResObj, const PixelDimensio
     {
         unsigned int startYCoord = pixResObj.heightInPixels - currentNumRowsParsed;
 
-        m_textureUpdateFunctor(tempTexUpdateBuffer.data(), pixResObj.widthInPixels, currentNumRowsParsed, 0, startYCoord);
+        m_rendererFunctors.sfmlTextureUpdateFunctor(tempTexUpdateBuffer.data(), pixResObj.widthInPixels, currentNumRowsParsed, 0, startYCoord);
 
         tempTexUpdateBuffer.clear();
         currentNumRowsParsed = 0;
     }
 }
 
-void Renderer::setTextureUpdateFunctor(const std::function<void(const sf::Uint8*, unsigned int, unsigned int, unsigned int, unsigned int)>& textureUpdateFunctor) noexcept
+void Renderer::setRendererFunctors(const RendererFunctors& rendererFuncObj) noexcept
 {
-    m_textureUpdateFunctor = textureUpdateFunctor;
-};
+    m_rendererFunctors = rendererFuncObj;
+}

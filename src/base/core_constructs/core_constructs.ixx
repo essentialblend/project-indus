@@ -4,6 +4,8 @@ import color;
 import vec3;
 import <vector>;
 
+import<functional>;
+
 import <SFML/Graphics.hpp>;
 
 export struct PixelResolution
@@ -80,3 +82,10 @@ export struct OverlayProperties
 	}
 };
 
+export struct RendererFunctors
+{
+	std::function<void()> sfmlClearWindowFunctor{};
+	std::function<void()> sfmlDrawSpriteFunctor{};
+	std::function<void()> sfmlDisplayWindowFunctor{};
+	std::function<void(const sf::Uint8*, unsigned int, unsigned int, unsigned int, unsigned int)> sfmlTextureUpdateFunctor{};
+};

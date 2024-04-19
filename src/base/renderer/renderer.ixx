@@ -25,13 +25,16 @@ public:
     void setupRenderer(const PixelResolution& pixResObj, const AspectRatio& aspectRatioObj);
     void renderFrame(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer);
 
-    void setTextureUpdateFunctor(const std::function<void(const sf::Uint8*, unsigned int, unsigned int, unsigned int, unsigned int)>& textureUpdateFunctor) noexcept;
+    void setRendererFunctors(const RendererFunctors& rendererFuncObj) noexcept
+    {
+        m_rendererFunctors = rendererFuncObj;
+    }
 
     CameraProperties getRendererCameraProps() const noexcept;
 
 private:   
     Camera m_mainCamera{};
-    std::function<void(const sf::Uint8*, unsigned int, unsigned int, unsigned int, unsigned int)> m_textureUpdateFunctor{};
+    RendererFunctors m_rendererFunctors{};
     [[nodiscard]] Color computeRayColor(const Ray& inputRay) const;
 };
 

@@ -25,8 +25,11 @@
     <ClCompile Include="src\base\color\color.ixx" />
     <ClCompile Include="src\base\core_constructs\core_constructs.ixx" />
     <ClCompile Include="src\base\core_util.ixx" />
-    <ClCompile Include="src\base\engine\indus.cppm" />
-    <ClCompile Include="src\base\engine\indus.ixx" />
+    <ClCompile Include="src\base\engine\main\indus.cppm" />
+    <ClCompile Include="src\base\engine\main\indus.ixx" />
+    <ClCompile Include="src\base\engine\systems\multithreading\threadpool\task.ixx" />
+    <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.cppm" />
+    <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.ixx" />
     <ClCompile Include="src\base\image\image.cppm" />
     <ClCompile Include="src\base\image\image.ixx" />
     <ClCompile Include="src\base\ray\ray.cppm" />

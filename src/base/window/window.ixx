@@ -13,7 +13,7 @@ public:
     explicit SFMLWindow(const PixelResolution& pixResObj) noexcept : m_windowPixelRes(pixResObj) {}
 
 	void setupWindow();
-    void displayWindow(StatsOverlay& statsOverlayObj, const Timer& timerObj);
+    void displayWindow(StatsOverlay& statsOverlayObj, Timer& timerObj);
 
     SFMLWindowProperties& getSFMLWindowProperties() noexcept;
 

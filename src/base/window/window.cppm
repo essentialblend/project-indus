@@ -12,7 +12,7 @@ void SFMLWindow::setupWindow()
 
 }
 
-void SFMLWindow::displayWindow(StatsOverlay& statsOverlayObj, const Timer& timerObj)
+void SFMLWindow::displayWindow(StatsOverlay& statsOverlayObj, Timer& timerObj)
 {
 	m_windowProps.renderWindowObj.create(sf::VideoMode(static_cast<int>(m_windowPixelRes.widthInPixels * m_windowProps.windowedResScale), static_cast<int>(m_windowPixelRes.heightInPixels * m_windowProps.windowedResScale)), m_windowTitle);
 
@@ -41,10 +41,12 @@ void SFMLWindow::displayWindow(StatsOverlay& statsOverlayObj, const Timer& timer
 			{
 				if (event.key.code == sf::Keyboard::Space)
 				{
+					timerObj.startTimer();
 					m_renderFrameFunctor();
+					timerObj.endTimer();
+					statsOverlayObj.setRenderingStatus(true);
 				}
 			}
-
 		}
 
 		m_windowProps.renderWindowObj.clear();
@@ -52,7 +54,6 @@ void SFMLWindow::displayWindow(StatsOverlay& statsOverlayObj, const Timer& timer
 		statsOverlayObj.showOverlay(m_windowProps.renderWindowObj, m_windowPixelRes, timerObj);
 		m_windowProps.renderWindowObj.display();
 	}
-
 }
 
 SFMLWindowProperties& SFMLWindow::getSFMLWindowProperties() noexcept
