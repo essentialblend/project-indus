@@ -7,6 +7,7 @@ import <queue>;
 import <atomic>;
 import <future>;
 import <mutex>;
+import <memory>;
 
 export class MT_ThreadPool
 {
@@ -17,10 +18,10 @@ public:
 	MT_ThreadPool(const MT_ThreadPool&) = delete;
 	MT_ThreadPool operator=(const MT_ThreadPool&) = delete;
 
-	template<typename F, typename... Args>
-	auto enqueueThreadPoolTask(F&& f, Args&&... args) -> std::future<typename std::invoke_result<F, Args...>::type>;
+    template<typename F>
+    auto enqueueThreadPoolTask(F&& func)->std::future<decltype(func())>;
 
-	void stopThreadPool();
+	[[noreturn]] void stopThreadPool();
 
 private:
 	std::vector<std::jthread> m_workerThreads;
@@ -33,17 +34,21 @@ private:
 	void executeTasks();
 };
 
-template<typename F, typename... Args>
-auto MT_ThreadPool::enqueueThreadPoolTask(F&& f, Args&&... args) -> std::future<typename std::invoke_result<F, Args...>::type> {
-	auto taskToPerform = std::make_shared<std::packaged_task<typename std::invoke_result<F, Args...>::type>>(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
-	auto futureResultFromTask = taskToPerform->get_future();
-	{
-		std::unique_lock<std::mutex> lock(m_queueMutex);
-		if (m_stopFlag) {
-			throw std::runtime_error("enqueue on stopped ThreadPool");
-		}
-		m_tasksQueue.emplace([taskToPerform]() { (*taskToPerform)(); });
-	}
-	m_conditionVar.notify_one();
-	return futureResultFromTask;
+template<typename F>
+auto MT_ThreadPool::enqueueThreadPoolTask(F&& func) -> std::future<decltype(func())> {
+
+    // Wrap the function in a std::packaged_task to tie it to a future.
+    auto taskPtr = std::make_shared<std::packaged_task<decltype(func())()>>(std::forward<F>(func));
+
+    auto futureTaskResult = taskPtr->get_future();
+    {
+        std::scoped_lock lock(m_queueMutex);
+
+        if (m_stopFlag) throw std::runtime_error("enqueue on stopped ThreadPool");
+        m_tasksQueue.emplace([taskPtr]() { (*taskPtr)(); });
+    }
+    m_conditionVar.notify_one();
+    return futureTaskResult;
 }
+
+

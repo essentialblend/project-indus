@@ -7,9 +7,10 @@ import <iostream>;
 int main()
 {
 	PixelResolution windowResolution{ .widthInPixels{1920}, .heightInPixels{1080} };
+	PixelResolution imgRes{ .widthInPixels{3840}, .heightInPixels{2160} };
 	AspectRatio aspectRatio{ .widthInAbsVal{16}, .heightInAbsVal{9} };
 
-	Indus mainInstance(windowResolution, windowResolution, aspectRatio);
+	Indus mainInstance(windowResolution, imgRes, aspectRatio);
 
 	mainInstance.initializeEngine();
 

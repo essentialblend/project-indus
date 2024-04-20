@@ -2,13 +2,17 @@ import renderer;
 
 import <span>;
 import <iostream>;
+import <thread>;
+import <future>;
+import <memory>;
 
 import core_constructs;
 import color;
+import threadpool;
 
 import <SFML/Graphics.hpp>;
 
-Color Renderer::computeRayColor(const Ray& inputRay) const
+Color Renderer::computeRayColor(const Ray& inputRay)
 {
     const Color gradientColor{ 0.5, 0.7, 1.0 };
 
@@ -32,7 +36,7 @@ void Renderer::setupRenderer(const PixelResolution& pixResObj, const AspectRatio
     m_mainCamera.setupCamera();
 }
 
-void Renderer::renderFrame(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer)
+void Renderer::renderFrameSingleCore(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer)
 {
     int numRowsPerTexUpdateBatch{ 20 };
     int currentNumRowsParsed{ 0 };
@@ -82,7 +86,39 @@ void Renderer::renderFrame(const PixelResolution& pixResObj, const PixelDimensio
     }
 }
 
-void Renderer::setRendererFunctors(const RendererFunctors& rendererFuncObj) noexcept
+void Renderer::renderFrameMultiCore(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer)
+{
+    std::vector<sf::Uint8> tempTexUpdateBuffer;
+    const unsigned int numAvailableThreads = std::thread::hardware_concurrency();
+    const unsigned int numThreadsToUse = numAvailableThreads > 1 ? static_cast<int>(numAvailableThreads * 0.5) : 1;
+
+    MT_ThreadPool renderThreadPool(numThreadsToUse);
+
+    for (int eachPixelRow{}; eachPixelRow < pixResObj.heightInPixels; ++eachPixelRow)
+    {
+        renderThreadPool.enqueueThreadPoolTask([this, &pixResObj, &pixDimObj, &camCenter, &primaryPixelBuffer, eachPixelRow]() {
+            this->renderPixelRowThreadPoolTask(pixResObj, pixDimObj, camCenter, primaryPixelBuffer, eachPixelRow);
+            });
+    }
+    renderThreadPool.stopThreadPool();
+}
+
+void Renderer::setRendererFunctors(const RendererSFMLFunctors& rendererFuncObj) noexcept
 {
     m_rendererFunctors = rendererFuncObj;
+}
+
+void Renderer::renderPixelRowThreadPoolTask(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer, int columnPixelForNewRow) const
+{
+    for (int i{}; i < pixResObj.widthInPixels; ++i)
+    {
+        const Point currentPixelCenter{ pixDimObj.pixelCenter + (i * pixDimObj.lateralSpanInAbsVal) + (columnPixelForNewRow * pixDimObj.verticalSpanInAbsVal) };
+        const Ray currentPixelRay{ camCenter, currentPixelCenter - camCenter };
+
+        const Color normCurrPixColor{ computeRayColor(currentPixelRay) };
+
+        const int primaryBufferIndex{ ((columnPixelForNewRow * pixResObj.widthInPixels) + i) };
+
+        primaryPixelBuffer[primaryBufferIndex] = normCurrPixColor;
+    }
 }

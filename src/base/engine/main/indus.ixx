@@ -12,11 +12,7 @@ export class Indus
 public:
 	explicit Indus() noexcept = default;
 	
-	explicit Indus(const PixelResolution& windowPixResObj, const PixelResolution& imagePixResObj, const AspectRatio& aspectRatioObj) noexcept : 
-		m_mainWindow(windowPixResObj), 
-		m_mainRenderImageProps{ 
-			.pixelResolutionObj{imagePixResObj}, 
-			.aspectRatioObj {aspectRatioObj} } {};
+	explicit Indus(const PixelResolution& windowPixResObj, const PixelResolution& imagePixResObj, const AspectRatio& aspectRatioObj) noexcept;
 	
 	void initializeEngine();
 	void runEngine();
@@ -27,6 +23,7 @@ private:
 	StatsOverlay m_statsOverlay{};
 	ImageProperties m_mainRenderImageProps{};
 	std::vector<Color> m_mainRenderFramebuffer{};
+	bool m_isMultithreaded{ true };
 
-	void setGlobalFunctors();
+	void setGlobalCallbackFunctors();
 };

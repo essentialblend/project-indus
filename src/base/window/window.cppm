@@ -1,5 +1,7 @@
 import window;
 
+import <chrono>;
+
 import <SFML/Graphics.hpp>;
 
 void SFMLWindow::setupWindow()
@@ -10,6 +12,46 @@ void SFMLWindow::setupWindow()
 	m_windowProps.spriteObj = sf::Sprite();
 
 
+}
+
+void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, Timer& timerObj)
+{
+	sf::Event event{};
+	while (m_windowProps.renderWindowObj.pollEvent(event))
+	{
+		if (event.type == sf::Event::Closed)
+			m_windowProps.renderWindowObj.close();
+
+		if (event.type == sf::Event::KeyPressed)
+		{
+			if (event.key.code == sf::Keyboard::BackSpace)
+			{
+				statsOverlayObj.setOverlayVisibility(!statsOverlayObj.getOverlayVisibility());
+			}
+		}
+
+		if (event.type == sf::Event::KeyPressed)
+		{
+			if (event.key.code == sf::Keyboard::Space)
+			{
+				timerObj.startTimer();
+
+				m_renderingStatusFuture = std::async(std::launch::async, [&]()
+					{
+						if (m_isMultithreadedFunctor()) [[likely]]
+							{
+								m_renderFrameMultiCoreFunctor();
+							}
+						else [[unlikely]]
+							{
+								m_renderFrameSingleCoreFunctor();
+							}
+						timerObj.endTimer();
+						statsOverlayObj.setRenderingStatus(true);
+					});
+			}
+		}
+	}
 }
 
 void SFMLWindow::displayWindow(StatsOverlay& statsOverlayObj, Timer& timerObj)
@@ -23,37 +65,17 @@ void SFMLWindow::displayWindow(StatsOverlay& statsOverlayObj, Timer& timerObj)
 
 	while (m_windowProps.renderWindowObj.isOpen())
 	{
-		sf::Event event{};
-		while (m_windowProps.renderWindowObj.pollEvent(event))
-		{
-			if (event.type == sf::Event::Closed)
-				m_windowProps.renderWindowObj.close();
-
-			if (event.type == sf::Event::KeyPressed)
-			{
-			    if (event.key.code == sf::Keyboard::BackSpace)
-			    {
-					statsOverlayObj.setOverlayVisibility(!statsOverlayObj.getOverlayVisibility());
-			    }
-			}
-
-			if (event.type == sf::Event::KeyPressed)
-			{
-				if (event.key.code == sf::Keyboard::Space)
-				{
-					timerObj.startTimer();
-					m_renderFrameFunctor();
-					timerObj.endTimer();
-					statsOverlayObj.setRenderingStatus(true);
-				}
-			}
-		}
-
-		m_windowProps.renderWindowObj.clear();
-		m_windowProps.renderWindowObj.draw(m_windowProps.spriteObj);
-		statsOverlayObj.showOverlay(m_windowProps.renderWindowObj, m_windowPixelRes, timerObj);
-		m_windowProps.renderWindowObj.display();
+		processInputEvents(statsOverlayObj, timerObj);
+		drawGUI(statsOverlayObj, timerObj);
 	}
+}
+
+void SFMLWindow::drawGUI(StatsOverlay& statsOverlayObj, Timer& timerObj)
+{
+	m_windowProps.renderWindowObj.clear();
+	m_windowProps.renderWindowObj.draw(m_windowProps.spriteObj);
+	statsOverlayObj.showOverlay(m_windowProps.renderWindowObj, m_windowPixelRes, timerObj);
+	m_windowProps.renderWindowObj.display();
 }
 
 SFMLWindowProperties& SFMLWindow::getSFMLWindowProperties() noexcept

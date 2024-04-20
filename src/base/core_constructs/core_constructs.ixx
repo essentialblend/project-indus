@@ -82,10 +82,16 @@ export struct OverlayProperties
 	}
 };
 
-export struct RendererFunctors
+export struct RendererSFMLFunctors
 {
 	std::function<void()> sfmlClearWindowFunctor{};
 	std::function<void()> sfmlDrawSpriteFunctor{};
 	std::function<void()> sfmlDisplayWindowFunctor{};
 	std::function<void(const sf::Uint8*, unsigned int, unsigned int, unsigned int, unsigned int)> sfmlTextureUpdateFunctor{};
+};
+
+export struct RenderingMode
+{
+	bool isSingleThreaded{ false };
+	bool isMultiThreaded{ true };
 };

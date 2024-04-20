@@ -14,9 +14,9 @@ export class Overlay abstract
 public:
 	explicit Overlay() noexcept = default;
 
-	virtual void setupOverlay() = 0;
+	virtual void setupOverlay(bool isMultithreaded) = 0;
 
-	virtual void setDefaultDisplayedText() = 0;
+	virtual void setDefaultDisplayedText(bool isMultithreaded) = 0;
 	virtual void setSFMLTextProperties() = 0;
 	virtual void setRenderingStatus(bool hasRenderCompleted) noexcept = 0;
 	virtual void setOverlayVisibility(bool shouldDisplayOverlay) noexcept = 0;

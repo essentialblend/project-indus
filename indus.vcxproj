@@ -27,7 +27,6 @@
     <ClCompile Include="src\base\core_util.ixx" />
     <ClCompile Include="src\base\engine\main\indus.cppm" />
     <ClCompile Include="src\base\engine\main\indus.ixx" />
-    <ClCompile Include="src\base\engine\systems\multithreading\threadpool\task.ixx" />
     <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.cppm" />
     <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.ixx" />
     <ClCompile Include="src\base\image\image.cppm" />

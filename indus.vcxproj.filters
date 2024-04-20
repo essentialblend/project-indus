@@ -84,9 +84,6 @@
     <ClCompile Include="src\base\engine\main\indus.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\engine\systems\multithreading\threadpool\task.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>

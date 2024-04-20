@@ -1,5 +1,7 @@
 import camera;
 
+Camera::Camera(const PixelResolution& resObj, const AspectRatio& arObj) noexcept : m_cameraProps{ .camImgPropsObj{.pixelResolutionObj{resObj}, .aspectRatioObj{arObj}} } {}
+
 void Camera::setupCamera()
 {
     const auto& localPixelResProps{ m_cameraProps.camImgPropsObj.pixelResolutionObj };

@@ -1,6 +1,6 @@
 import stats_overlay;
 
-void StatsOverlay::setupOverlay()
+void StatsOverlay::setupOverlay(bool isMultithreaded)
 {
 	if (!m_overlayFont.loadFromFile("src/dep/CourierPrime-Regular.ttf"))
 	{
@@ -10,24 +10,33 @@ void StatsOverlay::setupOverlay()
 
 	setSFMLTextProperties();
 
-	setDefaultDisplayedText();
+	setDefaultDisplayedText(isMultithreaded);
 }
 
-void StatsOverlay::setDefaultDisplayedText()
+void StatsOverlay::setDefaultDisplayedText(bool isMultithreaded)
 {
 	m_overlayProps.titleObj.statTitleObj.setString("indus:");
 	m_overlayProps.titleObj.statResultObj.setString("v0.0.0-alpha");
 	m_overlayProps.modeObj.statTitleObj.setString("Mode: ");
-	m_overlayProps.modeObj.statResultObj.setString("Single-threaded.");
+
+	if(isMultithreaded)
+	{
+		m_overlayProps.modeObj.statResultObj.setString("Multi-threaded.");
+	}
+	else
+	{
+		m_overlayProps.modeObj.statResultObj.setString("Single-threaded.");
+	}
+	
 	m_overlayProps.timeObj.statTitleObj.setString("Time: ");
-	m_overlayProps.timeObj.statResultObj.setString("Calculating.");
-	m_overlayProps.timeObj.statResultObj.setColor(sf::Color::Red);
+	m_overlayProps.timeObj.statResultObj.setString("Awaiting render.");
+	m_overlayProps.timeObj.statResultObj.setColor(sf::Color::Green);
 	m_overlayProps.renderObj.statTitleObj.setString("Status: ");
-	m_overlayProps.renderObj.statResultObj.setString("Rendering.");
-	m_overlayProps.renderObj.statResultObj.setColor(sf::Color::Red);
+	m_overlayProps.renderObj.statResultObj.setString("Idle.");
+	m_overlayProps.renderObj.statResultObj.setColor(sf::Color::Green);
 	m_overlayProps.GUIObj.statTitleObj.setString("GUI Status: ");
-	m_overlayProps.GUIObj.statResultObj.setString("Unresponsive.");
-	m_overlayProps.GUIObj.statResultObj.setColor(sf::Color::Red);
+	m_overlayProps.GUIObj.statResultObj.setString("Responsive.");
+	m_overlayProps.GUIObj.statResultObj.setColor(sf::Color::Green);
 }
 
 void StatsOverlay::setSFMLTextProperties()

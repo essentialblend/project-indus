@@ -7,13 +7,13 @@ export class StatsOverlay : public Overlay
 public:
 	explicit StatsOverlay() noexcept = default;
 
-	virtual void setupOverlay() override;
-	virtual void setDefaultDisplayedText() override;
-	virtual void setSFMLTextProperties() override;
-	virtual void setRenderingStatus(bool hasRenderCompleted) noexcept override;
-	virtual void setOverlayVisibility(bool shouldDisplayOverlay) noexcept override;
+	virtual void setupOverlay(bool isMultithreaded) override;
+	[[noreturn]] virtual void setDefaultDisplayedText(bool isMultithreaded) override;
+	[[noreturn]] virtual void setSFMLTextProperties() override;
+	[[noreturn]] virtual void setRenderingStatus(bool hasRenderCompleted) noexcept override;
+	[[noreturn]] virtual void setOverlayVisibility(bool shouldDisplayOverlay) noexcept override;
 
-	virtual bool getOverlayVisibility() const noexcept override;
+	[[nodiscard]] virtual bool getOverlayVisibility() const noexcept override;
 
 	virtual void showOverlay(sf::RenderWindow& renderWindowObj, const PixelResolution& pixResObj, const Timer& timerObj) override;
 

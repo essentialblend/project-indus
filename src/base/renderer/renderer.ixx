@@ -23,19 +23,34 @@ public:
 	explicit Renderer() noexcept = default;
     
     void setupRenderer(const PixelResolution& pixResObj, const AspectRatio& aspectRatioObj);
-    void renderFrame(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer);
+    void renderFrameSingleCore(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer);
+    void renderFrameMultiCore(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer);
 
-    void setRendererFunctors(const RendererFunctors& rendererFuncObj) noexcept
+    void setRendererFunctors(const RendererSFMLFunctors& rendererFuncObj) noexcept
     {
         m_rendererFunctors = rendererFuncObj;
     }
 
-    CameraProperties getRendererCameraProps() const noexcept;
+    void setThreadingMode(bool isMultithreaded) noexcept
+    {
+        m_isMultithreaded = isMultithreaded;
+    }
+
+    [[nodiscard]] bool getThreadingMode() const noexcept
+    {
+        return m_isMultithreaded;
+    }
+    
+    [[nodiscard]] CameraProperties getRendererCameraProps() const noexcept;
+
+    
 
 private:   
     Camera m_mainCamera{};
-    RendererFunctors m_rendererFunctors{};
-    [[nodiscard]] Color computeRayColor(const Ray& inputRay) const;
+    RendererSFMLFunctors m_rendererFunctors{};
+    bool m_isMultithreaded{ true };
+    [[nodiscard]] static Color computeRayColor(const Ray& inputRay);
+    void renderPixelRowThreadPoolTask(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer, int columnPixelForNewRow) const;
 };
 
 
