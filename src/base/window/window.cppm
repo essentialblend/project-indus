@@ -9,9 +9,10 @@ import <SFML/Graphics.hpp>;
 
 void SFMLWindow::setupWindow()
 {
-	m_windowProps.viewObj = sf::View(sf::FloatRect(0, 0, static_cast<float>(m_windowPixelRes.widthInPixels), static_cast<float>(m_windowPixelRes.heightInPixels)));
+	const auto test = m_windowFunctors.getRendererCameraPropsFunctor();
+	m_windowProps.viewObj = sf::View(sf::FloatRect(0, 0, static_cast<float>(test.camImgPropsObj.pixelResolutionObj.widthInPixels), static_cast<float>(test.camImgPropsObj.pixelResolutionObj.heightInPixels)));
 
-	m_windowProps.texObj.create(m_windowPixelRes.widthInPixels, m_windowPixelRes.heightInPixels);
+	m_windowProps.texObj.create(test.camImgPropsObj.pixelResolutionObj.widthInPixels, test.camImgPropsObj.pixelResolutionObj.heightInPixels);
 	m_windowProps.spriteObj = sf::Sprite();
 }
 

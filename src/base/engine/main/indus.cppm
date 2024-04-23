@@ -13,13 +13,13 @@ Indus::Indus(const PixelResolution& windowPixResObj, const PixelResolution& imag
 
 void Indus::initializeEngine()
 {
-	m_mainWindow.setupWindow();
 	m_statsOverlay.setupOverlay(m_isMultithreaded);
 	m_mainRenderer.setupRenderer(m_mainRenderImageProps.pixelResolutionObj, m_mainRenderImageProps.aspectRatioObj);
 	m_mainRenderFramebuffer.resize(static_cast<long long>(m_mainRenderer.getRendererCameraProps().camImgPropsObj.pixelResolutionObj.widthInPixels * m_mainRenderer.getRendererCameraProps().camImgPropsObj.pixelResolutionObj.heightInPixels));
 	m_mainRenderer.setThreadingMode(m_isMultithreaded);
 
 	setGlobalCallbackFunctors();
+	m_mainWindow.setupWindow();
 }
 
 void Indus::setGlobalCallbackFunctors()
