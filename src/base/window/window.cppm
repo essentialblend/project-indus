@@ -84,17 +84,22 @@ void SFMLWindow::checkForUpdates()
 		std::vector<sf::Uint8> localTexChunkSFMLBuffer;
 
 		const auto localRendererCamPixResObj{ m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj };
-		
 		const auto& localUpdateCounters = m_windowFunctors.getTextureUpdateCounterFunctor();
-		const auto& updateRate = localUpdateCounters.second;
-		
-		const auto singleChunkPixels{ localRendererCamPixResObj.widthInPixels * updateRate };
+		const int originalUpdateRate = localUpdateCounters.second;
+		int updateRate = originalUpdateRate;
+		auto singleChunkPixels{ localRendererCamPixResObj.widthInPixels * updateRate };
 
-		localTexChunkSFMLBuffer.reserve(static_cast<long long>(singleChunkPixels * 4));
-		
 		const auto itBegin{ localMainFramebuffer.begin() + static_cast<long long>(singleChunkPixels * m_texUpdateChunkTracker) };
-		const auto itEnd{ itBegin + singleChunkPixels >= localMainFramebuffer.end() ? localMainFramebuffer.end() : itBegin + singleChunkPixels };
+		auto itEnd{ itBegin };
+		const auto remainingPixels = std::distance(itEnd, localMainFramebuffer.end());
+		if (remainingPixels < singleChunkPixels)
+		{
+			singleChunkPixels = remainingPixels;
+			updateRate = remainingPixels / localRendererCamPixResObj.widthInPixels;
+		}
 
+		itEnd += singleChunkPixels;
+		localTexChunkSFMLBuffer.reserve(static_cast<long long>(singleChunkPixels * 4));
 		std::for_each(itBegin, itEnd, [&](const Color& color)
 		{
 			localTexChunkSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getX()));
@@ -103,7 +108,7 @@ void SFMLWindow::checkForUpdates()
 			localTexChunkSFMLBuffer.push_back(255);
 		});
 
-		m_windowProps.texObj.update(localTexChunkSFMLBuffer.data(), localRendererCamPixResObj.widthInPixels, updateRate, 0, m_texUpdateChunkTracker * updateRate);
+		m_windowProps.texObj.update(localTexChunkSFMLBuffer.data(), localRendererCamPixResObj.widthInPixels, updateRate , 0, originalUpdateRate * m_texUpdateChunkTracker);
 
 		if (itEnd == localMainFramebuffer.end())
 		{

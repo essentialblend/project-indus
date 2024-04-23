@@ -141,31 +141,25 @@ bool Renderer::checkForDrawUpdate()
 {
     auto shouldStart = m_texUpdateLatch->try_wait();
     if (!shouldStart) return false;
-    else
-    {
-        const auto itBegin{ m_texUpdateFutureVec.begin() + m_currChunkForTexUpdate };
-        auto itEnd{ itBegin + m_texUpdateRate };
-        if (itEnd >= m_texUpdateFutureVec.end()) itEnd = m_texUpdateFutureVec.end();
-        const bool hasChunkCompleted = std::all_of(itBegin, itEnd, [](const std::future<void>& fut) {
-			return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-		});
 
-        if (hasChunkCompleted)
-        {
-            if (itEnd == m_texUpdateFutureVec.end())
-            {
-                m_currChunkForTexUpdate = 0;
-                m_renderThreadPool.stopThreadPool();
-                return (!hasChunkCompleted);
-            }
-            else
-            {
-                m_currChunkForTexUpdate += m_texUpdateRate;
-                return hasChunkCompleted;
-            }
-        }
-        else return false;
-	}
+    const auto itBegin{ m_texUpdateFutureVec.begin() + m_currChunkForTexUpdate };
+    auto itEnd{ itBegin };
+    const auto remainingDistance = std::distance(itBegin, m_texUpdateFutureVec.end());
+    remainingDistance < m_texUpdateRate ? 
+        itEnd = m_texUpdateFutureVec.end() : 
+        itEnd = itBegin + m_texUpdateRate;
+
+    const bool hasChunkCompleted = std::all_of(itBegin, itEnd, [](const std::future<void>& fut) {
+    return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+    });
+
+    if (!hasChunkCompleted) return false;
+
+    itEnd == m_texUpdateFutureVec.end() ? m_currChunkForTexUpdate = 0 : m_currChunkForTexUpdate += m_texUpdateRate;
+
+    if (itEnd == m_texUpdateFutureVec.end()) m_renderThreadPool.stopThreadPool();
+
+    return true;
 }
 
 std::pair<int, int> Renderer::getTextureUpdateCounters() const

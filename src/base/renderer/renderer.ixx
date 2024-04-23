@@ -35,7 +35,7 @@ public:
     void setThreadingMode(bool isMultithreaded) noexcept;
 
     [[nodiscard]] bool getThreadingMode() const noexcept;
-    std::pair<int, int> getTextureUpdateCounters() const;
+    [[nodiscard]] std::pair<int, int> getTextureUpdateCounters() const;
     [[nodiscard]] CameraProperties getRendererCameraProps() const noexcept;
 
     bool checkForDrawUpdate();
@@ -49,7 +49,7 @@ private:
     std::vector<std::future<void>> m_texUpdateFutureVec{};
     std::unique_ptr<std::latch> m_texUpdateLatch{};
     int m_currChunkForTexUpdate{ 0 };
-    int m_texUpdateRate{ 10 };
+    int m_texUpdateRate{ 1 };
 
     [[nodiscard]] static Color computeRayColor(const Ray& inputRay);
     void renderPixelRowThreadPoolTask(int currentColumnCount, std::vector<Color>& primaryPixelBuffer);

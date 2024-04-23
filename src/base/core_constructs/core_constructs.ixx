@@ -58,7 +58,7 @@ export struct SFMLWindowProperties
 	sf::View viewObj{};
 	sf::Texture texObj{};
 	sf::Sprite spriteObj{};
-	unsigned int prefFPSInIntegral{ 30 };
+	unsigned int prefFPSInIntegral{ 60 };
 	float windowedResScale{ 0.5 };
 };
 
