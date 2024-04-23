@@ -1,6 +1,9 @@
 import window;
 
 import <chrono>;
+import <algorithm>;
+import <execution>;
+import <iostream>;
 
 import <SFML/Graphics.hpp>;
 
@@ -10,8 +13,6 @@ void SFMLWindow::setupWindow()
 
 	m_windowProps.texObj.create(m_windowPixelRes.widthInPixels, m_windowPixelRes.heightInPixels);
 	m_windowProps.spriteObj = sf::Sprite();
-
-
 }
 
 void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, Timer& timerObj)
@@ -30,25 +31,34 @@ void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, Timer& timerO
 			}
 		}
 
-		if (event.type == sf::Event::KeyPressed)
+		if (event.type == sf::Event::KeyReleased)
 		{
 			if (event.key.code == sf::Keyboard::Space)
 			{
 				timerObj.startTimer();
+				m_isRendering = true;
 
-				m_renderingStatusFuture = std::async(std::launch::async, [&]()
+				if (m_windowFunctors.isMultithreadedFunctor()) [[likely]]
+				{
+					m_renderingStatusFuture = std::async(std::launch::async, [&]()
 					{
-						if (m_isMultithreadedFunctor()) [[likely]]
-							{
-								m_renderFrameMultiCoreFunctor();
-							}
-						else [[unlikely]]
-							{
-								m_renderFrameSingleCoreFunctor();
-							}
+						m_needsDrawUpdate = true;
+						m_windowFunctors.renderFrameMultiCoreFunctor();
+						/*m_isRendering = false;
+
 						timerObj.endTimer();
-						statsOverlayObj.setRenderingStatus(true);
+						statsOverlayObj.setRenderingCompleteStatus(true);*/
 					});
+				}
+				else
+				{
+					m_needsDrawUpdate = true;
+					m_windowFunctors.renderFrameSingleCoreFunctor();
+					m_isRendering = false;
+
+					timerObj.endTimer();
+					statsOverlayObj.setRenderingCompleteStatus(true);
+				}
 			}
 		}
 	}
@@ -56,18 +66,65 @@ void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, Timer& timerO
 
 void SFMLWindow::displayWindow(StatsOverlay& statsOverlayObj, Timer& timerObj)
 {
-	m_windowProps.renderWindowObj.create(sf::VideoMode(static_cast<int>(m_windowPixelRes.widthInPixels * m_windowProps.windowedResScale), static_cast<int>(m_windowPixelRes.heightInPixels * m_windowProps.windowedResScale)), m_windowTitle);
+	setupWindowSFMLParams();
+
+	while (m_windowProps.renderWindowObj.isOpen())
+	{
+		processInputEvents(statsOverlayObj, timerObj);
+   		checkForUpdates();
+		drawGUI(statsOverlayObj, timerObj);
+	}
+}
+
+void SFMLWindow::checkForUpdates()
+{
+	if (m_needsDrawUpdate && m_windowFunctors.isTextureReadyForUpdateFunctor())
+	{
+		const auto& localMainFramebuffer = m_windowFunctors.getMainEngineFramebufferFunctor();
+		std::vector<sf::Uint8> localTexChunkSFMLBuffer;
+
+		const auto localRendererCamPixResObj{ m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj };
+		
+		const auto& localUpdateCounters = m_windowFunctors.getTextureUpdateCounterFunctor();
+		const auto& updateRate = localUpdateCounters.second;
+		
+		const auto singleChunkPixels{ localRendererCamPixResObj.widthInPixels * updateRate };
+
+		localTexChunkSFMLBuffer.reserve(static_cast<long long>(singleChunkPixels * 4));
+		
+		const auto itBegin{ localMainFramebuffer.begin() + static_cast<long long>(singleChunkPixels * m_texUpdateChunkTracker) };
+		const auto itEnd{ itBegin + singleChunkPixels >= localMainFramebuffer.end() ? localMainFramebuffer.end() : itBegin + singleChunkPixels };
+
+		std::for_each(itBegin, itEnd, [&](const Color& color)
+		{
+			localTexChunkSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getX()));
+			localTexChunkSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getY()));
+			localTexChunkSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getZ()));
+			localTexChunkSFMLBuffer.push_back(255);
+		});
+
+		m_windowProps.texObj.update(localTexChunkSFMLBuffer.data(), localRendererCamPixResObj.widthInPixels, updateRate, 0, m_texUpdateChunkTracker * updateRate);
+
+		if (itEnd == localMainFramebuffer.end())
+		{
+			m_needsDrawUpdate = false;
+			m_texUpdateChunkTracker = 0;
+		}
+		else
+		{
+			++m_texUpdateChunkTracker;
+		}
+	}
+}
+
+void SFMLWindow::setupWindowSFMLParams()
+{
+	m_windowProps.renderWindowObj.create(sf::VideoMode(static_cast<int>(m_windowPixelRes.widthInPixels * 0.5), static_cast<int>(m_windowPixelRes.heightInPixels * 0.5)) , m_windowTitle);
 
 	m_windowProps.renderWindowObj.setView(m_windowProps.viewObj);
 	m_windowProps.renderWindowObj.setFramerateLimit(m_windowProps.prefFPSInIntegral);
 	m_windowProps.texObj.create(m_windowPixelRes.widthInPixels, m_windowPixelRes.heightInPixels);
 	m_windowProps.spriteObj.setTexture(m_windowProps.texObj);
-
-	while (m_windowProps.renderWindowObj.isOpen())
-	{
-		processInputEvents(statsOverlayObj, timerObj);
-		drawGUI(statsOverlayObj, timerObj);
-	}
 }
 
 void SFMLWindow::drawGUI(StatsOverlay& statsOverlayObj, Timer& timerObj)
@@ -81,4 +138,44 @@ void SFMLWindow::drawGUI(StatsOverlay& statsOverlayObj, Timer& timerObj)
 SFMLWindowProperties& SFMLWindow::getSFMLWindowProperties() noexcept
 {
 	return m_windowProps;
+}
+
+[[noreturn]] void SFMLWindow::setResolution(const PixelResolution& windowPixResObj) noexcept
+{
+	m_windowPixelRes = windowPixResObj;
+}
+
+void SFMLWindow::setRenderFrameSingleCoreFunctor(const std::function<void()>& singleCoreFunctor) noexcept
+{
+	m_windowFunctors.renderFrameSingleCoreFunctor = singleCoreFunctor;
+}
+
+void SFMLWindow::setRenderFrameMultiCoreFunctor(const std::function<void()>& multiCoreFunctor) noexcept
+{
+	m_windowFunctors.renderFrameMultiCoreFunctor = multiCoreFunctor;
+}
+
+void SFMLWindow::setMultithreadedCheckFunctor(const std::function<bool()>& isMultithreadedCheckFunctor) noexcept
+{
+	m_windowFunctors.isMultithreadedFunctor = isMultithreadedCheckFunctor;
+}
+
+void SFMLWindow::setTextureUpdateCheckFunctor(const std::function<bool()>& texUpdateCheckFunctor) noexcept
+{
+	m_windowFunctors.isTextureReadyForUpdateFunctor = texUpdateCheckFunctor;
+}
+
+void SFMLWindow::setMainEngineFramebufferGetFunctor(const std::function<std::vector<Color>()>& mainEngineFramebufferGetFunctor) noexcept
+{
+	m_windowFunctors.getMainEngineFramebufferFunctor = mainEngineFramebufferGetFunctor;
+}
+
+void SFMLWindow::setTextureCounterGetterFunctor(const std::function<std::pair<int, int>()>& texUpdateCounterGetter) noexcept
+{
+	m_windowFunctors.getTextureUpdateCounterFunctor = texUpdateCounterGetter;
+}
+
+void SFMLWindow::setMainRendererCameraPropsGetFunctor(const std::function<CameraProperties()>& mainRendererCameraPropsGetFunctor)
+{
+	m_windowFunctors.getRendererCameraPropsFunctor = mainRendererCameraPropsGetFunctor;
 }

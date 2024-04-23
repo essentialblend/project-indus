@@ -9,7 +9,7 @@ public:
 	explicit Color(double x) noexcept;
 	explicit Color(double r, double g, double b) noexcept;
 
-	[[nodiscard]] Color convertNormToIntegral() const;
+	[[nodiscard]] Color convertFromNormalized() const;
 	[[nodiscard]] const Vec3 getBaseVec() const noexcept;
 
 private:

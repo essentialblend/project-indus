@@ -24,29 +24,22 @@ void Indus::initializeEngine()
 
 void Indus::setGlobalCallbackFunctors()
 {
-	// Window functors.
-	const std::function<bool()> multithreadingCheckFunctor = [&]() { return m_mainRenderer.getThreadingMode(); };
+	setWindowFunctors();
+	setRendererFunctors();
+}
 
-	const std::function<void()> renderSingleCoreFrameFunctor = [&]()
-		{
-			auto localProps = m_mainRenderer.getRendererCameraProps();
-			m_mainRenderer.renderFrameSingleCore(localProps.camImgPropsObj.pixelResolutionObj, localProps.camPixelDimObj, localProps.camCenter, m_mainRenderFramebuffer);
-		};
+void Indus::runEngine()
+{
+	// Run window.
+	Timer t;
+	m_mainWindow.displayWindow(m_statsOverlay, t);
+}
 
-	const std::function<void()> renderMultiCoreFrameFunctor = [&]()
-		{
-			auto localProps = m_mainRenderer.getRendererCameraProps();
-			m_mainRenderer.renderFrameMultiCore(localProps.camImgPropsObj.pixelResolutionObj, localProps.camPixelDimObj, localProps.camCenter, m_mainRenderFramebuffer);
-		};
-	
-	m_mainWindow.setMultithreadedCheckFunctor(multithreadingCheckFunctor);
-	m_mainWindow.setRenderFrameSingleCoreFunctor(renderSingleCoreFrameFunctor);
-	m_mainWindow.setRenderFrameMultiCoreFunctor(renderMultiCoreFrameFunctor);
-
-	// Renderer functors
+void Indus::setRendererFunctors()
+{
 	RendererSFMLFunctors localCopy{};
 	auto& mainDisplayTexObj{ m_mainWindow.getSFMLWindowProperties().texObj };
-	
+
 	localCopy.sfmlTextureUpdateFunctor = [&mainDisplayTexObj](const sf::Uint8* pixelData, unsigned int widthRegionInPixels, unsigned int heightRegionInPixels, unsigned int xCoord, unsigned int yCoord)
 		{
 			mainDisplayTexObj.update(pixelData, widthRegionInPixels, heightRegionInPixels, xCoord, yCoord);
@@ -59,12 +52,55 @@ void Indus::setGlobalCallbackFunctors()
 			m_mainWindow.getSFMLWindowProperties().renderWindowObj.draw(tempSprite);
 		};
 
-	m_mainRenderer.setRendererFunctors(localCopy);
+	m_mainRenderer.setRendererSFMLFunctors(localCopy);
 }
 
-void Indus::runEngine()
+void Indus::setWindowFunctors()
 {
-	// Run window.
-	Timer t;
-	m_mainWindow.displayWindow(m_statsOverlay, t);
+	const std::function<bool()> multithreadingCheckFunctor = [&]() { return m_mainRenderer.getThreadingMode(); };
+
+	const std::function<void()> renderSingleCoreFrameFunctor = [&]()
+		{
+			auto localProps = m_mainRenderer.getRendererCameraProps();
+			m_mainRenderer.renderFrameSingleCore(localProps.camImgPropsObj.pixelResolutionObj, localProps.camPixelDimObj, localProps.camCenter, m_mainRenderFramebuffer);
+		};
+
+	const std::function<void()> renderMultiCoreFrameFunctor = [&]()
+		{
+			m_mainRenderer.renderFrameMultiCore(m_mainRenderFramebuffer);
+		};
+
+	const std::function<bool()> texUpdateCheckFunctor = [&]()
+		{
+			return m_mainRenderer.checkForDrawUpdate();
+		};
+
+	const std::function<std::vector<Color>()> mainRenderFramebufferGetter = [&]()
+		{
+			return m_mainRenderFramebuffer;
+		};
+
+	const std::function<std::pair<int, int>()> texUpdateCounterGetter = [&]()
+		{
+			return m_mainRenderer.getTextureUpdateCounters();
+		};
+	const std::function<CameraProperties()> mainRendererCamPropsGetter = [&]()
+		{
+			return m_mainRenderer.getRendererCameraProps();
+		};
+
+
+	m_mainWindow.setMainEngineFramebufferGetFunctor(mainRenderFramebufferGetter);
+	m_mainWindow.setTextureUpdateCheckFunctor(texUpdateCheckFunctor);
+	m_mainWindow.setMultithreadedCheckFunctor(multithreadingCheckFunctor);
+	m_mainWindow.setRenderFrameSingleCoreFunctor(renderSingleCoreFrameFunctor);
+	m_mainWindow.setRenderFrameMultiCoreFunctor(renderMultiCoreFrameFunctor);
+	m_mainWindow.setTextureCounterGetterFunctor(texUpdateCounterGetter);
+	m_mainWindow.setMainRendererCameraPropsGetFunctor(mainRendererCamPropsGetter);
 }
+
+std::vector<Color> Indus::getMainRenderFramebuffer() const noexcept
+{
+	return m_mainRenderFramebuffer;
+}
+

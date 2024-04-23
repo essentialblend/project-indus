@@ -9,7 +9,7 @@ const Vec3 Color::getBaseVec() const noexcept
 	return m_colorVec;
 }
 
-Color Color::convertNormToIntegral() const
+Color Color::convertFromNormalized() const
 {
-	return Color(static_cast<std::uint8_t>(255.999 * m_colorVec[0]), static_cast<std::uint8_t>(255.999 * m_colorVec[1]), static_cast<std::uint8_t>(255.999 * m_colorVec[2]));
+	return Color((255.999 * m_colorVec[0]), (255.999 * m_colorVec[1]), (255.999 * m_colorVec[2]));
 }

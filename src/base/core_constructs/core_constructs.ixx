@@ -90,8 +90,24 @@ export struct RendererSFMLFunctors
 	std::function<void(const sf::Uint8*, unsigned int, unsigned int, unsigned int, unsigned int)> sfmlTextureUpdateFunctor{};
 };
 
+export struct RendererFunctors
+{
+
+};
+
 export struct RenderingMode
 {
 	bool isSingleThreaded{ false };
 	bool isMultiThreaded{ true };
+};
+
+export struct WindowFunctors
+{
+	std::function<void()> renderFrameSingleCoreFunctor{};
+	std::function<void()> renderFrameMultiCoreFunctor{};
+	std::function<bool()> isMultithreadedFunctor{};
+	std::function<bool()> isTextureReadyForUpdateFunctor{};
+	std::function<std::vector<Color>()> getMainEngineFramebufferFunctor{};
+	std::function<std::pair<int, int>()> getTextureUpdateCounterFunctor{};
+	std::function<CameraProperties()> getRendererCameraPropsFunctor{};
 };

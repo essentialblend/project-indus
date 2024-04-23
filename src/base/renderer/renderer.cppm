@@ -5,6 +5,9 @@ import <iostream>;
 import <thread>;
 import <future>;
 import <memory>;
+import <algorithm>;
+import <execution>;
+import <print>;
 
 import core_constructs;
 import color;
@@ -34,6 +37,10 @@ void Renderer::setupRenderer(const PixelResolution& pixResObj, const AspectRatio
 {
     m_mainCamera = Camera{ pixResObj, aspectRatioObj };
     m_mainCamera.setupCamera();
+
+    m_texUpdateFutureVec.reserve(m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels);
+    m_texUpdateLatch = std::make_unique<std::latch>(m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels);
+
 }
 
 void Renderer::renderFrameSingleCore(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer)
@@ -86,39 +93,82 @@ void Renderer::renderFrameSingleCore(const PixelResolution& pixResObj, const Pix
     }
 }
 
-void Renderer::renderFrameMultiCore(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer)
+void Renderer::renderFrameMultiCore(std::vector<Color>& mainFramebuffer)
 {
-    std::vector<sf::Uint8> tempTexUpdateBuffer;
-    const unsigned int numAvailableThreads = std::thread::hardware_concurrency();
-    const unsigned int numThreadsToUse = numAvailableThreads > 1 ? static_cast<int>(numAvailableThreads * 0.5) : 1;
+    m_renderThreadPool.initiateThreadPool();
 
-    MT_ThreadPool renderThreadPool(numThreadsToUse);
-
-    for (int eachPixelRow{}; eachPixelRow < pixResObj.heightInPixels; ++eachPixelRow)
+    for (int eachPixelRow{}; eachPixelRow < m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels; ++eachPixelRow)
     {
-        renderThreadPool.enqueueThreadPoolTask([this, &pixResObj, &pixDimObj, &camCenter, &primaryPixelBuffer, eachPixelRow]() {
-            this->renderPixelRowThreadPoolTask(pixResObj, pixDimObj, camCenter, primaryPixelBuffer, eachPixelRow);
-            });
+        m_texUpdateFutureVec.push_back(m_renderThreadPool.enqueueThreadPoolTask([this, eachPixelRow, &mainFramebuffer]() {
+            this->renderPixelRowThreadPoolTask(eachPixelRow, mainFramebuffer);
+        }));    
     }
-    renderThreadPool.stopThreadPool();
-}
+ }
 
-void Renderer::setRendererFunctors(const RendererSFMLFunctors& rendererFuncObj) noexcept
+void Renderer::setRendererSFMLFunctors(const RendererSFMLFunctors& rendererFuncObj) noexcept
 {
     m_rendererFunctors = rendererFuncObj;
 }
 
-void Renderer::renderPixelRowThreadPoolTask(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer, int columnPixelForNewRow) const
+void Renderer::renderPixelRowThreadPoolTask(int currentRowCount, std::vector<Color>& mainFramebuffer)
 {
-    for (int i{}; i < pixResObj.widthInPixels; ++i)
+    const auto localCamProps{ m_mainCamera.getCameraProperties() };
+    const auto localPixResObj{ m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj };
+    const auto localPixDimObj{ m_mainCamera.getCameraProperties().camPixelDimObj };
+    m_texUpdateLatch->count_down();
+    for (int i{}; i < localPixResObj.widthInPixels; ++i)
     {
-        const Point currentPixelCenter{ pixDimObj.pixelCenter + (i * pixDimObj.lateralSpanInAbsVal) + (columnPixelForNewRow * pixDimObj.verticalSpanInAbsVal) };
-        const Ray currentPixelRay{ camCenter, currentPixelCenter - camCenter };
-
+        const Point currentPixelCenter{ m_mainCamera.getCameraProperties().camPixelDimObj.pixelCenter + (i * localPixDimObj.lateralSpanInAbsVal) + (currentRowCount * localPixDimObj.verticalSpanInAbsVal)};
+        const Ray currentPixelRay{ localCamProps.camCenter, currentPixelCenter - localCamProps.camCenter };
         const Color normCurrPixColor{ computeRayColor(currentPixelRay) };
-
-        const int primaryBufferIndex{ ((columnPixelForNewRow * pixResObj.widthInPixels) + i) };
-
-        primaryPixelBuffer[primaryBufferIndex] = normCurrPixColor;
+        const int index { ((currentRowCount * localPixResObj.widthInPixels) + i) };
+        mainFramebuffer[index] = normCurrPixColor;
     }
+    
+}
+
+void Renderer::setThreadingMode(bool isMultithreaded) noexcept
+{
+    m_isMultithreaded = isMultithreaded;
+}
+
+bool Renderer::getThreadingMode() const noexcept
+{
+    return m_isMultithreaded;
+}
+
+bool Renderer::checkForDrawUpdate()
+{
+    auto shouldStart = m_texUpdateLatch->try_wait();
+    if (!shouldStart) return false;
+    else
+    {
+        const auto itBegin{ m_texUpdateFutureVec.begin() + m_currChunkForTexUpdate };
+        auto itEnd{ itBegin + m_texUpdateRate };
+        if (itEnd >= m_texUpdateFutureVec.end()) itEnd = m_texUpdateFutureVec.end();
+        const bool hasChunkCompleted = std::all_of(itBegin, itEnd, [](const std::future<void>& fut) {
+			return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+		});
+
+        if (hasChunkCompleted)
+        {
+            if (itEnd == m_texUpdateFutureVec.end())
+            {
+                m_currChunkForTexUpdate = 0;
+                m_renderThreadPool.stopThreadPool();
+                return (!hasChunkCompleted);
+            }
+            else
+            {
+                m_currChunkForTexUpdate += m_texUpdateRate;
+                return hasChunkCompleted;
+            }
+        }
+        else return false;
+	}
+}
+
+std::pair<int, int> Renderer::getTextureUpdateCounters() const
+{
+    return std::pair<int, int>(m_currChunkForTexUpdate - m_texUpdateRate, m_texUpdateRate);
 }

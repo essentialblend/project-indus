@@ -13,11 +13,10 @@ export class MT_ThreadPool
 {
 public:
 	explicit MT_ThreadPool() noexcept = default;
-	explicit MT_ThreadPool(std::size_t numThreads) noexcept;
-
 	MT_ThreadPool(const MT_ThreadPool&) = delete;
 	MT_ThreadPool operator=(const MT_ThreadPool&) = delete;
 
+    void initiateThreadPool();
     template<typename F>
     auto enqueueThreadPoolTask(F&& func)->std::future<decltype(func())>;
 
@@ -29,7 +28,7 @@ private:
 
 	std::mutex m_queueMutex{};
 	std::condition_variable m_conditionVar{};
-	bool m_stopFlag{};
+    bool m_stopFlag{ false };
 
 	void executeTasks();
 };

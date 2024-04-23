@@ -1,8 +1,11 @@
 export module indus;
 
+import <vector>;
+
 import core_constructs;
 import vec3;
 import renderer;
+import color;
 import camera;
 import overlay;
 import window;
@@ -16,6 +19,11 @@ public:
 	
 	void initializeEngine();
 	void runEngine();
+
+	void setRendererFunctors();
+	void setWindowFunctors();
+
+	[[nodiscard]] std::vector<Color> getMainRenderFramebuffer() const noexcept;
 
 private:
 	SFMLWindow m_mainWindow{};

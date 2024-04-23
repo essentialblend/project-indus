@@ -117,7 +117,7 @@ void StatsOverlay::showOverlay(sf::RenderWindow& renderWindowObj, const PixelRes
 	}
 }
 
-void StatsOverlay::setRenderingStatus(bool hasRenderCompleted) noexcept
+void StatsOverlay::setRenderingCompleteStatus(bool hasRenderCompleted) noexcept
 {
 	m_hasRenderCompleted = hasRenderCompleted;
 }

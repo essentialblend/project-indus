@@ -9,9 +9,12 @@ import <atomic>;
 import <future>;
 import <mutex>;
 
-MT_ThreadPool::MT_ThreadPool(std::size_t numThreads) noexcept : m_stopFlag{false}
+void MT_ThreadPool::initiateThreadPool()
 {
-	for (std::size_t i{}; i < numThreads; ++i)
+	const unsigned int numAvailableThreads = std::thread::hardware_concurrency();
+	const unsigned int numThreadsToUse = numAvailableThreads > 1 ? static_cast<int>(numAvailableThreads * 0.5) : 1;
+
+	for (std::size_t i{}; i < numThreadsToUse; ++i)
 	{
 		m_workerThreads.emplace_back(&MT_ThreadPool::executeTasks, this);
 	}

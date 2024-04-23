@@ -9,7 +9,7 @@ void PNGImage::createImage()
 {
 	for (auto& color : m_baseBuffer)
 	{
-		Color converted{ color.convertNormToIntegral() }; // Works
+		Color converted{ color.convertFromNormalized() }; // Works
 		
 		m_finalBuffer.push_back(static_cast<std::uint8_t>(converted.getBaseVec()[0]));
 		m_finalBuffer.push_back(static_cast<std::uint8_t>(converted.getBaseVec()[1]));

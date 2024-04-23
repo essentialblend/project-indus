@@ -10,7 +10,7 @@ public:
 	virtual void setupOverlay(bool isMultithreaded) override;
 	[[noreturn]] virtual void setDefaultDisplayedText(bool isMultithreaded) override;
 	[[noreturn]] virtual void setSFMLTextProperties() override;
-	[[noreturn]] virtual void setRenderingStatus(bool hasRenderCompleted) noexcept override;
+	[[noreturn]] virtual void setRenderingCompleteStatus(bool hasRenderCompleted) noexcept override;
 	[[noreturn]] virtual void setOverlayVisibility(bool shouldDisplayOverlay) noexcept override;
 
 	[[nodiscard]] virtual bool getOverlayVisibility() const noexcept override;
