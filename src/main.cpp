@@ -9,11 +9,11 @@ import <latch>;
 
 int main()
 {
-	PixelResolution windowResolution{ .widthInPixels{1920}, .heightInPixels{1080} };
-	PixelResolution imgRes{ .widthInPixels{640}, .heightInPixels{360} };
-	AspectRatio aspectRatio{ .widthInAbsVal{16}, .heightInAbsVal{9} };
+	PixelResolution windowResObj{ .widthInPixels{1920}, .heightInPixels{1080} };
+	PixelResolution imgResObj{ .widthInPixels{1920}, .heightInPixels{1080} };
+	AspectRatio aspectRatioObj{ .widthInAbsVal{16}, .heightInAbsVal{9} };
 
-	Indus mainInstance(windowResolution, imgRes, aspectRatio);
+	Indus mainInstance(windowResObj, imgResObj, aspectRatioObj);
 
 	mainInstance.initializeEngine();
 

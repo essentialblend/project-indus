@@ -5,6 +5,7 @@ import vec3;
 import <vector>;
 
 import<functional>;
+import<Pdh.h>;
 
 import <SFML/Graphics.hpp>;
 
@@ -75,10 +76,11 @@ export struct OverlayProperties
 	OverlayStatistic renderObj{};
 	OverlayStatistic timeObj{};
 	OverlayStatistic GUIObj{};
+	OverlayStatistic cpuUsageObj{};
 
 	std::vector<std::reference_wrapper<OverlayStatistic>> getStatsCollection()
 	{
-		return { std::ref(titleObj), std::ref(modeObj), std::ref(renderObj), std::ref(timeObj), std::ref(GUIObj) };
+		return { std::ref(titleObj), std::ref(modeObj), std::ref(renderObj), std::ref(timeObj), std::ref(GUIObj), std::ref(cpuUsageObj) };
 	}
 };
 
@@ -110,4 +112,11 @@ export struct WindowFunctors
 	std::function<std::vector<Color>()> getMainEngineFramebufferFunctor{};
 	std::function<std::pair<int, int>()> getTextureUpdateCounterFunctor{};
 	std::function<CameraProperties()> getRendererCameraPropsFunctor{};
+};
+
+export struct PDHVariables
+{
+	HQUERY cpuQuery{};
+	HCOUNTER cpuTotal{};
+	PDH_FMT_COUNTERVALUE counterValue{};
 };

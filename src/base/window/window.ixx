@@ -17,9 +17,12 @@ public:
 
 	void setupWindow();
     [[noreturn]] void displayWindow(StatsOverlay& statsOverlayObj, Timer& timerObj);
+    void startPDHQuery(PDHVariables& pdhVars);
     void setupWindowSFMLParams();
-    void checkForUpdates();
-    void drawGUI(StatsOverlay& statsOverlayObj, Timer& timerObj);
+    void checkForUpdates(StatsOverlay& statsOverlayObj, Timer& timerObj, PDHVariables& pdhVars);
+    void updateRenderingStatus(Timer& timerObj, StatsOverlay& statsOverlayObj);
+    void updateTextureForDisplay();
+    void drawGUI(StatsOverlay& statsOverlayObj, const Timer& timerObj);
     void processInputEvents(StatsOverlay& statsOverlayObj, Timer& timerObj);
     [[nodiscard]] SFMLWindowProperties& getSFMLWindowProperties() noexcept;
     [[noreturn]] void setResolution(const PixelResolution& windowPixResObj) noexcept;
@@ -34,18 +37,19 @@ public:
     void setMainEngineFramebufferGetFunctor(const std::function<std::vector<Color>()>& mainEngineFramebufferGetFunctor) noexcept;
     void setMainRendererCameraPropsGetFunctor(const std::function<CameraProperties()>& mainRendererCameraPropsGetFunctor);
 
+    double getCPUUsageWithPDH(PDHVariables& pdhVars);
+    void updatePDHOverlayPeriodic(StatsOverlay& statsOverlayObj, PDHVariables& pdhVars);
+
 private:
     SFMLWindowProperties m_windowProps{};
     WindowFunctors m_windowFunctors{};
+    PDHVariables m_pdhVars{};
     PixelResolution m_windowPixelRes{};
+    Timer m_cpuUsagePDHTimer{};
     std::string m_windowTitle{"indus prelim"};
     std::future<void> m_renderingStatusFuture{};
-    bool m_isRendering{ false };
     bool m_needsDrawUpdate{ false };
     int m_texUpdateChunkTracker{ 0 };
-
-
-    int TEMP_TO_REMOVE{ 0 };
 };
 
 

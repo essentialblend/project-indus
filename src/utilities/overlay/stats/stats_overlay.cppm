@@ -1,5 +1,9 @@
 import stats_overlay;
 
+import <iostream>;
+import <iomanip>;
+import <sstream>;
+
 void StatsOverlay::setupOverlay(bool isMultithreaded)
 {
 	if (!m_overlayFont.loadFromFile("src/dep/CourierPrime-Regular.ttf"))
@@ -37,6 +41,8 @@ void StatsOverlay::setDefaultDisplayedText(bool isMultithreaded)
 	m_overlayProps.GUIObj.statTitleObj.setString("GUI Status: ");
 	m_overlayProps.GUIObj.statResultObj.setString("Responsive.");
 	m_overlayProps.GUIObj.statResultObj.setColor(sf::Color::Green);
+	m_overlayProps.cpuUsageObj.statTitleObj.setString("CPU Usage: ");
+	m_overlayProps.cpuUsageObj.statResultObj.setString("N.A.");
 }
 
 void StatsOverlay::setSFMLTextProperties()
@@ -61,6 +67,11 @@ void StatsOverlay::showOverlay(sf::RenderWindow& renderWindowObj, const PixelRes
 	{
 		return;
 	}
+
+	std::ostringstream osStream;
+	osStream << std::fixed << std::setprecision(2) << m_totalCPUUsage;
+	std::string formattedCPUUsageStr{ osStream.str() + "%." };
+	m_overlayProps.cpuUsageObj.statResultObj.setString(formattedCPUUsageStr);
 
 	if (!m_hasRenderCompleted)
 	{
@@ -130,4 +141,9 @@ void StatsOverlay::setOverlayVisibility(bool shouldDisplayOverlay) noexcept
 bool StatsOverlay::getOverlayVisibility() const noexcept
 {
 	return m_isOverlayEnabled;
+}
+
+void StatsOverlay::setTotalCPUUsage(double totalCPUUsage) noexcept
+{
+	m_totalCPUUsage = totalCPUUsage;
 }

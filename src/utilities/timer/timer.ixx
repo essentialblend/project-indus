@@ -21,6 +21,7 @@ public:
 private:
 	std::chrono::time_point<std::chrono::high_resolution_clock> m_startTime{};
 	std::chrono::time_point<std::chrono::high_resolution_clock> m_endTime{};
+	bool hasTimerStopped{ false };
 };
 
 void Timer::startTimer() noexcept
@@ -30,12 +31,15 @@ void Timer::startTimer() noexcept
 
 void Timer::endTimer() noexcept
 {
-	m_endTime = std::chrono::high_resolution_clock::now();
+	if(!hasTimerStopped)
+		m_endTime = std::chrono::high_resolution_clock::now();
+		hasTimerStopped = true;
 }
 
 std::chrono::duration<double> Timer::getElapsedTime() const noexcept
 {
-	return (m_endTime - m_startTime);
+	const auto endTime{ hasTimerStopped ? m_endTime : std::chrono::high_resolution_clock::now() };
+	return (endTime - m_startTime);
 }
 
 std::string Timer::getTimerResultString() const
@@ -50,4 +54,5 @@ void Timer::resetTimer() noexcept
 {
 	m_startTime = std::chrono::time_point<std::chrono::high_resolution_clock>{};
 	m_endTime = std::chrono::time_point<std::chrono::high_resolution_clock>{};
+	hasTimerStopped = false;
 }

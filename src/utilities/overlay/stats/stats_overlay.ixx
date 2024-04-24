@@ -12,6 +12,8 @@ public:
 	[[noreturn]] virtual void setSFMLTextProperties() override;
 	[[noreturn]] virtual void setRenderingCompleteStatus(bool hasRenderCompleted) noexcept override;
 	[[noreturn]] virtual void setOverlayVisibility(bool shouldDisplayOverlay) noexcept override;
+	
+	void setTotalCPUUsage(double totalCPUUsage) noexcept;
 
 	[[nodiscard]] virtual bool getOverlayVisibility() const noexcept override;
 
@@ -22,4 +24,5 @@ private:
 	sf::Font m_overlayFont{};
 	bool m_isOverlayEnabled{ true };
 	bool m_hasRenderCompleted{ false };
+	double m_totalCPUUsage{};
 };
