@@ -75,12 +75,11 @@ export struct OverlayProperties
 	OverlayStatistic modeObj{};
 	OverlayStatistic renderObj{};
 	OverlayStatistic timeObj{};
-	OverlayStatistic GUIObj{};
 	OverlayStatistic cpuUsageObj{};
 
 	std::vector<std::reference_wrapper<OverlayStatistic>> getStatsCollection()
 	{
-		return { std::ref(titleObj), std::ref(modeObj), std::ref(renderObj), std::ref(timeObj), std::ref(GUIObj), std::ref(cpuUsageObj) };
+		return { std::ref(titleObj), std::ref(modeObj), std::ref(timeObj), std::ref(renderObj), std::ref(cpuUsageObj) };
 	}
 };
 

@@ -9,13 +9,9 @@ public:
 	explicit Timer() noexcept = default;
 
 	void startTimer() noexcept;
-
 	void endTimer() noexcept;
-
 	std::chrono::duration<double> getElapsedTime() const noexcept;
-
 	std::string getTimerResultString() const;
-
 	void resetTimer() noexcept;
 
 private:

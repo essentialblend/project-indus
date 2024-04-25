@@ -1,11 +1,5 @@
-
-import core_util;
-import threadpool;
-
-import <thread>;
-import <iostream>;
-import <print>;
-import <latch>;
+import core_constructs;
+import indus;
 
 int main()
 {

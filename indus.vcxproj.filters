@@ -90,6 +90,18 @@
     <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\components\world_object\world_object.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\world_object\sphere\sphere.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\world_object\sphere\sphere.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\world_object\world_object.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dep\stb_image_write.h">

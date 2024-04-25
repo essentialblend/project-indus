@@ -1,14 +1,5 @@
 import threadpool;
 
-import <memory>;
-import <vector>;
-import <functional>;
-import <thread>;
-import <queue>;
-import <atomic>;
-import <future>;
-import <mutex>;
-
 void MT_ThreadPool::initiateThreadPool()
 {
 	const unsigned int numAvailableThreads = std::thread::hardware_concurrency();

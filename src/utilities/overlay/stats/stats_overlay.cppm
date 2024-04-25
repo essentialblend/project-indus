@@ -19,30 +19,15 @@ void StatsOverlay::setupOverlay(bool isMultithreaded)
 
 void StatsOverlay::setDefaultDisplayedText(bool isMultithreaded)
 {
-	m_overlayProps.titleObj.statTitleObj.setString("indus:");
-	m_overlayProps.titleObj.statResultObj.setString("v0.0.0-alpha");
-	m_overlayProps.modeObj.statTitleObj.setString("Mode: ");
+	std::vector<std::string> leftSideTitles{ "indus:", "Mode:", "Time:", "Status:", "CPU Usage:" };
+	std::vector<std::string> rightSideValues{ "v0.0.0-alpha.", (isMultithreaded ? "Multithreaded." : "Singlethreaded."), "Awaiting render.", "Idle.", "N.A." };
+	auto localOverlayProps{ m_overlayProps.getStatsCollection() };
 
-	if(isMultithreaded)
+	for (std::size_t i{ 0 }; i < leftSideTitles.size(); ++i)
 	{
-		m_overlayProps.modeObj.statResultObj.setString("Multi-threaded.");
+		localOverlayProps[i].get().statTitleObj.setString(leftSideTitles[i]);
+		localOverlayProps[i].get().statResultObj.setString(rightSideValues[i]);
 	}
-	else
-	{
-		m_overlayProps.modeObj.statResultObj.setString("Single-threaded.");
-	}
-	
-	m_overlayProps.timeObj.statTitleObj.setString("Time: ");
-	m_overlayProps.timeObj.statResultObj.setString("Awaiting render.");
-	m_overlayProps.timeObj.statResultObj.setColor(sf::Color::Green);
-	m_overlayProps.renderObj.statTitleObj.setString("Status: ");
-	m_overlayProps.renderObj.statResultObj.setString("Idle.");
-	m_overlayProps.renderObj.statResultObj.setColor(sf::Color::Green);
-	m_overlayProps.GUIObj.statTitleObj.setString("GUI Status: ");
-	m_overlayProps.GUIObj.statResultObj.setString("Responsive.");
-	m_overlayProps.GUIObj.statResultObj.setColor(sf::Color::Green);
-	m_overlayProps.cpuUsageObj.statTitleObj.setString("CPU Usage: ");
-	m_overlayProps.cpuUsageObj.statResultObj.setString("N.A.");
 }
 
 void StatsOverlay::setSFMLTextProperties()
@@ -73,37 +58,15 @@ void StatsOverlay::showOverlay(sf::RenderWindow& renderWindowObj, const PixelRes
 	std::string formattedCPUUsageStr{ osStream.str() + "%." };
 	m_overlayProps.cpuUsageObj.statResultObj.setString(formattedCPUUsageStr);
 
-	if (!m_hasRenderCompleted)
+	float widthScaleFactor{ 0.23f };
+	float overlayWidthPadding{ pixResObj.widthInPixels * widthScaleFactor };
+	float modeTitleGlobalWidth = m_overlayProps.modeObj.statTitleObj.getGlobalBounds().width + 100;
+	float resultTextStartPos{ (pixResObj.widthInPixels - overlayWidthPadding) + modeTitleGlobalWidth };
+	int verticalStatSpacing{ 0 };
+	std::vector<std::reference_wrapper<OverlayStatistic>> tempCopy{ m_overlayProps.getStatsCollection() };
+
+	if (m_hasRenderCompleted)
 	{
-		std::vector<std::reference_wrapper<OverlayStatistic>> tempCopy{ m_overlayProps.getStatsCollection() };
-
-		float widthScaleFactor{ 0.23f };
-		float overlayWidthPadding{ pixResObj.widthInPixels * widthScaleFactor };
-		float modeTitleGlobalWidth = m_overlayProps.modeObj.statTitleObj.getGlobalBounds().width + 100;
-		float resultTextStartPos{ (pixResObj.widthInPixels - overlayWidthPadding) + modeTitleGlobalWidth };
-		int verticalStatSpacing{ 0 };
-
-		for (auto& overlayStat : tempCopy)
-		{
-			overlayStat.get().statTitleObj.setPosition(static_cast<float>(pixResObj.widthInPixels - overlayWidthPadding), static_cast<float>(verticalStatSpacing));
-			overlayStat.get().statResultObj.setPosition(static_cast<float>(resultTextStartPos), static_cast<float>(verticalStatSpacing));
-
-			renderWindowObj.draw(overlayStat.get().statTitleObj);
-			renderWindowObj.draw(overlayStat.get().statResultObj);
-
-			verticalStatSpacing += 30;
-		}
-	}
-	else
-	{
-		std::vector<std::reference_wrapper<OverlayStatistic>> tempCopy{ m_overlayProps.getStatsCollection() };
-
-		float widthScaleFactor{ 0.23f };
-		float overlayWidthPadding{ pixResObj.widthInPixels * widthScaleFactor };
-		float modeTitleGlobalWidth = m_overlayProps.modeObj.statTitleObj.getGlobalBounds().width + 100;
-		float resultTextStartPos{ (pixResObj.widthInPixels - overlayWidthPadding) + modeTitleGlobalWidth };
-		int verticalStatSpacing{ 0 };
-
 		std::string timerResult{ timerObj.getTimerResultString() };
 
 		m_overlayProps.timeObj.statResultObj.setString(timerResult);
@@ -111,20 +74,17 @@ void StatsOverlay::showOverlay(sf::RenderWindow& renderWindowObj, const PixelRes
 
 		m_overlayProps.renderObj.statResultObj.setString("Render complete.");
 		m_overlayProps.renderObj.statResultObj.setColor(sf::Color::Green);
+	}
 
-		m_overlayProps.GUIObj.statResultObj.setString("Responsive.");
-		m_overlayProps.GUIObj.statResultObj.setColor(sf::Color::Green);
+	for (auto& overlayStat : tempCopy)
+	{
+		overlayStat.get().statTitleObj.setPosition(static_cast<float>(pixResObj.widthInPixels - overlayWidthPadding), static_cast<float>(verticalStatSpacing));
+		overlayStat.get().statResultObj.setPosition(static_cast<float>(resultTextStartPos), static_cast<float>(verticalStatSpacing));
 
-		for (auto& overlayStat : tempCopy)
-		{
-			overlayStat.get().statTitleObj.setPosition(static_cast<float>(pixResObj.widthInPixels - overlayWidthPadding), static_cast<float>(verticalStatSpacing));
-			overlayStat.get().statResultObj.setPosition(static_cast<float>(resultTextStartPos), static_cast<float>(verticalStatSpacing));
+		renderWindowObj.draw(overlayStat.get().statTitleObj);
+		renderWindowObj.draw(overlayStat.get().statResultObj);
 
-			renderWindowObj.draw(overlayStat.get().statTitleObj);
-			renderWindowObj.draw(overlayStat.get().statResultObj);
-
-			verticalStatSpacing += 30;
-		}
+		verticalStatSpacing += 30;
 	}
 }
 

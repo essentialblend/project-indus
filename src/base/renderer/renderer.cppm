@@ -1,14 +1,4 @@
 import renderer;
-
-import <span>;
-import <iostream>;
-import <thread>;
-import <future>;
-import <memory>;
-import <algorithm>;
-import <execution>;
-import <print>;
-
 import core_constructs;
 import color;
 import threadpool;
@@ -16,6 +6,17 @@ import threadpool;
 import <SFML/Graphics.hpp>;
 
 Color Renderer::computeRayColor(const Ray& inputRay)
+{
+    auto hitRoot{ tempHitSphere(Point(0, 0, -1), 0.5, inputRay) };
+    if (hitRoot > 0.0)
+    {
+        Vec3 normal{ getUnit(inputRay.getPointOnRayAt(hitRoot) - Vec3(0, 0, -1)) };
+        return Color((normal.getX() + 1) * 0.5, (normal.getY() + 1) * 0.5, (normal.getZ() + 1) * 0.5);
+    }
+    return getBackgroundGradient(inputRay);
+}
+
+const Color Renderer::getBackgroundGradient(const Ray& inputRay)
 {
     const Color gradientColor{ 0.5, 0.7, 1.0 };
 
@@ -43,7 +44,7 @@ void Renderer::setupRenderer(const PixelResolution& pixResObj, const AspectRatio
 
 }
 
-void Renderer::renderFrameSingleCore(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer)
+[[deprecated]] void Renderer::renderFrameSingleCore(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer)
 {
     int numRowsPerTexUpdateBatch{ 20 };
     int currentNumRowsParsed{ 0 };
@@ -116,6 +117,7 @@ void Renderer::renderPixelRowThreadPoolTask(int currentRowCount, std::vector<Col
     const auto localPixResObj{ m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj };
     const auto localPixDimObj{ m_mainCamera.getCameraProperties().camPixelDimObj };
     m_texUpdateLatch->count_down();
+
     for (int i{}; i < localPixResObj.widthInPixels; ++i)
     {
         const Point currentPixelCenter{ m_mainCamera.getCameraProperties().camPixelDimObj.pixelCenter + (i * localPixDimObj.lateralSpanInAbsVal) + (currentRowCount * localPixDimObj.verticalSpanInAbsVal)};
@@ -165,4 +167,16 @@ bool Renderer::checkForDrawUpdate()
 std::pair<int, int> Renderer::getTextureUpdateCounters() const
 {
     return std::pair<int, int>(m_currChunkForTexUpdate - m_texUpdateRate, m_texUpdateRate);
+}
+
+double Renderer::tempHitSphere(const Point& sphereCenter, double sphereRadius, const Ray& inputRay) 
+{
+    Vec3 originToCenter = sphereCenter - inputRay.getOrigin();
+    auto a = inputRay.getDirection().getMagnitudeSq();
+    auto h = computeDot(inputRay.getDirection(), originToCenter);
+    auto c = originToCenter.getMagnitudeSq() - (sphereRadius * sphereRadius);
+    auto discriminant = (h * h) - (a * c);
+    
+    if (discriminant < 0) return -1.0;
+    else return (h - std::sqrt(discriminant)) / a;
 }

@@ -1,8 +1,5 @@
 import indus;
 
-import <vector>;
-import <span>;
-
 import color;
 
 Indus::Indus(const PixelResolution& windowPixResObj, const PixelResolution& imagePixResObj, const AspectRatio& aspectRatioObj) noexcept :

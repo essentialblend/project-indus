@@ -46,6 +46,7 @@ private:
     PDHVariables m_pdhVars{};
     PixelResolution m_windowPixelRes{};
     Timer m_cpuUsagePDHTimer{};
+
     std::string m_windowTitle{"indus prelim"};
     std::future<void> m_renderingStatusFuture{};
     bool m_needsDrawUpdate{ false };

@@ -63,12 +63,9 @@ void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, Timer& timerO
 
 void SFMLWindow::displayWindow(StatsOverlay& statsOverlayObj, Timer& timerObj)
 {
-	
+
 	startPDHQuery(m_pdhVars);
-
 	setupWindowSFMLParams();
-
-	
 	m_cpuUsagePDHTimer.startTimer();
 
 	while (m_windowProps.renderWindowObj.isOpen())
@@ -77,6 +74,7 @@ void SFMLWindow::displayWindow(StatsOverlay& statsOverlayObj, Timer& timerObj)
    		checkForUpdates(statsOverlayObj, timerObj, m_pdhVars);
 		drawGUI(statsOverlayObj, timerObj);
 	}
+
 	PdhCloseQuery(m_pdhVars.cpuQuery);
 }
 
@@ -231,7 +229,7 @@ void SFMLWindow::setMainRendererCameraPropsGetFunctor(const std::function<Camera
 double SFMLWindow::getCPUUsageWithPDH(PDHVariables& pdhVars)
 {
 	
-	if (m_cpuUsagePDHTimer.getElapsedTime().count() > 0.25)
+	if (m_cpuUsagePDHTimer.getElapsedTime().count() > 1.5)
 	{
 		if (PdhCollectQueryData(pdhVars.cpuQuery) != ERROR_SUCCESS)
 		{

@@ -39,6 +39,10 @@
     <ClCompile Include="src\base\vec3\vec3.ixx" />
     <ClCompile Include="src\base\window\window.cppm" />
     <ClCompile Include="src\base\window\window.ixx" />
+    <ClCompile Include="src\components\world_object\sphere\sphere.cppm" />
+    <ClCompile Include="src\components\world_object\sphere\sphere.ixx" />
+    <ClCompile Include="src\components\world_object\world_object.cppm" />
+    <ClCompile Include="src\components\world_object\world_object.ixx" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\utilities\overlay\overlay.ixx" />
     <ClCompile Include="src\utilities\overlay\stats\stats_overlay.cppm" />
