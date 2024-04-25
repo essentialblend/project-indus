@@ -2,12 +2,12 @@ export module window;
 
 import <functional>;
 import <future>;
-import <vector>;
 
 import core_constructs;
 import stats_overlay;
 import timer;
 import color;
+
 
 export class SFMLWindow
 {
@@ -27,7 +27,6 @@ public:
     [[nodiscard]] SFMLWindowProperties& getSFMLWindowProperties() noexcept;
     [[noreturn]] void setResolution(const PixelResolution& windowPixResObj) noexcept;
 
-    void setRenderFrameSingleCoreFunctor(const std::function<void()>& singleCoreFunctor) noexcept;
     void setRenderFrameMultiCoreFunctor(const std::function<void()>& multiCoreFunctor) noexcept;
     void setMultithreadedCheckFunctor(const std::function<bool()>& isMultithreadedCheckFunctor) noexcept;
 
@@ -50,6 +49,7 @@ private:
     std::string m_windowTitle{"indus prelim"};
     std::future<void> m_renderingStatusFuture{};
     bool m_needsDrawUpdate{ false };
+    bool m_isRendering{ false };
     int m_texUpdateChunkTracker{ 0 };
 };
 

@@ -45,16 +45,9 @@ void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, Timer& timerO
 					m_renderingStatusFuture = std::async(std::launch::async, [&]()
 					{
 						m_needsDrawUpdate = true;
+						m_isRendering = true;
 						m_windowFunctors.renderFrameMultiCoreFunctor();
 					});
-				}
-				else
-				{
-					m_needsDrawUpdate = true;
-					m_windowFunctors.renderFrameSingleCoreFunctor();
-
-					timerObj.endTimer();
-					statsOverlayObj.setRenderingCompleteStatus(true);
 				}
 			}
 		}
@@ -110,10 +103,11 @@ void SFMLWindow::updatePDHOverlayPeriodic(StatsOverlay& statsOverlayObj, PDHVari
 
 void SFMLWindow::updateRenderingStatus(Timer& timerObj, StatsOverlay& statsOverlayObj)
 {
-	if (m_renderingStatusFuture.valid() && m_renderingStatusFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+	if (m_isRendering && m_renderingStatusFuture.valid() && m_renderingStatusFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
 	{
 		timerObj.endTimer();
 		statsOverlayObj.setRenderingCompleteStatus(true);
+		m_isRendering = false;
 	}
 }
 
@@ -189,11 +183,6 @@ SFMLWindowProperties& SFMLWindow::getSFMLWindowProperties() noexcept
 void SFMLWindow::setResolution(const PixelResolution& windowPixResObj) noexcept
 {
 	m_windowPixelRes = windowPixResObj;
-}
-
-void SFMLWindow::setRenderFrameSingleCoreFunctor(const std::function<void()>& singleCoreFunctor) noexcept
-{
-	m_windowFunctors.renderFrameSingleCoreFunctor = singleCoreFunctor;
 }
 
 void SFMLWindow::setRenderFrameMultiCoreFunctor(const std::function<void()>& multiCoreFunctor) noexcept

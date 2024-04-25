@@ -1,17 +1,21 @@
 import renderer;
 import core_constructs;
+import core_util;
 import color;
 import threadpool;
+import world_object;
 
 import <SFML/Graphics.hpp>;
 
-Color Renderer::computeRayColor(const Ray& inputRay)
+Color Renderer::computeRayColor(const Ray& inputRay, const WorldObject& mainWorld)
 {
-    auto hitRoot{ tempHitSphere(Point(0, 0, -1), 0.5, inputRay) };
-    if (hitRoot > 0.0)
+    HitRecord tempHitRecord{};
+    
+    if (mainWorld.checkHit(inputRay, Interval(0, +UInfinity), tempHitRecord))
     {
-        Vec3 normal{ getUnit(inputRay.getPointOnRayAt(hitRoot) - Vec3(0, 0, -1)) };
-        return Color((normal.getX() + 1) * 0.5, (normal.getY() + 1) * 0.5, (normal.getZ() + 1) * 0.5);
+        Vec3 returnColorVec{ 0.5 * (tempHitRecord.normalVec + Vec3(1.0, 1.0, 1.0)) };
+        
+        return Color(returnColorVec.getX(), returnColorVec.getY(), returnColorVec.getZ());
     }
     return getBackgroundGradient(inputRay);
 }
@@ -44,64 +48,14 @@ void Renderer::setupRenderer(const PixelResolution& pixResObj, const AspectRatio
 
 }
 
-[[deprecated]] void Renderer::renderFrameSingleCore(const PixelResolution& pixResObj, const PixelDimension& pixDimObj, const Point& camCenter, std::vector<Color>& primaryPixelBuffer)
-{
-    int numRowsPerTexUpdateBatch{ 20 };
-    int currentNumRowsParsed{ 0 };
-
-    std::vector<sf::Uint8> tempTexUpdateBuffer;
-    tempTexUpdateBuffer.reserve(static_cast<long long>(pixResObj.widthInPixels * numRowsPerTexUpdateBatch * (m_mainCamera.getCameraProperties().camImgPropsObj.numColorChannels + 1)));
-
-    for (int i = 0; i < pixResObj.heightInPixels; ++i) {
-        for (int j = 0; j < pixResObj.widthInPixels; ++j) {
-
-            const Point currentPixelCenter{ pixDimObj.pixelCenter + (j * pixDimObj.lateralSpanInAbsVal) + (i * pixDimObj.verticalSpanInAbsVal) };
-            const Ray currentPixelRay{ camCenter, currentPixelCenter - camCenter };
-
-            // Prime candidate for parallelization.
-            const Color normCurrPixColor{ computeRayColor(currentPixelRay) };
-
-            tempTexUpdateBuffer.push_back(static_cast<sf::Uint8>(normCurrPixColor.getBaseVec().getX() * 255));
-            tempTexUpdateBuffer.push_back(static_cast<sf::Uint8>(normCurrPixColor.getBaseVec().getY() * 255));
-            tempTexUpdateBuffer.push_back(static_cast<sf::Uint8>(normCurrPixColor.getBaseVec().getZ() * 255));
-            tempTexUpdateBuffer.push_back(255);
-
-            primaryPixelBuffer.push_back(std::move(normCurrPixColor));
-        }
-        ++currentNumRowsParsed;
-
-        if (currentNumRowsParsed == numRowsPerTexUpdateBatch)
-        {
-            unsigned int startYCoord = i - numRowsPerTexUpdateBatch + 1;
-            m_rendererFunctors.sfmlTextureUpdateFunctor(tempTexUpdateBuffer.data(), pixResObj.widthInPixels, currentNumRowsParsed, 0, startYCoord);
-            tempTexUpdateBuffer.clear();
-            currentNumRowsParsed = 0;
-
-            m_rendererFunctors.sfmlClearWindowFunctor();
-            m_rendererFunctors.sfmlDrawSpriteFunctor();
-            m_rendererFunctors.sfmlDisplayWindowFunctor();
-        }
-    }
-
-    if (!tempTexUpdateBuffer.empty())
-    {
-        unsigned int startYCoord = pixResObj.heightInPixels - currentNumRowsParsed;
-
-        m_rendererFunctors.sfmlTextureUpdateFunctor(tempTexUpdateBuffer.data(), pixResObj.widthInPixels, currentNumRowsParsed, 0, startYCoord);
-
-        tempTexUpdateBuffer.clear();
-        currentNumRowsParsed = 0;
-    }
-}
-
-void Renderer::renderFrameMultiCore(std::vector<Color>& mainFramebuffer)
+void Renderer::renderFrameMultiCore(std::vector<Color>& mainFramebuffer, const WorldObject& mainWorld)
 {
     m_renderThreadPool.initiateThreadPool();
 
     for (int eachPixelRow{}; eachPixelRow < m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels; ++eachPixelRow)
     {
-        m_texUpdateFutureVec.push_back(m_renderThreadPool.enqueueThreadPoolTask([this, eachPixelRow, &mainFramebuffer]() {
-            this->renderPixelRowThreadPoolTask(eachPixelRow, mainFramebuffer);
+        m_texUpdateFutureVec.push_back(m_renderThreadPool.enqueueThreadPoolTask([this, eachPixelRow, &mainFramebuffer, &mainWorld]() {
+            this->renderPixelRowThreadPoolTask(eachPixelRow, mainFramebuffer, mainWorld);
         }));    
     }
  }
@@ -111,7 +65,7 @@ void Renderer::setRendererSFMLFunctors(const RendererSFMLFunctors& rendererFuncO
     m_rendererFunctors = rendererFuncObj;
 }
 
-void Renderer::renderPixelRowThreadPoolTask(int currentRowCount, std::vector<Color>& mainFramebuffer)
+void Renderer::renderPixelRowThreadPoolTask(int currentRowCount, std::vector<Color>& mainFramebuffer, const WorldObject& mainWorld)
 {
     const auto localCamProps{ m_mainCamera.getCameraProperties() };
     const auto localPixResObj{ m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj };
@@ -120,13 +74,16 @@ void Renderer::renderPixelRowThreadPoolTask(int currentRowCount, std::vector<Col
 
     for (int i{}; i < localPixResObj.widthInPixels; ++i)
     {
-        const Point currentPixelCenter{ m_mainCamera.getCameraProperties().camPixelDimObj.pixelCenter + (i * localPixDimObj.lateralSpanInAbsVal) + (currentRowCount * localPixDimObj.verticalSpanInAbsVal)};
-        const Ray currentPixelRay{ localCamProps.camCenter, currentPixelCenter - localCamProps.camCenter };
-        const Color normCurrPixColor{ computeRayColor(currentPixelRay) };
-        const int index { ((currentRowCount * localPixResObj.widthInPixels) + i) };
+        Color normCurrPixColor(0);
+        int index{};
+        for (int pixelSample{}; pixelSample < m_samplesPerPixel; ++pixelSample)
+        {
+            Ray currentPixelRay = getRayForPixel(i, currentRowCount);
+            normCurrPixColor = normCurrPixColor + computeRayColor(currentPixelRay, mainWorld);
+            index = ((currentRowCount * localPixResObj.widthInPixels) + i);
+        }
         mainFramebuffer[index] = normCurrPixColor;
     }
-    
 }
 
 void Renderer::setThreadingMode(bool isMultithreaded) noexcept
@@ -169,14 +126,9 @@ std::pair<int, int> Renderer::getTextureUpdateCounters() const
     return std::pair<int, int>(m_currChunkForTexUpdate - m_texUpdateRate, m_texUpdateRate);
 }
 
-double Renderer::tempHitSphere(const Point& sphereCenter, double sphereRadius, const Ray& inputRay) 
+Ray Renderer::getRayForPixel(int i, int currentRowCount) const noexcept
 {
-    Vec3 originToCenter = sphereCenter - inputRay.getOrigin();
-    auto a = inputRay.getDirection().getMagnitudeSq();
-    auto h = computeDot(inputRay.getDirection(), originToCenter);
-    auto c = originToCenter.getMagnitudeSq() - (sphereRadius * sphereRadius);
-    auto discriminant = (h * h) - (a * c);
-    
-    if (discriminant < 0) return -1.0;
-    else return (h - std::sqrt(discriminant)) / a;
+    const auto localCamProps{ m_mainCamera.getCameraProperties() };
+    const Point currentPixelCenter{ localCamProps.camPixelDimObj.pixelCenter + (i * localCamProps.camPixelDimObj.lateralSpanInAbsVal) + (currentRowCount * localCamProps.camPixelDimObj.verticalSpanInAbsVal) };
+    return Ray(localCamProps.camCenter, currentPixelCenter - localCamProps.camCenter);
 }

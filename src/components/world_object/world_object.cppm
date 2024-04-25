@@ -15,21 +15,20 @@ void WorldObjectList::addWorldObj(std::unique_ptr<WorldObject> worldObj) noexcep
 	m_worldObjectList.push_back(std::move(worldObj));
 }
 
-bool WorldObjectList::checkHit(const Ray& inputRay, double rayT_min, double rayT_max, HitRecord& hitRec) const
+bool WorldObjectList::checkHit(const Ray& inputRay, Interval rayInterval, HitRecord& hitRec) const
 {
 	HitRecord tempHitRec;
 	bool hitAnything = false;
-	double closestSoFar = rayT_max;
+	double closestSoFar = rayInterval.getMax();
 
 	for (const auto& worldObj : m_worldObjectList)
 	{
-		if (worldObj->checkHit(inputRay, rayT_min, closestSoFar, tempHitRec))
+		if (worldObj->checkHit(inputRay, Interval(rayInterval.getMin(), closestSoFar), tempHitRec))
 		{
 			hitAnything = true;
 			closestSoFar = tempHitRec.root;
 			hitRec = tempHitRec;
 		}
 	}
-
 	return hitAnything;
 }

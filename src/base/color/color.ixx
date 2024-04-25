@@ -9,6 +9,8 @@ public:
 	explicit Color(double x) noexcept;
 	explicit Color(double r, double g, double b) noexcept;
 
+	[[nodiscard]] Color operator+(const Color& rhs) const noexcept;
+
 	[[nodiscard]] Color convertFromNormalized() const;
 	[[nodiscard]] const Vec3 getBaseVec() const noexcept;
 

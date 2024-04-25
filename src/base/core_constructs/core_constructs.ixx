@@ -104,7 +104,6 @@ export struct RenderingMode
 
 export struct WindowFunctors
 {
-	std::function<void()> renderFrameSingleCoreFunctor{};
 	std::function<void()> renderFrameMultiCoreFunctor{};
 	std::function<bool()> isMultithreadedFunctor{};
 	std::function<bool()> isTextureReadyForUpdateFunctor{};

@@ -1,4 +1,5 @@
 import color;
+import interval;
 
 Color::Color(double x) noexcept : m_colorVec{ x, x, x } {}
 
@@ -11,5 +12,11 @@ const Vec3 Color::getBaseVec() const noexcept
 
 Color Color::convertFromNormalized() const
 {
-	return Color((255.999 * m_colorVec[0]), (255.999 * m_colorVec[1]), (255.999 * m_colorVec[2]));
+	static const Interval colorIntensity(0.000, 0.999);
+	return Color(((256 * colorIntensity.clampWithin(m_colorVec[0]))), ((256 * colorIntensity.clampWithin(m_colorVec[1]))), ((256 * colorIntensity.clampWithin(m_colorVec[2]))));
+}
+
+Color Color::operator+(const Color& rhs) const noexcept
+{
+	return Color(m_colorVec[0] + rhs.m_colorVec[0], m_colorVec[1] + rhs.m_colorVec[1], m_colorVec[2] + rhs.m_colorVec[2]);
 }

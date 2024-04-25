@@ -1,6 +1,7 @@
 export module indus;
 
 import <vector>;
+import <memory>;
 
 import core_constructs;
 import vec3;
@@ -9,6 +10,8 @@ import color;
 import camera;
 import overlay;
 import window;
+
+import world_object;
 
 export class Indus
 {
@@ -22,6 +25,7 @@ public:
 
 	void setRendererFunctors();
 	void setWindowFunctors();
+	void initializeWorld();
 
 	[[nodiscard]] std::vector<Color> getMainRenderFramebuffer() const noexcept;
 
@@ -32,6 +36,8 @@ private:
 	ImageProperties m_mainRenderImageProps{};
 	std::vector<Color> m_mainRenderFramebuffer{};
 	bool m_isMultithreaded{ true };
+
+	WorldObjectList m_mainWorld{};
 
 	void setGlobalCallbackFunctors();
 };

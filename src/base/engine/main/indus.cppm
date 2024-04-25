@@ -1,12 +1,20 @@
 import indus;
 
 import color;
+import sphere;
 
 Indus::Indus(const PixelResolution& windowPixResObj, const PixelResolution& imagePixResObj, const AspectRatio& aspectRatioObj) noexcept :
 	m_mainWindow(windowPixResObj),
 	m_mainRenderImageProps{
 		.pixelResolutionObj{imagePixResObj},
 		.aspectRatioObj {aspectRatioObj} } {};
+
+void Indus::initializeWorld()
+{
+	m_mainWorld = WorldObjectList();
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0, 0, -1), 0.5));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0, -100.5, -1), 100));
+}
 
 void Indus::initializeEngine()
 {
@@ -28,8 +36,9 @@ void Indus::setGlobalCallbackFunctors()
 void Indus::runEngine()
 {
 	// Run window.
-	Timer t;
-	m_mainWindow.displayWindow(m_statsOverlay, t);
+	Timer overlayTimer;
+	initializeWorld();
+	m_mainWindow.displayWindow(m_statsOverlay, overlayTimer);
 }
 
 void Indus::setRendererFunctors()
@@ -56,15 +65,9 @@ void Indus::setWindowFunctors()
 {
 	const std::function<bool()> multithreadingCheckFunctor = [&]() { return m_mainRenderer.getThreadingMode(); };
 
-	const std::function<void()> renderSingleCoreFrameFunctor = [&]()
-		{
-			auto localProps = m_mainRenderer.getRendererCameraProps();
-			m_mainRenderer.renderFrameSingleCore(localProps.camImgPropsObj.pixelResolutionObj, localProps.camPixelDimObj, localProps.camCenter, m_mainRenderFramebuffer);
-		};
-
 	const std::function<void()> renderMultiCoreFrameFunctor = [&]()
 		{
-			m_mainRenderer.renderFrameMultiCore(m_mainRenderFramebuffer);
+			m_mainRenderer.renderFrameMultiCore(m_mainRenderFramebuffer, m_mainWorld);
 		};
 
 	const std::function<bool()> texUpdateCheckFunctor = [&]()
@@ -90,7 +93,6 @@ void Indus::setWindowFunctors()
 	m_mainWindow.setMainEngineFramebufferGetFunctor(mainRenderFramebufferGetter);
 	m_mainWindow.setTextureUpdateCheckFunctor(texUpdateCheckFunctor);
 	m_mainWindow.setMultithreadedCheckFunctor(multithreadingCheckFunctor);
-	m_mainWindow.setRenderFrameSingleCoreFunctor(renderSingleCoreFrameFunctor);
 	m_mainWindow.setRenderFrameMultiCoreFunctor(renderMultiCoreFrameFunctor);
 	m_mainWindow.setTextureCounterGetterFunctor(texUpdateCounterGetter);
 	m_mainWindow.setMainRendererCameraPropsGetFunctor(mainRendererCamPropsGetter);

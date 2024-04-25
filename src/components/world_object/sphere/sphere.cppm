@@ -4,7 +4,7 @@ import <cmath>;
 
 WOSphere::WOSphere(const Point& center, double radius) noexcept : m_sphereCenter(center), m_sphereRadius(radius) {}
 
-bool WOSphere::checkHit(const Ray& inputRay, double rayT_min, double rayT_max, HitRecord& hitRec) const
+bool WOSphere::checkHit(const Ray& inputRay, Interval rayInterval, HitRecord& hitRec) const
 {
     Vec3 originToCenter = m_sphereCenter - inputRay.getOrigin();
     auto a = inputRay.getDirection().getMagnitudeSq();
@@ -15,11 +15,11 @@ bool WOSphere::checkHit(const Ray& inputRay, double rayT_min, double rayT_max, H
     if (discriminant < 0) return false;
     
     auto discrSqrt{ std::sqrt(discriminant) };
-    auto root = (-h - discrSqrt) / a;
-    if(root <= rayT_min || rayT_max <= root)
+    auto root = (h - discrSqrt) / a;
+    if(!rayInterval.isSurrounded(root))
 	{
-		root = (-h + discrSqrt) / a;
-		if(root <= rayT_min || rayT_max <= root)
+		root = (h + discrSqrt) / a;
+		if(!rayInterval.isSurrounded(root))
 		{
 			return false;
 		}

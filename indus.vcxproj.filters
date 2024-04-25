@@ -102,6 +102,15 @@
     <ClCompile Include="src\components\world_object\world_object.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\base\engine\i_indus.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\interval\interval.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\interval\interval.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dep\stb_image_write.h">
