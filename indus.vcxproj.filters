@@ -111,6 +111,18 @@
     <ClCompile Include="src\utilities\interval\interval.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\components\materials\material.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\materials\lambertian.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\hit_record\hit_record.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\materials\metal.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dep\stb_image_write.h">

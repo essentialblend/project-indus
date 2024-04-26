@@ -2,8 +2,9 @@ export module core_constructs;
 
 import color;
 import vec3;
-import <vector>;
 
+import <vector>;
+import <future>;
 import<functional>;
 import<Pdh.h>;
 
@@ -110,6 +111,7 @@ export struct WindowFunctors
 	std::function<std::vector<Color>()> getMainEngineFramebufferFunctor{};
 	std::function<std::pair<int, int>()> getTextureUpdateCounterFunctor{};
 	std::function<CameraProperties()> getRendererCameraPropsFunctor{};
+	std::function<bool()> getRenderCompleteStatusFunctor{};
 };
 
 export struct PDHVariables

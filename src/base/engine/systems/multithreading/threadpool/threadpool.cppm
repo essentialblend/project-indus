@@ -5,7 +5,7 @@ void MT_ThreadPool::initiateThreadPool()
 	const unsigned int numAvailableThreads = std::thread::hardware_concurrency();
 	const unsigned int numThreadsToUse = numAvailableThreads > 1 ? static_cast<int>(numAvailableThreads * 0.5) : 1;
 
-	for (std::size_t i{}; i < numThreadsToUse; ++i)
+	for (std::size_t i{}; i < 9; ++i)
 	{
 		m_workerThreads.emplace_back(&MT_ThreadPool::executeTasks, this);
 	}

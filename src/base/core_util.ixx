@@ -21,19 +21,19 @@ export double URadiansToDegrees(double radiansValue)
 export template<typename ValueType>
 ValueType UGenRNG(ValueType min = 0, ValueType max = 1)
 {
-	static thread_local std::mt19937 generator{ std::random_device(min, max) };
-
-	if constexpr (std::is_integral_v<ValueType>)
-	{
-		std::uniform_int_distribution<ValueType> distr(min, max);
-		return distr(generator);
-	}
-	else
-	{
-		std::uniform_real_distribution<ValueType> distr(min, max);
-		return distr(generator);
-	}
-
+    static thread_local std::random_device rd;
+    static thread_local std::mt19937 generator(rd());
+    
+    if constexpr (std::is_integral_v<ValueType>)
+    {
+        std::uniform_int_distribution<ValueType> distr(min, max);
+        return distr(generator);
+    }
+    else
+    {
+        std::uniform_real_distribution<ValueType> distr(min, max);
+        return distr(generator);
+    }
 }
 
 

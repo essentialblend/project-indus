@@ -1,7 +1,8 @@
 import vec3;
 
-import <iostream>;
+import core_util;
 
+import <iostream>;
 
 Vec3::Vec3(double x) noexcept : m_Vec{ x, x, x } {}
 Vec3::Vec3(double x, double y, double z) noexcept : m_Vec{ x, y, z } {}
@@ -58,6 +59,13 @@ double Vec3::getMagnitude() const noexcept
 	return std::sqrt(getMagnitudeSq());
 }
 
+bool Vec3::isNearZero() const noexcept
+{
+	const auto eps{ std::numeric_limits<double>::epsilon() };
+	return ((std::fabs(m_Vec[0]) < eps) && (std::fabs(m_Vec[1]) < eps) && (std::fabs(m_Vec[2]) < eps));
+}
+
+
 // Non-member vec3 utils.
 std::ostream& operator<<(std::ostream& outStream, const Vec3& outVec)
 {
@@ -110,3 +118,33 @@ Vec3 getUnit(const Vec3& inputVec) noexcept
 {
 	return inputVec / inputVec.getMagnitude();
 }
+
+Vec3 genRandomVec(double min, double max) noexcept
+{
+	return Vec3(UGenRNG(min, max), UGenRNG(min, max), UGenRNG(min, max));
+}
+
+Vec3 genRandomUnitSphereVec()
+{
+	while (true)
+	{
+		auto randomVec = genRandomVec(-1, 1);
+		if (randomVec.getMagnitudeSq() < 1) 
+			return randomVec;
+	}
+}
+
+Vec3 genRandomUnitSphereVecNorm()
+{
+	return getUnit(genRandomUnitSphereVec());
+}
+
+Vec3 genRandomUnitHemisphereVecNorm(const Vec3& normalVec)
+{
+	Vec3 unitSphereRandVec{ genRandomUnitSphereVecNorm() };
+	if (computeDot(unitSphereRandVec, normalVec) > 0.0)
+		return unitSphereRandVec;
+	else
+		return -unitSphereRandVec;
+}
+

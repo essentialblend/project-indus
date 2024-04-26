@@ -1,21 +1,30 @@
 import renderer;
-import core_constructs;
+
 import core_util;
 import color;
 import threadpool;
+import hit_record;
+import material;
+import lambertian;
 import world_object;
 
 import <SFML/Graphics.hpp>;
 
-Color Renderer::computeRayColor(const Ray& inputRay, const WorldObject& mainWorld)
+Color Renderer::computeRayColor(const Ray& inputRay, const WorldObject& mainWorld, int maxRayBounceDepth)
 {
+    if (maxRayBounceDepth <= 0) return Color(0);
+
     HitRecord tempHitRecord{};
     
-    if (mainWorld.checkHit(inputRay, Interval(0, +UInfinity), tempHitRecord))
+    if (mainWorld.checkHit(inputRay, Interval(0.001, +UInfinity), tempHitRecord))
     {
-        Vec3 returnColorVec{ 0.5 * (tempHitRecord.normalVec + Vec3(1.0, 1.0, 1.0)) };
-        
-        return Color(returnColorVec.getX(), returnColorVec.getY(), returnColorVec.getZ());
+        Ray scatteredRay{};
+        Color materialAlbedo{};
+
+        if (tempHitRecord.hitMaterial->handleRayScatter(inputRay, tempHitRecord, materialAlbedo, scatteredRay))
+        {
+            return materialAlbedo * computeRayColor(scatteredRay, mainWorld, maxRayBounceDepth - 1);
+        }
     }
     return getBackgroundGradient(inputRay);
 }
@@ -43,7 +52,7 @@ void Renderer::setupRenderer(const PixelResolution& pixResObj, const AspectRatio
     m_mainCamera = Camera{ pixResObj, aspectRatioObj };
     m_mainCamera.setupCamera();
 
-    m_texUpdateFutureVec.reserve(m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels);
+    m_renderingStatusFutureVec.reserve(m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels);
     m_texUpdateLatch = std::make_unique<std::latch>(m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels);
 
 }
@@ -54,7 +63,7 @@ void Renderer::renderFrameMultiCore(std::vector<Color>& mainFramebuffer, const W
 
     for (int eachPixelRow{}; eachPixelRow < m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels; ++eachPixelRow)
     {
-        m_texUpdateFutureVec.push_back(m_renderThreadPool.enqueueThreadPoolTask([this, eachPixelRow, &mainFramebuffer, &mainWorld]() {
+        m_renderingStatusFutureVec.push_back(m_renderThreadPool.enqueueThreadPoolTask([this, eachPixelRow, &mainFramebuffer, &mainWorld]() {
             this->renderPixelRowThreadPoolTask(eachPixelRow, mainFramebuffer, mainWorld);
         }));    
     }
@@ -79,10 +88,10 @@ void Renderer::renderPixelRowThreadPoolTask(int currentRowCount, std::vector<Col
         for (int pixelSample{}; pixelSample < m_samplesPerPixel; ++pixelSample)
         {
             Ray currentPixelRay = getRayForPixel(i, currentRowCount);
-            normCurrPixColor = normCurrPixColor + computeRayColor(currentPixelRay, mainWorld);
+            normCurrPixColor = normCurrPixColor + computeRayColor(currentPixelRay, mainWorld, m_maxRayBounceDepth - 1);
             index = ((currentRowCount * localPixResObj.widthInPixels) + i);
         }
-        mainFramebuffer[index] = normCurrPixColor;
+        mainFramebuffer[index] = normCurrPixColor * (1.0 / m_samplesPerPixel);
     }
 }
 
@@ -101,11 +110,11 @@ bool Renderer::checkForDrawUpdate()
     auto shouldStart = m_texUpdateLatch->try_wait();
     if (!shouldStart) return false;
 
-    const auto itBegin{ m_texUpdateFutureVec.begin() + m_currChunkForTexUpdate };
+    const auto itBegin{ m_renderingStatusFutureVec.begin() + m_currChunkForTexUpdate };
     auto itEnd{ itBegin };
-    const auto remainingDistance = std::distance(itBegin, m_texUpdateFutureVec.end());
+    const auto remainingDistance = std::distance(itBegin, m_renderingStatusFutureVec.end());
     remainingDistance < m_texUpdateRate ? 
-        itEnd = m_texUpdateFutureVec.end() : 
+        itEnd = m_renderingStatusFutureVec.end() : 
         itEnd = itBegin + m_texUpdateRate;
 
     const bool hasChunkCompleted = std::all_of(itBegin, itEnd, [](const std::future<void>& fut) {
@@ -114,11 +123,11 @@ bool Renderer::checkForDrawUpdate()
 
     if (!hasChunkCompleted) return false;
 
-    itEnd == m_texUpdateFutureVec.end() ? m_currChunkForTexUpdate = 0 : m_currChunkForTexUpdate += m_texUpdateRate;
+    itEnd == m_renderingStatusFutureVec.end() ? m_currChunkForTexUpdate = 0 : m_currChunkForTexUpdate += m_texUpdateRate;
 
-    if (itEnd == m_texUpdateFutureVec.end()) m_renderThreadPool.stopThreadPool();
+    if (itEnd == m_renderingStatusFutureVec.end()) m_renderThreadPool.stopThreadPool();
 
-    return true;
+    return hasChunkCompleted;
 }
 
 std::pair<int, int> Renderer::getTextureUpdateCounters() const
@@ -126,9 +135,22 @@ std::pair<int, int> Renderer::getTextureUpdateCounters() const
     return std::pair<int, int>(m_currChunkForTexUpdate - m_texUpdateRate, m_texUpdateRate);
 }
 
+bool Renderer::getRenderCompleteStatus() const noexcept
+{
+    if (!m_texUpdateLatch->try_wait()) return false;
+    bool isRenderComplete = std::all_of(m_renderingStatusFutureVec.begin(), m_renderingStatusFutureVec.end(), [](const std::future<void>& fut) {
+		return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+	});
+
+    return isRenderComplete;
+}
+
 Ray Renderer::getRayForPixel(int i, int currentRowCount) const noexcept
 {
     const auto localCamProps{ m_mainCamera.getCameraProperties() };
-    const Point currentPixelCenter{ localCamProps.camPixelDimObj.pixelCenter + (i * localCamProps.camPixelDimObj.lateralSpanInAbsVal) + (currentRowCount * localCamProps.camPixelDimObj.verticalSpanInAbsVal) };
-    return Ray(localCamProps.camCenter, currentPixelCenter - localCamProps.camCenter);
+    
+    auto sampleOffset{ Vec3((UGenRNG<double>() - 0.5), (UGenRNG<double>() - 0.5), 0) };
+    
+    const Point currentRayForPixel{ localCamProps.camPixelDimObj.pixelCenter + ((i + sampleOffset.getX()) * localCamProps.camPixelDimObj.lateralSpanInAbsVal) + ((currentRowCount + sampleOffset.getY()) * localCamProps.camPixelDimObj.verticalSpanInAbsVal) };
+    return Ray(localCamProps.camCenter, currentRayForPixel - localCamProps.camCenter);
 }

@@ -30,6 +30,7 @@
     <ClCompile Include="src\base\engine\main\indus.ixx" />
     <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.cppm" />
     <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.ixx" />
+    <ClCompile Include="src\base\hit_record\hit_record.ixx" />
     <ClCompile Include="src\base\image\image.cppm" />
     <ClCompile Include="src\base\image\image.ixx" />
     <ClCompile Include="src\base\ray\ray.cppm" />
@@ -40,6 +41,9 @@
     <ClCompile Include="src\base\vec3\vec3.ixx" />
     <ClCompile Include="src\base\window\window.cppm" />
     <ClCompile Include="src\base\window\window.ixx" />
+    <ClCompile Include="src\components\materials\lambertian.ixx" />
+    <ClCompile Include="src\components\materials\material.ixx" />
+    <ClCompile Include="src\components\materials\metal.ixx" />
     <ClCompile Include="src\components\world_object\sphere\sphere.cppm" />
     <ClCompile Include="src\components\world_object\sphere\sphere.ixx" />
     <ClCompile Include="src\components\world_object\world_object.cppm" />

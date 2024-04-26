@@ -2,7 +2,7 @@ import sphere;
 
 import <cmath>;
 
-WOSphere::WOSphere(const Point& center, double radius) noexcept : m_sphereCenter(center), m_sphereRadius(radius) {}
+WOSphere::WOSphere(const Point& center, double radius, std::shared_ptr<Material> material) noexcept : m_sphereCenter(center), m_sphereRadius(radius), m_sphereMaterial{ material } {}
 
 bool WOSphere::checkHit(const Ray& inputRay, Interval rayInterval, HitRecord& hitRec) const
 {
@@ -28,5 +28,7 @@ bool WOSphere::checkHit(const Ray& inputRay, Interval rayInterval, HitRecord& hi
 	hitRec.hitPoint = inputRay.getPointOnRayAt(hitRec.root);
 	Vec3 outwardNormal = (hitRec.hitPoint - m_sphereCenter) / m_sphereRadius;
 	hitRec.setFaceNormal(inputRay, outwardNormal);
+	hitRec.hitMaterial = m_sphereMaterial;
+
 	return true;
 }

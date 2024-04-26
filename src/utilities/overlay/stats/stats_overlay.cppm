@@ -65,6 +65,14 @@ void StatsOverlay::showOverlay(sf::RenderWindow& renderWindowObj, const PixelRes
 	int verticalStatSpacing{ 0 };
 	std::vector<std::reference_wrapper<OverlayStatistic>> tempCopy{ m_overlayProps.getStatsCollection() };
 
+	if (m_hasRenderStarted)
+	{
+		m_overlayProps.renderObj.statResultObj.setString("Rendering.");
+		m_overlayProps.renderObj.statResultObj.setColor(sf::Color::Red);
+		m_overlayProps.timeObj.statResultObj.setString("Calculating.");
+		m_overlayProps.timeObj.statResultObj.setColor(sf::Color::Red);
+	}
+
 	if (m_hasRenderCompleted)
 	{
 		std::string timerResult{ timerObj.getTimerResultString() };

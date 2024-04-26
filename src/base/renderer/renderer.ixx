@@ -34,10 +34,11 @@ public:
     void setRendererSFMLFunctors(const RendererSFMLFunctors& rendererFuncObj) noexcept;
     void setThreadingMode(bool isMultithreaded) noexcept;
 
+    [[nodiscard]] bool getRenderCompleteStatus() const noexcept;
     [[nodiscard]] bool getThreadingMode() const noexcept;
     [[nodiscard]] std::pair<int, int> getTextureUpdateCounters() const;
     [[nodiscard]] CameraProperties getRendererCameraProps() const noexcept;
-
+    
     bool checkForDrawUpdate();
 
 private:   
@@ -46,14 +47,15 @@ private:
     bool m_isMultithreaded{ true };
 
     MT_ThreadPool m_renderThreadPool{};
-    std::vector<std::future<void>> m_texUpdateFutureVec{};
+    std::vector<std::future<void>> m_renderingStatusFutureVec{};
     std::unique_ptr<std::latch> m_texUpdateLatch{};
     int m_currChunkForTexUpdate{ 0 };
-    int m_texUpdateRate{ 50 };
-    int m_samplesPerPixel{ 10 };
+    int m_texUpdateRate{ 20 };
+    int m_samplesPerPixel{ 50 };
+    int m_maxRayBounceDepth{ 50 };
 
     [[nodiscard]] Ray getRayForPixel(int i, int currentRowCount) const noexcept;
-    [[nodiscard]] static Color computeRayColor(const Ray& inputRay, const WorldObject& mainWorld);
+    [[nodiscard]] static Color computeRayColor(const Ray& inputRay, const WorldObject& mainWorld, int maxRayBounceDepth);
     static const Color getBackgroundGradient(const Ray& inputRay);
     void renderPixelRowThreadPoolTask(int currentColumnCount, std::vector<Color>& primaryPixelBuffer, const WorldObject& mainWorld);
 };

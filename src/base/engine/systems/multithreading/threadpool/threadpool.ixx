@@ -19,7 +19,6 @@ public:
     void initiateThreadPool();
     template<typename F>
     auto enqueueThreadPoolTask(F&& func)->std::future<decltype(func())>;
-
 	[[noreturn]] void stopThreadPool();
 
 private:

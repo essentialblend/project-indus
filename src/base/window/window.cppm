@@ -103,7 +103,7 @@ void SFMLWindow::updatePDHOverlayPeriodic(StatsOverlay& statsOverlayObj, PDHVari
 
 void SFMLWindow::updateRenderingStatus(Timer& timerObj, StatsOverlay& statsOverlayObj)
 {
-	if (m_isRendering && m_renderingStatusFuture.valid() && m_renderingStatusFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+	if (m_isRendering && m_windowFunctors.getRenderCompleteStatusFunctor())
 	{
 		timerObj.endTimer();
 		statsOverlayObj.setRenderingCompleteStatus(true);
@@ -213,6 +213,11 @@ void SFMLWindow::setTextureCounterGetterFunctor(const std::function<std::pair<in
 void SFMLWindow::setMainRendererCameraPropsGetFunctor(const std::function<CameraProperties()>& mainRendererCameraPropsGetFunctor)
 {
 	m_windowFunctors.getRendererCameraPropsFunctor = mainRendererCameraPropsGetFunctor;
+}
+
+void SFMLWindow::setRenderCompleteStatusGetFunctor(const std::function<bool()>& renderCompleteStatusFunctor) noexcept
+{
+	m_windowFunctors.getRenderCompleteStatusFunctor = renderCompleteStatusFunctor;
 }
 
 double SFMLWindow::getCPUUsageWithPDH(PDHVariables& pdhVars)

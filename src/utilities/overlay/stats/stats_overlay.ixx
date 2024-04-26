@@ -24,5 +24,6 @@ private:
 	sf::Font m_overlayFont{};
 	bool m_isOverlayEnabled{ true };
 	bool m_hasRenderCompleted{ false };
+	bool m_hasRenderStarted{ false };
 	double m_totalCPUUsage{};
 };

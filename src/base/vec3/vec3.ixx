@@ -27,13 +27,14 @@ public:
 	[[nodiscard]] double getMagnitude() const noexcept;
 	[[nodiscard]] double getMagnitudeSq() const noexcept;
 
+	[[nodiscard]] bool isNearZero() const noexcept;
+
 private:
 	std::array<double, 3> m_Vec{};
 };
 
 // Non-member vec3 utils.
 export {
-
 	std::ostream& operator<<(std::ostream& outStream, const Vec3& outVec);
 
 	[[nodiscard]] Vec3 operator+(const Vec3& f, const Vec3& s) noexcept;
@@ -46,6 +47,9 @@ export {
 	[[nodiscard]] double computeDot(const Vec3& f, const Vec3& s) noexcept;
 	[[nodiscard]] Vec3 computeCross(const Vec3& f, const Vec3& s) noexcept;
 	[[nodiscard]] Vec3 getUnit(const Vec3& inputVec) noexcept;
-
+	[[nodiscard]] Vec3 genRandomVec(double min = 0, double max = 1) noexcept;
+	[[nodiscard]] Vec3 genRandomUnitSphereVec();
+	[[nodiscard]] Vec3 genRandomUnitSphereVecNorm();
+	[[nodiscard]] Vec3 genRandomUnitHemisphereVecNorm(const Vec3& normalVec);
 	using Point = Vec3;
 }
