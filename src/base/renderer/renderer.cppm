@@ -1,5 +1,7 @@
 import renderer;
 
+import <algorithm>;
+
 import core_util;
 import color;
 import threadpool;
@@ -107,40 +109,49 @@ bool Renderer::getThreadingMode() const noexcept
 
 bool Renderer::checkForDrawUpdate()
 {
-    auto shouldStart = m_texUpdateLatch->try_wait();
-    if (!shouldStart) return false;
+    if (m_renderingStatusFutureVec.size() != m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels) return false;
+    
+    // updateChunk spans 0 to m_texUpdateRate rows for one chunk. 
+    static int updateChunk{ 0 };
+    
+    const auto itBegin{ m_renderingStatusFutureVec.begin() + updateChunk };
+    const auto numElementsRemaining = std::distance(itBegin, m_renderingStatusFutureVec.end());
 
-    const auto itBegin{ m_renderingStatusFutureVec.begin() + m_currChunkForTexUpdate };
-    auto itEnd{ itBegin };
-    const auto remainingDistance = std::distance(itBegin, m_renderingStatusFutureVec.end());
-    remainingDistance < m_texUpdateRate ? 
-        itEnd = m_renderingStatusFutureVec.end() : 
-        itEnd = itBegin + m_texUpdateRate;
+    if (numElementsRemaining < m_texUpdateRate)
+    {
+        m_texUpdateRate = static_cast<int>(numElementsRemaining);
+    }
 
-    const bool hasChunkCompleted = std::all_of(itBegin, itEnd, [](const std::future<void>& fut) {
-    return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-    });
+    const auto itEnd{ itBegin + m_texUpdateRate };
 
-    if (!hasChunkCompleted) return false;
+    bool canCurrentChunkBeDrawn = std::all_of(itBegin, itEnd, [](const std::future<void>& fut) {
+		return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+	});
 
-    itEnd == m_renderingStatusFutureVec.end() ? m_currChunkForTexUpdate = 0 : m_currChunkForTexUpdate += m_texUpdateRate;
+    if (itBegin + m_texUpdateRate == m_renderingStatusFutureVec.end())
+    {
+        updateChunk = 0;
+    }
+    else if(canCurrentChunkBeDrawn)
+    {
+        updateChunk += m_texUpdateRate;
+    }
 
-    if (itEnd == m_renderingStatusFutureVec.end()) m_renderThreadPool.stopThreadPool();
-
-    return hasChunkCompleted;
+    return canCurrentChunkBeDrawn;
 }
 
-std::pair<int, int> Renderer::getTextureUpdateCounters() const
-{
-    return std::pair<int, int>(m_currChunkForTexUpdate - m_texUpdateRate, m_texUpdateRate);
-}
-
-bool Renderer::getRenderCompleteStatus() const noexcept
+bool Renderer::getRenderCompleteStatus() noexcept
 {
     if (!m_texUpdateLatch->try_wait()) return false;
     bool isRenderComplete = std::all_of(m_renderingStatusFutureVec.begin(), m_renderingStatusFutureVec.end(), [](const std::future<void>& fut) {
-		return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-	});
+        return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+    });
+
+    if (isRenderComplete)
+    {
+        // Causes crash.
+        m_renderThreadPool.stopThreadPool();
+    }
 
     return isRenderComplete;
 }
@@ -153,4 +164,9 @@ Ray Renderer::getRayForPixel(int i, int currentRowCount) const noexcept
     
     const Point currentRayForPixel{ localCamProps.camPixelDimObj.pixelCenter + ((i + sampleOffset.getX()) * localCamProps.camPixelDimObj.lateralSpanInAbsVal) + ((currentRowCount + sampleOffset.getY()) * localCamProps.camPixelDimObj.verticalSpanInAbsVal) };
     return Ray(localCamProps.camCenter, currentRayForPixel - localCamProps.camCenter);
+}
+
+[[nodiscard]] int Renderer::getTexUpdateRate() const noexcept
+{
+    return m_texUpdateRate;
 }

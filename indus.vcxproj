@@ -41,6 +41,7 @@
     <ClCompile Include="src\base\vec3\vec3.ixx" />
     <ClCompile Include="src\base\window\window.cppm" />
     <ClCompile Include="src\base\window\window.ixx" />
+    <ClCompile Include="src\components\materials\dielectric.ixx" />
     <ClCompile Include="src\components\materials\lambertian.ixx" />
     <ClCompile Include="src\components\materials\material.ixx" />
     <ClCompile Include="src\components\materials\metal.ixx" />
@@ -185,7 +186,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)src\dep\SFML\lib;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>sfml-graphics.lib;sfml-window.lib;sfml-system.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Pdh.lib;sfml-graphics.lib;sfml-window.lib;sfml-system.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

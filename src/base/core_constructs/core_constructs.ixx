@@ -52,6 +52,8 @@ export struct CameraProperties
 
 	Point camCenter{ 0.0, 0.0, 0.0 };
 	Vec3 camFocalLength{0, 0, 1};
+
+	double camVerticalFOV{ 90.0 };
 };
 
 export struct SFMLWindowProperties
@@ -109,9 +111,9 @@ export struct WindowFunctors
 	std::function<bool()> isMultithreadedFunctor{};
 	std::function<bool()> isTextureReadyForUpdateFunctor{};
 	std::function<std::vector<Color>()> getMainEngineFramebufferFunctor{};
-	std::function<std::pair<int, int>()> getTextureUpdateCounterFunctor{};
 	std::function<CameraProperties()> getRendererCameraPropsFunctor{};
 	std::function<bool()> getRenderCompleteStatusFunctor{};
+	std::function<int()> getTextureUpdateRateFunctor{};
 };
 
 export struct PDHVariables

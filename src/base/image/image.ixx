@@ -22,7 +22,7 @@ public:
 	explicit PNGImage() noexcept = default;
 	explicit PNGImage(const ImageProperties& imgProp, std::span<Color const> pixelBuffer) noexcept;
 
-	[[noreturn]] virtual void createImage() override;
+	virtual void createImage() override;
 
 private:
 	ImageProperties m_imageProperties{};

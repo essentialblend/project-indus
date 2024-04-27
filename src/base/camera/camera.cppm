@@ -1,14 +1,22 @@
 import camera;
 
+import <cmath>;
+
+import core_util;
+
 Camera::Camera(const PixelResolution& resObj, const AspectRatio& arObj) noexcept : m_cameraProps{ .camImgPropsObj{.pixelResolutionObj{resObj}, .aspectRatioObj{arObj}} } {}
 
 void Camera::setupCamera()
 {
     const auto& localPixelResProps{ m_cameraProps.camImgPropsObj.pixelResolutionObj };
-    const auto& localViewportProps{ m_cameraProps.camViewportPropsObj };
+    auto& localViewportProps{ m_cameraProps.camViewportPropsObj };
     const auto& localARProps{ m_cameraProps.camImgPropsObj.aspectRatioObj };
 
     m_cameraProps.camImgPropsObj.pixelResolutionObj.heightInPixels = std::max(1, static_cast<int>(localPixelResProps.widthInPixels / (localARProps.widthInAbsVal / localARProps.heightInAbsVal)));
+
+    const auto theta = UDegreesToRadians(m_cameraProps.camVerticalFOV);
+    const auto h = std::tan(theta / 2);
+    localViewportProps.heightInWorldSpaceUnits = 2 * h * m_cameraProps.camFocalLength.getZ();
 
     m_cameraProps.camViewportPropsObj.widthInWorldSpaceUnits = localViewportProps.heightInWorldSpaceUnits * static_cast<double>(localPixelResProps.widthInPixels) / m_cameraProps.camImgPropsObj.pixelResolutionObj.heightInPixels;
 

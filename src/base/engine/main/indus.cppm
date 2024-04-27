@@ -5,6 +5,7 @@ import sphere;
 import material;
 import lambertian;
 import metal;
+import dielectric;
 
 Indus::Indus(const PixelResolution& windowPixResObj, const PixelResolution& imagePixResObj, const AspectRatio& aspectRatioObj) noexcept :
 	m_mainWindow(windowPixResObj),
@@ -14,15 +15,17 @@ Indus::Indus(const PixelResolution& windowPixResObj, const PixelResolution& imag
 
 void Indus::initializeWorld()
 {
-	const auto ground{ std::make_shared<MLambertian>(Color(0.8, 0.8, 0.5)) };
-	const auto center{ std::make_shared<MLambertian>(Color(0.9, 0.2, 0.6)) };
-	const auto left{ std::make_shared<MMetal>(Color(0.8, 0.5, 0.8)) };
-	const auto right{ std::make_shared<MMetal>(Color(0.4, 0.6, 0.2)) };
+	const auto ground_lamb = std::make_shared<MLambertian>(Color(0.8, 0.8, 0.0));
+	const auto center_lamb = std::make_shared<MLambertian>(Color(0.1, 0.2, 0.5));
+	const auto left_diel = std::make_shared<MDielectric>(1.50);
+	const auto bubble_diel = std::make_shared<MDielectric>(1.00 / 1.50);
+	const auto right_metal = std::make_shared<MMetal>(Color(0.8, 0.6, 0.2));
 
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0, -100.5, -1), 100, ground));
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0, 0, -1), 0.5, center));
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(-1, 0, -1), 0.5, left));
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(1, 0, -1), 0.5, right));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0.0, -100.5, -1.0), 100.0, ground_lamb));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0.0, 0.0, -1.2), 0.5, center_lamb));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(-1.0, 0.0, -1.0), 0.5, left_diel));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(-1.0, 0.0, -1.0), 0.4, bubble_diel));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(1.0, 0.0, -1.0), 0.5, right_metal));
 }
 
 void Indus::initializeEngine()
@@ -72,43 +75,45 @@ void Indus::setRendererFunctors()
 
 void Indus::setWindowFunctors()
 {
-	const std::function<bool()> multithreadingCheckFunctor = [&]() { return m_mainRenderer.getThreadingMode(); };
+	const std::function<bool()> multithreadingCheckFunctor{ [&]() { return m_mainRenderer.getThreadingMode(); } };
 
-	const std::function<void()> renderMultiCoreFrameFunctor = [&]()
-		{
-			m_mainRenderer.renderFrameMultiCore(m_mainRenderFramebuffer, m_mainWorld);
-		};
+	const std::function<void()> renderMultiCoreFrameFunctor{ [&]()
+	{
+		m_mainRenderer.renderFrameMultiCore(m_mainRenderFramebuffer, m_mainWorld);
+	} };
 
-	const std::function<bool()> texUpdateCheckFunctor = [&]()
-		{
-			return m_mainRenderer.checkForDrawUpdate();
-		};
+	const std::function<bool()> texUpdateCheckFunctor{ [&]()
+	{
+		return m_mainRenderer.checkForDrawUpdate();
+	} };
 
-	const std::function<std::vector<Color>()> mainRenderFramebufferGetter = [&]()
-		{
-			return m_mainRenderFramebuffer;
-		};
+	const std::function<std::vector<Color>()> mainRenderFramebufferGetter{ [&]()
+	{
+		return m_mainRenderFramebuffer;
+	} };
 
-	const std::function<std::pair<int, int>()> texUpdateCounterGetter = [&]()
-		{
-			return m_mainRenderer.getTextureUpdateCounters();
-		};
-	const std::function<CameraProperties()> mainRendererCamPropsGetter = [&]()
-		{
-			return m_mainRenderer.getRendererCameraProps();
-		};
-	const std::function<bool()> mainRenderCompleteStatusGetter = [&]()
-		{
-			return m_mainRenderer.getRenderCompleteStatus();
-		};
+	const std::function<CameraProperties()> mainRendererCamPropsGetter{ [&]()
+	{
+		return m_mainRenderer.getRendererCameraProps();
+	} };
+	
+	const std::function<bool()> mainRenderCompleteStatusGetter{ [&]()
+	{
+		return m_mainRenderer.getRenderCompleteStatus();
+	} };
+
+	const std::function<int()> textureUpdateRateGetter{ [&]()
+	{
+		return m_mainRenderer.getTexUpdateRate();
+	} };
 
 	m_mainWindow.setMainEngineFramebufferGetFunctor(mainRenderFramebufferGetter);
 	m_mainWindow.setTextureUpdateCheckFunctor(texUpdateCheckFunctor);
 	m_mainWindow.setMultithreadedCheckFunctor(multithreadingCheckFunctor);
 	m_mainWindow.setRenderFrameMultiCoreFunctor(renderMultiCoreFrameFunctor);
-	m_mainWindow.setTextureCounterGetterFunctor(texUpdateCounterGetter);
 	m_mainWindow.setMainRendererCameraPropsGetFunctor(mainRendererCamPropsGetter);
 	m_mainWindow.setRenderCompleteStatusGetFunctor(mainRenderCompleteStatusGetter);
+	m_mainWindow.setTextureUpdateRateGetFunctor(textureUpdateRateGetter);
 }
 
 std::vector<Color> Indus::getMainRenderFramebuffer() const noexcept

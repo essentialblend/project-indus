@@ -13,9 +13,9 @@ public:
 	
     void setupCamera();
 
-    [[noreturn]] void setViewportHeight(double vpHeightInWorldSpace = 2.0) noexcept;
-    [[noreturn]] void setFocalLength(const Vec3& focalLengthInCartesianZ) noexcept;
-    [[noreturn]] void setCameraCenter(const Point& centerPointInWorldSpace = Point(0)) noexcept;
+    void setViewportHeight(double vpHeightInWorldSpace = 2.0) noexcept;
+    void setFocalLength(const Vec3& focalLengthInCartesianZ) noexcept;
+    void setCameraCenter(const Point& centerPointInWorldSpace = Point(0)) noexcept;
 
     [[nodiscard]] CameraProperties getCameraProperties() const noexcept;
 

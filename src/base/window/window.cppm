@@ -115,44 +115,44 @@ void SFMLWindow::updateTextureForDisplay()
 {
 	if (m_needsDrawUpdate && m_windowFunctors.isTextureReadyForUpdateFunctor())
 	{
-		const auto& localMainFramebuffer = m_windowFunctors.getMainEngineFramebufferFunctor();
-		std::vector<sf::Uint8> localTexChunkSFMLBuffer;
+		// chunkTracker increments from 0 to (numRows - 1).
+		static int chunkTracker{ 0 };
+		const auto& localMainFramebuffer{ m_windowFunctors.getMainEngineFramebufferFunctor() };
+		const auto& localImgPixResObj{ m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj };
+		int texUpdateRate{ m_windowFunctors.getTextureUpdateRateFunctor() };
+		std::vector<sf::Uint8> localTexSFMLBuffer;
+		int singleChunkPixels{ localImgPixResObj.widthInPixels * texUpdateRate };
 
-		const auto localRendererCamPixResObj{ m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj };
-		const auto& localUpdateCounters = m_windowFunctors.getTextureUpdateCounterFunctor();
-		const int originalUpdateRate = localUpdateCounters.second;
-		int updateRate = originalUpdateRate;
-		auto singleChunkPixels{ localRendererCamPixResObj.widthInPixels * updateRate };
+		const auto itBegin{ localMainFramebuffer.begin() + (static_cast<long long>(chunkTracker * singleChunkPixels)) };
+		const auto remainingPixels{ std::distance(itBegin, localMainFramebuffer.end()) };
 
-		const auto itBegin{ localMainFramebuffer.begin() + static_cast<long long>(singleChunkPixels * m_texUpdateChunkTracker) };
-		auto itEnd{ itBegin };
-		const auto remainingPixels = std::distance(itEnd, localMainFramebuffer.end());
 		if (remainingPixels < singleChunkPixels)
 		{
 			singleChunkPixels = static_cast<int>(remainingPixels);
-			updateRate = static_cast<int>(remainingPixels / localRendererCamPixResObj.widthInPixels);
+			texUpdateRate = static_cast<int>(remainingPixels / localImgPixResObj.widthInPixels);
 		}
 
-		itEnd += singleChunkPixels;
-		localTexChunkSFMLBuffer.reserve(static_cast<long long>(singleChunkPixels * 4));
+		const auto itEnd{ itBegin + singleChunkPixels };
+		localTexSFMLBuffer.reserve(static_cast<long long>(singleChunkPixels * 4));
+
 		std::for_each(itBegin, itEnd, [&](const Color& color)
 			{
-				localTexChunkSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getX()));
-				localTexChunkSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getY()));
-				localTexChunkSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getZ()));
-				localTexChunkSFMLBuffer.push_back(255);
+				localTexSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getX()));
+				localTexSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getY()));
+				localTexSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getZ()));
+				localTexSFMLBuffer.push_back(255);
 			});
 
-		m_windowProps.texObj.update(localTexChunkSFMLBuffer.data(), localRendererCamPixResObj.widthInPixels, updateRate, 0, originalUpdateRate * m_texUpdateChunkTracker);
+		m_windowProps.texObj.update(localTexSFMLBuffer.data(), localImgPixResObj.widthInPixels, texUpdateRate, 0, texUpdateRate * chunkTracker);
 
 		if (itEnd == localMainFramebuffer.end())
 		{
 			m_needsDrawUpdate = false;
-			m_texUpdateChunkTracker = 0;
+			chunkTracker = 0;
 		}
 		else
 		{
-			++m_texUpdateChunkTracker;
+			++chunkTracker;
 		}
 	}
 }
@@ -205,11 +205,6 @@ void SFMLWindow::setMainEngineFramebufferGetFunctor(const std::function<std::vec
 	m_windowFunctors.getMainEngineFramebufferFunctor = mainEngineFramebufferGetFunctor;
 }
 
-void SFMLWindow::setTextureCounterGetterFunctor(const std::function<std::pair<int, int>()>& texUpdateCounterGetter) noexcept
-{
-	m_windowFunctors.getTextureUpdateCounterFunctor = texUpdateCounterGetter;
-}
-
 void SFMLWindow::setMainRendererCameraPropsGetFunctor(const std::function<CameraProperties()>& mainRendererCameraPropsGetFunctor)
 {
 	m_windowFunctors.getRendererCameraPropsFunctor = mainRendererCameraPropsGetFunctor;
@@ -218,6 +213,11 @@ void SFMLWindow::setMainRendererCameraPropsGetFunctor(const std::function<Camera
 void SFMLWindow::setRenderCompleteStatusGetFunctor(const std::function<bool()>& renderCompleteStatusFunctor) noexcept
 {
 	m_windowFunctors.getRenderCompleteStatusFunctor = renderCompleteStatusFunctor;
+}
+
+void SFMLWindow::setTextureUpdateRateGetFunctor(const std::function<int()>& texUpdateRateFunctor) noexcept
+{
+	m_windowFunctors.getTextureUpdateRateFunctor = texUpdateRateFunctor;
 }
 
 double SFMLWindow::getCPUUsageWithPDH(PDHVariables& pdhVars)

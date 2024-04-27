@@ -8,10 +8,10 @@ public:
 	explicit StatsOverlay() noexcept = default;
 
 	virtual void setupOverlay(bool isMultithreaded) override;
-	[[noreturn]] virtual void setDefaultDisplayedText(bool isMultithreaded) override;
-	[[noreturn]] virtual void setSFMLTextProperties() override;
-	[[noreturn]] virtual void setRenderingCompleteStatus(bool hasRenderCompleted) noexcept override;
-	[[noreturn]] virtual void setOverlayVisibility(bool shouldDisplayOverlay) noexcept override;
+	virtual void setDefaultDisplayedText(bool isMultithreaded) override;
+	virtual void setSFMLTextProperties() override;
+	virtual void setRenderingCompleteStatus(bool hasRenderCompleted) noexcept override;
+	virtual void setOverlayVisibility(bool shouldDisplayOverlay) noexcept override;
 	
 	void setTotalCPUUsage(double totalCPUUsage) noexcept;
 

@@ -16,7 +16,7 @@ public:
     explicit SFMLWindow(const PixelResolution& pixResObj) noexcept : m_windowPixelRes(pixResObj) {}
 
 	void setupWindow();
-    [[noreturn]] void displayWindow(StatsOverlay& statsOverlayObj, Timer& timerObj);
+    void displayWindow(StatsOverlay& statsOverlayObj, Timer& timerObj);
     void startPDHQuery(PDHVariables& pdhVars);
     void setupWindowSFMLParams();
     void checkForUpdates(StatsOverlay& statsOverlayObj, Timer& timerObj, PDHVariables& pdhVars);
@@ -25,19 +25,17 @@ public:
     void drawGUI(StatsOverlay& statsOverlayObj, const Timer& timerObj);
     void processInputEvents(StatsOverlay& statsOverlayObj, Timer& timerObj);
     [[nodiscard]] SFMLWindowProperties& getSFMLWindowProperties() noexcept;
-    [[noreturn]] void setResolution(const PixelResolution& windowPixResObj) noexcept;
+    void setResolution(const PixelResolution& windowPixResObj) noexcept;
 
     void setRenderFrameMultiCoreFunctor(const std::function<void()>& multiCoreFunctor) noexcept;
     void setMultithreadedCheckFunctor(const std::function<bool()>& isMultithreadedCheckFunctor) noexcept;
 
     void setTextureUpdateCheckFunctor(const std::function<bool()>& texUpdateCheckFunctor) noexcept;
-    void setTextureCounterGetterFunctor(const std::function<std::pair<int, int>()>& texUpdateCounterGetter) noexcept;
 
     void setMainEngineFramebufferGetFunctor(const std::function<std::vector<Color>()>& mainEngineFramebufferGetFunctor) noexcept;
     void setMainRendererCameraPropsGetFunctor(const std::function<CameraProperties()>& mainRendererCameraPropsGetFunctor);
     void setRenderCompleteStatusGetFunctor(const std::function<bool()>& renderCompleteStatusFunctor) noexcept;
-    double getCPUUsageWithPDH(PDHVariables& pdhVars);
-    void updatePDHOverlayPeriodic(StatsOverlay& statsOverlayObj, PDHVariables& pdhVars);
+    void setTextureUpdateRateGetFunctor(const std::function<int()>& texUpdateRateFunctor) noexcept;
 
 private:
     SFMLWindowProperties m_windowProps{};
@@ -51,6 +49,9 @@ private:
     bool m_needsDrawUpdate{ false };
     bool m_isRendering{ false };
     int m_texUpdateChunkTracker{ 0 };
+    
+    [[nodiscard]] double getCPUUsageWithPDH(PDHVariables& pdhVars);
+    void updatePDHOverlayPeriodic(StatsOverlay& statsOverlayObj, PDHVariables& pdhVars);
 };
 
 

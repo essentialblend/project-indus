@@ -34,10 +34,10 @@ public:
     void setRendererSFMLFunctors(const RendererSFMLFunctors& rendererFuncObj) noexcept;
     void setThreadingMode(bool isMultithreaded) noexcept;
 
-    [[nodiscard]] bool getRenderCompleteStatus() const noexcept;
+    [[nodiscard]] bool getRenderCompleteStatus() noexcept;
     [[nodiscard]] bool getThreadingMode() const noexcept;
-    [[nodiscard]] std::pair<int, int> getTextureUpdateCounters() const;
     [[nodiscard]] CameraProperties getRendererCameraProps() const noexcept;
+    [[nodiscard]] int getTexUpdateRate() const noexcept;
     
     bool checkForDrawUpdate();
 
@@ -49,10 +49,9 @@ private:
     MT_ThreadPool m_renderThreadPool{};
     std::vector<std::future<void>> m_renderingStatusFutureVec{};
     std::unique_ptr<std::latch> m_texUpdateLatch{};
-    int m_currChunkForTexUpdate{ 0 };
-    int m_texUpdateRate{ 20 };
-    int m_samplesPerPixel{ 50 };
-    int m_maxRayBounceDepth{ 50 };
+    int m_texUpdateRate{ 50 };
+    int m_samplesPerPixel{ 20 };
+    int m_maxRayBounceDepth{ 20 };
 
     [[nodiscard]] Ray getRayForPixel(int i, int currentRowCount) const noexcept;
     [[nodiscard]] static Color computeRayColor(const Ray& inputRay, const WorldObject& mainWorld, int maxRayBounceDepth);

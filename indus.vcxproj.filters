@@ -123,6 +123,9 @@
     <ClCompile Include="src\components\materials\metal.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\components\materials\dielectric.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dep\stb_image_write.h">
