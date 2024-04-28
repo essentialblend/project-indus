@@ -50,8 +50,8 @@ private:
     std::vector<std::future<void>> m_renderingStatusFutureVec{};
     std::unique_ptr<std::latch> m_texUpdateLatch{};
     int m_texUpdateRate{ 50 };
-    int m_samplesPerPixel{ 20 };
-    int m_maxRayBounceDepth{ 20 };
+    int m_samplesPerPixel{ 100 };
+    int m_maxRayBounceDepth{ 50 };
 
     [[nodiscard]] Ray getRayForPixel(int i, int currentRowCount) const noexcept;
     [[nodiscard]] static Color computeRayColor(const Ray& inputRay, const WorldObject& mainWorld, int maxRayBounceDepth);

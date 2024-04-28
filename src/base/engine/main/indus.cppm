@@ -15,17 +15,17 @@ Indus::Indus(const PixelResolution& windowPixResObj, const PixelResolution& imag
 
 void Indus::initializeWorld()
 {
-	const auto ground_lamb = std::make_shared<MLambertian>(Color(0.8, 0.8, 0.0));
-	const auto center_lamb = std::make_shared<MLambertian>(Color(0.1, 0.2, 0.5));
-	const auto left_diel = std::make_shared<MDielectric>(1.50);
-	const auto bubble_diel = std::make_shared<MDielectric>(1.00 / 1.50);
-	const auto right_metal = std::make_shared<MMetal>(Color(0.8, 0.6, 0.2));
+	auto material_ground = std::make_shared<MLambertian>(Color(0.8, 0.8, 0.0));
+	auto material_center = std::make_shared<MLambertian>(Color(0.1, 0.2, 0.5));
+	auto material_left = std::make_shared<MDielectric>(1.50);
+	auto material_bubble = std::make_shared<MDielectric>(1.00 / 1.50);
+	auto material_right = std::make_shared<MMetal>(Color(0.8, 0.6, 0.2));
 
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0.0, -100.5, -1.0), 100.0, ground_lamb));
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0.0, 0.0, -1.2), 0.5, center_lamb));
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(-1.0, 0.0, -1.0), 0.5, left_diel));
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(-1.0, 0.0, -1.0), 0.4, bubble_diel));
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(1.0, 0.0, -1.0), 0.5, right_metal));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0.0, -100.5, -1.0), 100.0, material_ground));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0.0, 0.0, -1.2), 0.5, material_center));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(-1.0, 0.0, -1.0), 0.5, material_left));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(-1.0, 0.0, -1.0), 0.4, material_bubble));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(1.0, 0.0, -1.0), 0.5, material_right));
 }
 
 void Indus::initializeEngine()

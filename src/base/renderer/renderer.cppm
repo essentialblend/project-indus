@@ -128,7 +128,7 @@ bool Renderer::checkForDrawUpdate()
 		return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
 	});
 
-    if (itBegin + m_texUpdateRate == m_renderingStatusFutureVec.end())
+    if (itEnd == m_renderingStatusFutureVec.end() && canCurrentChunkBeDrawn)
     {
         updateChunk = 0;
     }
@@ -149,7 +149,6 @@ bool Renderer::getRenderCompleteStatus() noexcept
 
     if (isRenderComplete)
     {
-        // Causes crash.
         m_renderThreadPool.stopThreadPool();
     }
 

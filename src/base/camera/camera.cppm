@@ -8,26 +8,28 @@ Camera::Camera(const PixelResolution& resObj, const AspectRatio& arObj) noexcept
 
 void Camera::setupCamera()
 {
-    const auto& localPixelResProps{ m_cameraProps.camImgPropsObj.pixelResolutionObj };
-    auto& localViewportProps{ m_cameraProps.camViewportPropsObj };
-    const auto& localARProps{ m_cameraProps.camImgPropsObj.aspectRatioObj };
+    auto& localPixelResPropsObj{ m_cameraProps.camImgPropsObj.pixelResolutionObj };
+    auto& localViewportPropsObj{ m_cameraProps.camViewportPropsObj };
+    auto& localARPropsObj{ m_cameraProps.camImgPropsObj.aspectRatioObj };
+    auto& localPixDimObj{ m_cameraProps.camPixelDimObj };
 
-    m_cameraProps.camImgPropsObj.pixelResolutionObj.heightInPixels = std::max(1, static_cast<int>(localPixelResProps.widthInPixels / (localARProps.widthInAbsVal / localARProps.heightInAbsVal)));
+    localPixelResPropsObj.heightInPixels = std::max(1, static_cast<int>(localPixelResPropsObj.widthInPixels / (localARPropsObj.widthInAbsVal / localARPropsObj.heightInAbsVal)));
 
     const auto theta = UDegreesToRadians(m_cameraProps.camVerticalFOV);
     const auto h = std::tan(theta / 2);
-    localViewportProps.heightInWorldSpaceUnits = 2 * h * m_cameraProps.camFocalLength.getZ();
+    localViewportPropsObj.heightInWorldSpaceUnits = 2 * h * m_cameraProps.camFocalLength.getZ();
+    localViewportPropsObj.widthInWorldSpaceUnits = localViewportPropsObj.heightInWorldSpaceUnits * static_cast<double>(localPixelResPropsObj.widthInPixels) / localPixelResPropsObj.heightInPixels;
 
-    m_cameraProps.camViewportPropsObj.widthInWorldSpaceUnits = localViewportProps.heightInWorldSpaceUnits * static_cast<double>(localPixelResProps.widthInPixels) / m_cameraProps.camImgPropsObj.pixelResolutionObj.heightInPixels;
+    localViewportPropsObj.horizontalPixelSpan = localViewportPropsObj.widthInWorldSpaceUnits * m_cameraProps.camU;
+    localViewportPropsObj.verticalPixelSpan = localViewportPropsObj.heightInWorldSpaceUnits * -m_cameraProps.camV;
 
-    m_cameraProps.camViewportPropsObj.horizontalPixelSpan = Vec3(m_cameraProps.camViewportPropsObj.widthInWorldSpaceUnits, 0, 0);
-    m_cameraProps.camViewportPropsObj.verticalPixelSpan = Vec3(0, -localViewportProps.heightInWorldSpaceUnits, 0);
-
-    const Point viewportTopLeft{ m_cameraProps.camCenter - m_cameraProps.camFocalLength - (m_cameraProps.camViewportPropsObj.horizontalPixelSpan / 2) - (m_cameraProps.camViewportPropsObj.verticalPixelSpan / 2) };
-
-    m_cameraProps.camPixelDimObj.lateralSpanInAbsVal = m_cameraProps.camViewportPropsObj.horizontalPixelSpan / localPixelResProps.widthInPixels;
-    m_cameraProps.camPixelDimObj.verticalSpanInAbsVal = m_cameraProps.camViewportPropsObj.verticalPixelSpan / m_cameraProps.camImgPropsObj.pixelResolutionObj.heightInPixels;
-    m_cameraProps.camPixelDimObj.pixelCenter = viewportTopLeft + (0.5 * (m_cameraProps.camPixelDimObj.lateralSpanInAbsVal + m_cameraProps.camPixelDimObj.verticalSpanInAbsVal));
+    localPixDimObj.lateralSpanInAbsVal = localViewportPropsObj.horizontalPixelSpan / localPixelResPropsObj.widthInPixels;
+    localPixDimObj.verticalSpanInAbsVal = localViewportPropsObj.verticalPixelSpan / localPixelResPropsObj.heightInPixels;
+    
+    const Point viewportTopLeft{ m_cameraProps.camCenter - (m_cameraProps.camFocalLength.getZ() * m_cameraProps.camW) - (localViewportPropsObj.horizontalPixelSpan / 2) - (localViewportPropsObj.verticalPixelSpan / 2) };
+    
+    localPixDimObj.pixelCenter = viewportTopLeft + (0.5 * (localPixDimObj.lateralSpanInAbsVal + localPixDimObj.verticalSpanInAbsVal));
+    
 }
 
 void Camera::setViewportHeight(double vpHeightInWorldSpace) noexcept

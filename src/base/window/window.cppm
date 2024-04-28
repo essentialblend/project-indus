@@ -4,6 +4,7 @@ import <chrono>;
 import <algorithm>;
 import <execution>;
 import <iostream>;
+import <cmath>;
 
 import<windows.h>;
 import<Pdh.h>;
@@ -119,21 +120,26 @@ void SFMLWindow::updateTextureForDisplay()
 		static int chunkTracker{ 0 };
 		const auto& localMainFramebuffer{ m_windowFunctors.getMainEngineFramebufferFunctor() };
 		const auto& localImgPixResObj{ m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj };
-		int texUpdateRate{ m_windowFunctors.getTextureUpdateRateFunctor() };
-		std::vector<sf::Uint8> localTexSFMLBuffer;
-		int singleChunkPixels{ localImgPixResObj.widthInPixels * texUpdateRate };
+		
+		static int beginningTexUpdateRate{ m_windowFunctors.getTextureUpdateRateFunctor() };
+		const int beginningSingleChunkPixels{ localImgPixResObj.widthInPixels * beginningTexUpdateRate };
+		int currentSingleChunkPixels{ beginningSingleChunkPixels };
+		int currentTexUpdateRate{ m_windowFunctors.getTextureUpdateRateFunctor() };
 
-		const auto itBegin{ localMainFramebuffer.begin() + (static_cast<long long>(chunkTracker * singleChunkPixels)) };
+		std::vector<sf::Uint8> localTexSFMLBuffer;
+		
+		const auto itBegin{ localMainFramebuffer.begin() + static_cast<long long>(beginningSingleChunkPixels * chunkTracker) };
 		const auto remainingPixels{ std::distance(itBegin, localMainFramebuffer.end()) };
 
-		if (remainingPixels < singleChunkPixels)
+		if (remainingPixels < beginningSingleChunkPixels)
 		{
-			singleChunkPixels = static_cast<int>(remainingPixels);
-			texUpdateRate = static_cast<int>(remainingPixels / localImgPixResObj.widthInPixels);
+			currentSingleChunkPixels = static_cast<int>(remainingPixels);
+			m_needsDrawUpdate = false;
 		}
 
-		const auto itEnd{ itBegin + singleChunkPixels };
-		localTexSFMLBuffer.reserve(static_cast<long long>(singleChunkPixels * 4));
+		const auto itEnd{ itBegin + remainingPixels };
+
+		localTexSFMLBuffer.reserve(static_cast<long long>(4 * currentSingleChunkPixels));
 
 		std::for_each(itBegin, itEnd, [&](const Color& color)
 			{
@@ -142,18 +148,10 @@ void SFMLWindow::updateTextureForDisplay()
 				localTexSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getZ()));
 				localTexSFMLBuffer.push_back(255);
 			});
-
-		m_windowProps.texObj.update(localTexSFMLBuffer.data(), localImgPixResObj.widthInPixels, texUpdateRate, 0, texUpdateRate * chunkTracker);
-
-		if (itEnd == localMainFramebuffer.end())
-		{
-			m_needsDrawUpdate = false;
-			chunkTracker = 0;
-		}
-		else
-		{
-			++chunkTracker;
-		}
+		
+		m_windowProps.texObj.update(localTexSFMLBuffer.data(), localImgPixResObj.widthInPixels, currentTexUpdateRate, 0, chunkTracker * beginningTexUpdateRate);
+		
+		++chunkTracker;
 	}
 }
 
@@ -163,7 +161,7 @@ void SFMLWindow::setupWindowSFMLParams()
 
 	m_windowProps.renderWindowObj.setView(m_windowProps.viewObj);
 	m_windowProps.renderWindowObj.setFramerateLimit(m_windowProps.prefFPSInIntegral);
-	m_windowProps.texObj.create(m_windowPixelRes.widthInPixels, m_windowPixelRes.heightInPixels);
+	m_windowProps.texObj.create(m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj.widthInPixels, m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj.heightInPixels);
 	m_windowProps.spriteObj.setTexture(m_windowProps.texObj);
 }
 

@@ -50,10 +50,14 @@ export struct CameraProperties
 	ViewportProperties camViewportPropsObj{};
 	PixelDimension camPixelDimObj{};
 
-	Point camCenter{ 0.0, 0.0, 0.0 };
-	Vec3 camFocalLength{0, 0, 1};
-
 	double camVerticalFOV{ 90.0 };
+	Point camLookFrom{ -0.5, -0.5, 1 };
+	Point camCenter{ camLookFrom };
+	Point camLookAt{ 0, 0, -1 };
+	Vec3 camVUP{ 0, 1, 0 };
+	Vec3 camFocalLength{ 0, 0, (camLookFrom - camLookAt).getMagnitude() };
+
+	Vec3 camW{ getUnit(camLookFrom - camLookAt) }; Vec3 camU{ getUnit(computeCross(camVUP, camW)) }; Vec3 camV{ computeCross(camW, camU) };
 };
 
 export struct SFMLWindowProperties
