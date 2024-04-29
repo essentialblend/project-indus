@@ -162,7 +162,13 @@ Ray Renderer::getRayForPixel(int i, int currentRowCount) const noexcept
     auto sampleOffset{ Vec3((UGenRNG<double>() - 0.5), (UGenRNG<double>() - 0.5), 0) };
     
     const Point currentRayForPixel{ localCamProps.camPixelDimObj.pixelCenter + ((i + sampleOffset.getX()) * localCamProps.camPixelDimObj.lateralSpanInAbsVal) + ((currentRowCount + sampleOffset.getY()) * localCamProps.camPixelDimObj.verticalSpanInAbsVal) };
-    return Ray(localCamProps.camCenter, currentRayForPixel - localCamProps.camCenter);
+
+    const auto randUnitDiskVec{ genRandomUnitDiskVec() };
+    const auto randRayOriginOnUnitDisk{ localCamProps.camCenter + (randUnitDiskVec.getX() * localCamProps.defocusDiskU) + (randUnitDiskVec.getY() * localCamProps.defocusDiskV) };
+
+    const Vec3 rayOrigin{ localCamProps.defocusAngle <= 0 ? localCamProps.camCenter : randRayOriginOnUnitDisk };
+
+    return Ray(rayOrigin, currentRayForPixel - rayOrigin);
 }
 
 [[nodiscard]] int Renderer::getTexUpdateRate() const noexcept

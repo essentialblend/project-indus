@@ -25,7 +25,7 @@ export struct AspectRatio
 export struct ViewportProperties
 {
 	double widthInWorldSpaceUnits{};
-	double heightInWorldSpaceUnits{ 2.0 };
+	double heightInWorldSpaceUnits{};
 	Vec3 horizontalPixelSpan{};
 	Vec3 verticalPixelSpan{};
 };
@@ -50,14 +50,18 @@ export struct CameraProperties
 	ViewportProperties camViewportPropsObj{};
 	PixelDimension camPixelDimObj{};
 
-	double camVerticalFOV{ 90.0 };
-	Point camLookFrom{ -0.5, -0.5, 1 };
+	double camVerticalFOV{ 20 };
+	Point camLookFrom{ 13, 2, 3 };
 	Point camCenter{ camLookFrom };
-	Point camLookAt{ 0, 0, -1 };
+	Point camLookAt{ 0, 0, 0 };
 	Vec3 camVUP{ 0, 1, 0 };
-	Vec3 camFocalLength{ 0, 0, (camLookFrom - camLookAt).getMagnitude() };
+	
 
 	Vec3 camW{ getUnit(camLookFrom - camLookAt) }; Vec3 camU{ getUnit(computeCross(camVUP, camW)) }; Vec3 camV{ computeCross(camW, camU) };
+	double defocusAngle{0.6};
+	double focusDist{10};
+	Vec3 defocusDiskU{};
+	Vec3 defocusDiskV{};
 };
 
 export struct SFMLWindowProperties
@@ -66,7 +70,7 @@ export struct SFMLWindowProperties
 	sf::View viewObj{};
 	sf::Texture texObj{};
 	sf::Sprite spriteObj{};
-	unsigned int prefFPSInIntegral{ 60 };
+	unsigned int prefFPSInIntegral{ 30 };
 	float windowedResScale{ 0.5 };
 };
 

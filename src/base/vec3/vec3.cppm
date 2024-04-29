@@ -128,7 +128,7 @@ Vec3 genRandomUnitSphereVec()
 {
 	while (true)
 	{
-		auto randomVec = genRandomVec(-1, 1);
+		const auto randomVec = genRandomVec(-1, 1);
 		if (randomVec.getMagnitudeSq() < 1) 
 			return randomVec;
 	}
@@ -141,10 +141,21 @@ Vec3 genRandomUnitSphereVecNorm()
 
 Vec3 genRandomUnitHemisphereVecNorm(const Vec3& normalVec)
 {
-	Vec3 unitSphereRandVec{ genRandomUnitSphereVecNorm() };
+	const Vec3 unitSphereRandVec{ genRandomUnitSphereVecNorm() };
 	if (computeDot(unitSphereRandVec, normalVec) > 0.0)
 		return unitSphereRandVec;
 	else
 		return -unitSphereRandVec;
 }
+
+Vec3 genRandomUnitDiskVec()
+{
+	while (true)
+	{
+		const auto randomVec = Vec3(UGenRNG<double>(-1, 1), UGenRNG<double>(-1, 1), 0);
+		if (randomVec.getMagnitudeSq() < 1)
+			return randomVec;
+	}
+}
+
 

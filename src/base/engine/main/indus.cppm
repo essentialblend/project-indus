@@ -6,6 +6,7 @@ import material;
 import lambertian;
 import metal;
 import dielectric;
+import core_util;
 
 Indus::Indus(const PixelResolution& windowPixResObj, const PixelResolution& imagePixResObj, const AspectRatio& aspectRatioObj) noexcept :
 	m_mainWindow(windowPixResObj),
@@ -15,17 +16,47 @@ Indus::Indus(const PixelResolution& windowPixResObj, const PixelResolution& imag
 
 void Indus::initializeWorld()
 {
-	auto material_ground = std::make_shared<MLambertian>(Color(0.8, 0.8, 0.0));
-	auto material_center = std::make_shared<MLambertian>(Color(0.1, 0.2, 0.5));
-	auto material_left = std::make_shared<MDielectric>(1.50);
-	auto material_bubble = std::make_shared<MDielectric>(1.00 / 1.50);
-	auto material_right = std::make_shared<MMetal>(Color(0.8, 0.6, 0.2));
+	auto groundMat = std::make_shared<MLambertian>(Color(0.5, 0.5, 0.5));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0, -1000, 0), 1000, groundMat));
 
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0.0, -100.5, -1.0), 100.0, material_ground));
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0.0, 0.0, -1.2), 0.5, material_center));
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(-1.0, 0.0, -1.0), 0.5, material_left));
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(-1.0, 0.0, -1.0), 0.4, material_bubble));
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(1.0, 0.0, -1.0), 0.5, material_right));
+	for (int a = -11; a < 11; a++) {
+		for (int b = -11; b < 11; b++) {
+			auto matChosen = UGenRNG<double>();
+			Point center(a + 0.9 * UGenRNG<double>(), 0.2, b + 0.9 * UGenRNG<double>());
+
+			if ((center - Point(4, 0.2, 0)).getMagnitude() > 0.9) {
+				std::shared_ptr<Material> sphereMat;
+
+				if (matChosen < 0.8) {
+					// diffuse
+					auto matAlbedo = Color(UGenRNG<double>(), UGenRNG<double>(), UGenRNG<double>()) * Color(UGenRNG<double>(), UGenRNG<double>(), UGenRNG<double>());
+					sphereMat = std::make_shared<MLambertian>(matAlbedo);
+					m_mainWorld.addWorldObj(std::make_unique<WOSphere>(center, 0.2, sphereMat));
+				}
+				else if (matChosen < 0.95) {
+					// metal
+					auto matAlbedo = Color(UGenRNG<double>(0.5, 1), UGenRNG<double>(0.5, 1), UGenRNG<double>(0.5, 1));
+					auto fuzz = UGenRNG<double>(0, 0.5);
+					sphereMat = std::make_shared<MMetal>(matAlbedo, fuzz);
+					m_mainWorld.addWorldObj(std::make_unique<WOSphere>(center, 0.2, sphereMat));
+				}
+				else {
+					// glass
+					sphereMat = std::make_shared<MDielectric>(1.5);
+					m_mainWorld.addWorldObj(std::make_unique<WOSphere>(center, 0.2, sphereMat));
+				}
+			}
+		}
+	}
+
+	auto material1 = std::make_shared<MDielectric>(1.5);
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0, 1, 0), 1.0, material1));
+
+	auto material2 = std::make_shared<MLambertian>(Color(0.4, 0.2, 0.1));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(-4, 1, 0), 1.0, material2));
+
+	auto material3 = std::make_shared<MMetal>(Color(0.7, 0.6, 0.5), 0.0);
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(4, 1, 0), 1.0, material3));
 }
 
 void Indus::initializeEngine()

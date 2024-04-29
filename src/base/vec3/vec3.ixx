@@ -51,5 +51,6 @@ export {
 	[[nodiscard]] Vec3 genRandomUnitSphereVec();
 	[[nodiscard]] Vec3 genRandomUnitSphereVecNorm();
 	[[nodiscard]] Vec3 genRandomUnitHemisphereVecNorm(const Vec3& normalVec);
+	[[nodiscard]] Vec3 genRandomUnitDiskVec();
 	using Point = Vec3;
 }
