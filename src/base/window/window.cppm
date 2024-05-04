@@ -11,15 +11,6 @@ import<Pdh.h>;
 
 import <SFML/Graphics.hpp>;
 
-void SFMLWindow::setupWindow()
-{
-	const auto test = m_windowFunctors.getRendererCameraPropsFunctor();
-	m_windowProps.viewObj = sf::View(sf::FloatRect(0, 0, static_cast<float>(test.camImgPropsObj.pixelResolutionObj.widthInPixels), static_cast<float>(test.camImgPropsObj.pixelResolutionObj.heightInPixels)));
-
-	m_windowProps.texObj.create(test.camImgPropsObj.pixelResolutionObj.widthInPixels, test.camImgPropsObj.pixelResolutionObj.heightInPixels);
-	m_windowProps.spriteObj = sf::Sprite();
-}
-
 void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, Timer& timerObj)
 {
 	sf::Event event{};
@@ -43,12 +34,10 @@ void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, Timer& timerO
 				timerObj.startTimer();
 				if (m_windowFunctors.isMultithreadedFunctor()) [[likely]]
 				{
-					m_renderingStatusFuture = std::async(std::launch::async, [&]()
-					{
-						m_needsDrawUpdate = true;
-						m_isRendering = true;
-						m_windowFunctors.renderFrameMultiCoreFunctor();
-					});
+					m_needsDrawUpdate = true;
+					m_isRendering = true;
+					statsOverlayObj.setRenderingStartStatus(m_isRendering);
+					m_windowFunctors.renderSampleCollectionPassFunctor();
 				}
 			}
 		}
@@ -104,7 +93,14 @@ void SFMLWindow::updatePDHOverlayPeriodic(StatsOverlay& statsOverlayObj, PDHVari
 
 void SFMLWindow::updateRenderingStatus(Timer& timerObj, StatsOverlay& statsOverlayObj)
 {
-	if (m_isRendering && m_windowFunctors.getRenderCompleteStatusFunctor())
+	if (m_isRendering && m_windowFunctors.getRenderSampleCollectionPassCompleteStatusFunctor() && !m_hasSecondPassStarted)
+	{
+		statsOverlayObj.setPixelSampleCollectionCompleteStatus(true);
+		m_windowFunctors.renderFrameMultiCoreFunctor();
+		m_hasSecondPassStarted = true;
+	}
+
+	else if (m_isRendering && m_windowFunctors.getRenderCompleteStatusFunctor())
 	{
 		timerObj.endTimer();
 		statsOverlayObj.setRenderingCompleteStatus(true);
@@ -114,62 +110,78 @@ void SFMLWindow::updateRenderingStatus(Timer& timerObj, StatsOverlay& statsOverl
 
 void SFMLWindow::updateTextureForDisplay()
 {
-	if (m_needsDrawUpdate && m_windowFunctors.isTextureReadyForUpdateFunctor())
+	//if (m_needsDrawUpdate && m_windowFunctors.isTextureReadyForUpdateFunctor())
+	//{
+	//	displayWithSequentialTexUpdates();
+	//}
+}
+
+void SFMLWindow::displayWithSequentialTexUpdates()
+{
+	// chunkTracker increments from 0 to (numRows - 1).
+	static int chunkTracker{ 0 };
+	const auto& localMainFramebuffer{ m_windowFunctors.getMainEngineFramebufferFunctor() };
+	const auto& localImgPixResObj{ m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj };
+
+	static int beginningTexUpdateRate{ m_windowFunctors.getTextureUpdateRateFunctor() };
+	const int beginningSingleChunkPixels{ localImgPixResObj.widthInPixels * beginningTexUpdateRate };
+	int currentSingleChunkPixels{ beginningSingleChunkPixels };
+	int currentTexUpdateRate{ m_windowFunctors.getTextureUpdateRateFunctor() };
+
+	std::vector<sf::Uint8> localTexSFMLBuffer;
+
+	const auto itBegin{ localMainFramebuffer.begin() + static_cast<long long>(beginningSingleChunkPixels * chunkTracker) };
+	const auto remainingPixels{ std::distance(itBegin, localMainFramebuffer.end()) };
+
+	if (remainingPixels < beginningSingleChunkPixels)
 	{
-		// chunkTracker increments from 0 to (numRows - 1).
-		static int chunkTracker{ 0 };
-		const auto& localMainFramebuffer{ m_windowFunctors.getMainEngineFramebufferFunctor() };
-		const auto& localImgPixResObj{ m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj };
-		
-		static int beginningTexUpdateRate{ m_windowFunctors.getTextureUpdateRateFunctor() };
-		const int beginningSingleChunkPixels{ localImgPixResObj.widthInPixels * beginningTexUpdateRate };
-		int currentSingleChunkPixels{ beginningSingleChunkPixels };
-		int currentTexUpdateRate{ m_windowFunctors.getTextureUpdateRateFunctor() };
-
-		std::vector<sf::Uint8> localTexSFMLBuffer;
-		
-		const auto itBegin{ localMainFramebuffer.begin() + static_cast<long long>(beginningSingleChunkPixels * chunkTracker) };
-		const auto remainingPixels{ std::distance(itBegin, localMainFramebuffer.end()) };
-
-		if (remainingPixels < beginningSingleChunkPixels)
-		{
-			currentSingleChunkPixels = static_cast<int>(remainingPixels);
-			m_needsDrawUpdate = false;
-		}
-
-		const auto itEnd{ itBegin + remainingPixels };
-
-		localTexSFMLBuffer.reserve(static_cast<long long>(4 * currentSingleChunkPixels));
-
-		std::for_each(itBegin, itEnd, [&](const Color& color)
-			{
-				localTexSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getX()));
-				localTexSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getY()));
-				localTexSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getZ()));
-				localTexSFMLBuffer.push_back(255);
-			});
-		
-		m_windowProps.texObj.update(localTexSFMLBuffer.data(), localImgPixResObj.widthInPixels, currentTexUpdateRate, 0, chunkTracker * beginningTexUpdateRate);
-		
-		++chunkTracker;
+		currentSingleChunkPixels = static_cast<int>(remainingPixels);
+		m_needsDrawUpdate = false;
 	}
+
+	const auto itEnd{ itBegin + remainingPixels };
+
+	localTexSFMLBuffer.reserve(static_cast<long long>(4 * currentSingleChunkPixels));
+
+	std::for_each(itBegin, itEnd, [&](const Color& color)
+		{
+			localTexSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getX()));
+			localTexSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getY()));
+			localTexSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getZ()));
+			localTexSFMLBuffer.push_back(255);
+		});
+
+	m_windowProps.mainRenderTexObj.update(localTexSFMLBuffer.data(), localImgPixResObj.widthInPixels, currentTexUpdateRate, 0, chunkTracker * beginningTexUpdateRate);
+
+	++chunkTracker;
 }
 
 void SFMLWindow::setupWindowSFMLParams()
 {
 	m_windowProps.renderWindowObj.create(sf::VideoMode(static_cast<int>(m_windowPixelRes.widthInPixels * m_windowProps.windowedResScale), static_cast<int>(m_windowPixelRes.heightInPixels * m_windowProps.windowedResScale)) , m_windowTitle);
 
-	m_windowProps.renderWindowObj.setView(m_windowProps.viewObj);
+	m_windowProps.mainRenderViewObj = sf::View(sf::FloatRect(0, 0, static_cast<float>(m_windowPixelRes.widthInPixels), static_cast<float>(m_windowPixelRes.heightInPixels)));
+	m_windowProps.renderWindowObj.setView(m_windowProps.mainRenderViewObj);
+	
 	m_windowProps.renderWindowObj.setFramerateLimit(m_windowProps.prefFPSInIntegral);
-	m_windowProps.texObj.create(m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj.widthInPixels, m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj.heightInPixels);
-	m_windowProps.spriteObj.setTexture(m_windowProps.texObj);
+
+	m_windowProps.mainRenderTexObj.create(m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj.widthInPixels, m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj.heightInPixels);
+	m_windowProps.mainRenderSpriteObj.setTexture(m_windowProps.mainRenderTexObj);
+
+	m_windowProps.mainOverlayViewObj = sf::View(sf::FloatRect(0, 0, static_cast<float>(m_windowPixelRes.widthInPixels), static_cast<float>(m_windowPixelRes.heightInPixels)));
+
 }
 
 void SFMLWindow::drawGUI(StatsOverlay& statsOverlayObj, const Timer& timerObj)
 {
 	m_windowProps.renderWindowObj.clear();
-	m_windowProps.renderWindowObj.draw(m_windowProps.spriteObj);
-	statsOverlayObj.showOverlay(m_windowProps.renderWindowObj, m_windowPixelRes , timerObj);
+
+	m_windowProps.renderWindowObj.setView(m_windowProps.mainRenderViewObj);
+	m_windowProps.renderWindowObj.draw(m_windowProps.mainRenderSpriteObj);
+	
+	m_windowProps.renderWindowObj.setView(m_windowProps.mainOverlayViewObj);
+	statsOverlayObj.showOverlay(m_windowProps.renderWindowObj, m_windowPixelRes, timerObj);
+	
 	m_windowProps.renderWindowObj.display();
 }
 
@@ -217,6 +229,17 @@ void SFMLWindow::setTextureUpdateRateGetFunctor(const std::function<int()>& texU
 {
 	m_windowFunctors.getTextureUpdateRateFunctor = texUpdateRateFunctor;
 }
+
+void SFMLWindow::setRenderSampleCollectionPassFunctor(const std::function<void()>& sampleCollectionPassFunctor) noexcept
+{
+	m_windowFunctors.renderSampleCollectionPassFunctor = sampleCollectionPassFunctor;
+}
+
+void SFMLWindow::setSampleCollectionPassCompleteStatusFunctor(const std::function<bool()>& sampleCollectionPassCompleteStatusFunctor) noexcept
+{
+	m_windowFunctors.getRenderSampleCollectionPassCompleteStatusFunctor = sampleCollectionPassCompleteStatusFunctor;
+}
+
 
 double SFMLWindow::getCPUUsageWithPDH(PDHVariables& pdhVars)
 {

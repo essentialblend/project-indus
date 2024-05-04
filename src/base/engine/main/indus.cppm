@@ -66,7 +66,6 @@ void Indus::initializeEngine()
 	m_mainRenderer.setThreadingMode(m_isMultithreaded);
 
 	setGlobalCallbackFunctors();
-	m_mainWindow.setupWindow();
 	m_statsOverlay.setupOverlay(m_isMultithreaded);
 }
 
@@ -87,7 +86,7 @@ void Indus::runEngine()
 void Indus::setRendererFunctors()
 {
 	RendererSFMLFunctors localCopy{};
-	auto& mainDisplayTexObj{ m_mainWindow.getSFMLWindowProperties().texObj };
+	auto& mainDisplayTexObj{ m_mainWindow.getSFMLWindowProperties().mainRenderTexObj };
 
 	localCopy.sfmlTextureUpdateFunctor = [&mainDisplayTexObj](const sf::Uint8* pixelData, unsigned int widthRegionInPixels, unsigned int heightRegionInPixels, unsigned int xCoord, unsigned int yCoord)
 		{
@@ -97,7 +96,7 @@ void Indus::setRendererFunctors()
 	localCopy.sfmlDisplayWindowFunctor = [this]() {m_mainWindow.getSFMLWindowProperties().renderWindowObj.display(); };
 	localCopy.sfmlDrawSpriteFunctor = [this]()
 		{
-			const auto& tempSprite = m_mainWindow.getSFMLWindowProperties().spriteObj;
+			const auto& tempSprite = m_mainWindow.getSFMLWindowProperties().mainRenderSpriteObj;
 			m_mainWindow.getSFMLWindowProperties().renderWindowObj.draw(tempSprite);
 		};
 
@@ -111,6 +110,11 @@ void Indus::setWindowFunctors()
 	const std::function<void()> renderMultiCoreFrameFunctor{ [&]()
 	{
 		m_mainRenderer.renderFrameMultiCore(m_mainRenderFramebuffer, m_mainWorld);
+	} };
+
+	const std::function<void()> renderSampleCollectionPassFunctor{[&]()
+	{
+		m_mainRenderer.samplesCollectionRenderPassMultiCore(m_mainWorld);
 	} };
 
 	const std::function<bool()> texUpdateCheckFunctor{ [&]()
@@ -128,9 +132,14 @@ void Indus::setWindowFunctors()
 		return m_mainRenderer.getRendererCameraProps();
 	} };
 	
-	const std::function<bool()> mainRenderCompleteStatusGetter{ [&]()
+	const std::function<bool()> getRenderCompleteStatusGetter{ [&]()
 	{
 		return m_mainRenderer.getRenderCompleteStatus();
+	} };
+
+	const std::function<bool()> getSampleCollectionPassStatusGetter{ [&]()
+	{
+		return m_mainRenderer.getSampleCollectionPassCompleteStatus();
 	} };
 
 	const std::function<int()> textureUpdateRateGetter{ [&]()
@@ -143,8 +152,10 @@ void Indus::setWindowFunctors()
 	m_mainWindow.setMultithreadedCheckFunctor(multithreadingCheckFunctor);
 	m_mainWindow.setRenderFrameMultiCoreFunctor(renderMultiCoreFrameFunctor);
 	m_mainWindow.setMainRendererCameraPropsGetFunctor(mainRendererCamPropsGetter);
-	m_mainWindow.setRenderCompleteStatusGetFunctor(mainRenderCompleteStatusGetter);
+	m_mainWindow.setRenderCompleteStatusGetFunctor(getRenderCompleteStatusGetter);
 	m_mainWindow.setTextureUpdateRateGetFunctor(textureUpdateRateGetter);
+	m_mainWindow.setRenderSampleCollectionPassFunctor(renderSampleCollectionPassFunctor);
+	m_mainWindow.setSampleCollectionPassCompleteStatusFunctor(getSampleCollectionPassStatusGetter);
 }
 
 std::vector<Color> Indus::getMainRenderFramebuffer() const noexcept

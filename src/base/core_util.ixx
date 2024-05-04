@@ -5,15 +5,15 @@ import <limits>;
 import <numbers>;
 import <random>;
 
-export const double UPi{ std::numbers::pi };
-export const double UInfinity{ std::numeric_limits<double>::infinity() };
+export constexpr double UPi{ std::numbers::pi };
+export constexpr double UInfinity{ std::numeric_limits<double>::infinity() };
 
-export double UDegreesToRadians(double degreesValue)
+export constexpr double UDegreesToRadians(double degreesValue)
 {
 	return degreesValue * UPi / 180.0;
 }
 
-export double URadiansToDegrees(double radiansValue)
+export constexpr double URadiansToDegrees(double radiansValue)
 {
 	return radiansValue * 180.0 / UPi;
 }
@@ -35,7 +35,6 @@ ValueType UGenRNG(ValueType min = 0, ValueType max = 1)
         return distr(generator);
     }
 }
-
 
 
 

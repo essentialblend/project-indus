@@ -3,9 +3,9 @@ import threadpool;
 void MT_ThreadPool::initiateThreadPool()
 {
 	const unsigned int numAvailableThreads = std::thread::hardware_concurrency();
-	const unsigned int numThreadsToUse = numAvailableThreads > 1 ? static_cast<int>(numAvailableThreads * 0.5) : 1;
+	const unsigned int numThreadsToUse = numAvailableThreads > 1 ? static_cast<int>(numAvailableThreads * 0.5) + (static_cast<int>(numAvailableThreads / 4)) : 1;
 
-	for (std::size_t i{}; i < 9; ++i)
+	for (std::size_t i{}; i < static_cast<int>(numThreadsToUse); ++i)
 	{
 		m_workerThreads.emplace_back(&MT_ThreadPool::executeTasks, this);
 	}

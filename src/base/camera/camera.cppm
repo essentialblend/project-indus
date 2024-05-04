@@ -28,7 +28,7 @@ void Camera::setupCamera()
     
     const Point viewportTopLeft{ m_cameraProps.camCenter - (m_cameraProps.focusDist * m_cameraProps.camW) - (localViewportPropsObj.horizontalPixelSpan / 2) - (localViewportPropsObj.verticalPixelSpan / 2) };
     
-    localPixDimObj.pixelCenter = viewportTopLeft + (0.5 * (localPixDimObj.lateralSpanInAbsVal + localPixDimObj.verticalSpanInAbsVal));
+    localPixDimObj.topLeftmostPixelCenter = viewportTopLeft + (0.5 * (localPixDimObj.lateralSpanInAbsVal + localPixDimObj.verticalSpanInAbsVal));
 
     // Defocus disk basis vectors.
     const auto defocusRadius{ m_cameraProps.focusDist * std::tan(UDegreesToRadians(m_cameraProps.defocusAngle / 2)) };

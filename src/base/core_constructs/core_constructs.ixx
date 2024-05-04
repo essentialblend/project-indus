@@ -2,11 +2,14 @@ export module core_constructs;
 
 import color;
 import vec3;
+import color;
+import ray;
 
 import <vector>;
 import <future>;
 import<functional>;
 import<Pdh.h>;
+
 
 import <SFML/Graphics.hpp>;
 
@@ -41,7 +44,7 @@ export struct PixelDimension
 {
 	Vec3 lateralSpanInAbsVal{};
 	Vec3 verticalSpanInAbsVal{};
-	Point pixelCenter{};
+	Point topLeftmostPixelCenter{};
 };
 
 export struct CameraProperties
@@ -67,9 +70,10 @@ export struct CameraProperties
 export struct SFMLWindowProperties
 {
 	sf::RenderWindow renderWindowObj{};
-	sf::View viewObj{};
-	sf::Texture texObj{};
-	sf::Sprite spriteObj{};
+	sf::View mainRenderViewObj{};
+	sf::View mainOverlayViewObj{};
+	sf::Texture mainRenderTexObj{};
+	sf::Sprite mainRenderSpriteObj{};
 	unsigned int prefFPSInIntegral{ 30 };
 	float windowedResScale{ 0.5 };
 };
@@ -102,11 +106,6 @@ export struct RendererSFMLFunctors
 	std::function<void(const sf::Uint8*, unsigned int, unsigned int, unsigned int, unsigned int)> sfmlTextureUpdateFunctor{};
 };
 
-export struct RendererFunctors
-{
-
-};
-
 export struct RenderingMode
 {
 	bool isSingleThreaded{ false };
@@ -116,11 +115,13 @@ export struct RenderingMode
 export struct WindowFunctors
 {
 	std::function<void()> renderFrameMultiCoreFunctor{};
+	std::function<void()> renderSampleCollectionPassFunctor{};
 	std::function<bool()> isMultithreadedFunctor{};
 	std::function<bool()> isTextureReadyForUpdateFunctor{};
 	std::function<std::vector<Color>()> getMainEngineFramebufferFunctor{};
 	std::function<CameraProperties()> getRendererCameraPropsFunctor{};
 	std::function<bool()> getRenderCompleteStatusFunctor{};
+	std::function<bool()> getRenderSampleCollectionPassCompleteStatusFunctor{};
 	std::function<int()> getTextureUpdateRateFunctor{};
 };
 
@@ -129,4 +130,16 @@ export struct PDHVariables
 	HQUERY cpuQuery{};
 	HCOUNTER cpuTotal{};
 	PDH_FMT_COUNTERVALUE counterValue{};
+};
+
+export struct PixelSampleData
+{
+	Point pointOnViewPlane{};
+	Color computedBaseColor{};
+};
+
+export struct PixelSamples
+{
+	int pixel1DIndex{};
+	std::vector <PixelSampleData> pixelSamples{};
 };

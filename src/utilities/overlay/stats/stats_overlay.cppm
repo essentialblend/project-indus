@@ -37,11 +37,11 @@ void StatsOverlay::setSFMLTextProperties()
 	for (auto& overlayStat : localStatsCollection)
 	{
 		overlayStat.get().statTitleObj.setFont(m_overlayFont);
-		overlayStat.get().statTitleObj.setCharacterSize(25);
+		overlayStat.get().statTitleObj.setCharacterSize(22);
 		overlayStat.get().statTitleObj.setColor(sf::Color::White);
 
 		overlayStat.get().statResultObj.setFont(m_overlayFont);
-		overlayStat.get().statResultObj.setCharacterSize(25);
+		overlayStat.get().statResultObj.setCharacterSize(22);
 		overlayStat.get().statResultObj.setColor(sf::Color::White);
 	}
 }
@@ -57,23 +57,29 @@ void StatsOverlay::showOverlay(sf::RenderWindow& renderWindowObj, const PixelRes
 	osStream << std::fixed << std::setprecision(2) << m_totalCPUUsage;
 	std::string formattedCPUUsageStr{ osStream.str() + "%." };
 	m_overlayProps.cpuUsageObj.statResultObj.setString(formattedCPUUsageStr);
+	
+	const float resultTextStartPos{ static_cast<float>(pixResObj.widthInPixels) };
 
-	float widthScaleFactor{ 0.23f };
-	float overlayWidthPadding{ pixResObj.widthInPixels * widthScaleFactor };
-	float modeTitleGlobalWidth = m_overlayProps.modeObj.statTitleObj.getGlobalBounds().width + 100;
-	float resultTextStartPos{ (pixResObj.widthInPixels - overlayWidthPadding) + modeTitleGlobalWidth };
+
 	int verticalStatSpacing{ 0 };
 	std::vector<std::reference_wrapper<OverlayStatistic>> tempCopy{ m_overlayProps.getStatsCollection() };
 
-	if (m_hasRenderStarted)
+	if (m_hasRenderStarted && !m_hasPixelSampleCollectionCompleted)
 	{
-		m_overlayProps.renderObj.statResultObj.setString("Rendering.");
+		m_overlayProps.renderObj.statResultObj.setString("I - Sample gen.");
 		m_overlayProps.renderObj.statResultObj.setColor(sf::Color::Red);
-		m_overlayProps.timeObj.statResultObj.setString("Calculating.");
+		m_overlayProps.timeObj.statResultObj.setString("N.A.");
 		m_overlayProps.timeObj.statResultObj.setColor(sf::Color::Red);
 	}
+	else if(m_hasRenderStarted && m_hasPixelSampleCollectionCompleted && !m_hasRenderCompleted)
+	{
+		m_overlayProps.renderObj.statResultObj.setString("II - Color computation.");
+		m_overlayProps.renderObj.statResultObj.setColor(sf::Color::Magenta);
+		m_overlayProps.timeObj.statResultObj.setString("N.A.");
+		m_overlayProps.timeObj.statResultObj.setColor(sf::Color::Magenta);
+	}
 
-	if (m_hasRenderCompleted)
+	else if (m_hasRenderCompleted)
 	{
 		std::string timerResult{ timerObj.getTimerResultString() };
 
@@ -84,10 +90,14 @@ void StatsOverlay::showOverlay(sf::RenderWindow& renderWindowObj, const PixelRes
 		m_overlayProps.renderObj.statResultObj.setColor(sf::Color::Green);
 	}
 
+	const double scaleSpacingFactor{ 0.22 * pixResObj.widthInPixels };
+	const double overlayTitleStartPos{ pixResObj.widthInPixels - scaleSpacingFactor };
+	const double overlayResultStartPos{ overlayTitleStartPos + (0.12 * overlayTitleStartPos) };
+
 	for (auto& overlayStat : tempCopy)
 	{
-		overlayStat.get().statTitleObj.setPosition(static_cast<float>(pixResObj.widthInPixels - overlayWidthPadding), static_cast<float>(verticalStatSpacing));
-		overlayStat.get().statResultObj.setPosition(static_cast<float>(resultTextStartPos), static_cast<float>(verticalStatSpacing));
+		overlayStat.get().statTitleObj.setPosition(overlayTitleStartPos, verticalStatSpacing);
+		overlayStat.get().statResultObj.setPosition(overlayResultStartPos, verticalStatSpacing);
 
 		renderWindowObj.draw(overlayStat.get().statTitleObj);
 		renderWindowObj.draw(overlayStat.get().statResultObj);
@@ -99,6 +109,16 @@ void StatsOverlay::showOverlay(sf::RenderWindow& renderWindowObj, const PixelRes
 void StatsOverlay::setRenderingCompleteStatus(bool hasRenderCompleted) noexcept
 {
 	m_hasRenderCompleted = hasRenderCompleted;
+}
+
+void StatsOverlay::setRenderingStartStatus(bool hasRenderStarted) noexcept
+{
+	m_hasRenderStarted = hasRenderStarted;
+}
+
+void StatsOverlay::setPixelSampleCollectionCompleteStatus(bool hasPixelSampleCollectionCompleted) noexcept
+{
+	m_hasPixelSampleCollectionCompleted = hasPixelSampleCollectionCompleted;
 }
 
 void StatsOverlay::setOverlayVisibility(bool shouldDisplayOverlay) noexcept
