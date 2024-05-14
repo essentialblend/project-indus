@@ -9,10 +9,10 @@ Point Ray::getPointOnRayAt(double t) const noexcept
 
 Point Ray::getOrigin() const noexcept
 {
-	return m_rayOrigin;
+	return Point(m_rayOrigin);
 }
 
 Vec3 Ray::getDirection() const noexcept
 {
-	return m_rayDirection;
+	return Vec3(m_rayDirection);
 }

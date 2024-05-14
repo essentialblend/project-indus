@@ -25,19 +25,19 @@ public:
 
 	void setRendererFunctors();
 	void setWindowFunctors();
-	void initializeWorld();
 
-	[[nodiscard]] std::vector<Color> getMainRenderFramebuffer() const noexcept;
+	[[nodiscard]] std::vector<std::unique_ptr<IColor>>& getMainRenderFramebuffer() noexcept;
 
 private:
 	SFMLWindow m_mainWindow{};
 	Renderer m_mainRenderer{};
 	StatsOverlay m_statsOverlay{};
 	ImageProperties m_mainRenderImageProps{};
-	std::vector<Color> m_mainRenderFramebuffer{};
+	std::vector<std::unique_ptr<IColor>> m_mainRenderFramebuffer{};
 	bool m_isMultithreaded{ true };
 
 	WorldObjectList m_mainWorld{};
 
 	void setGlobalCallbackFunctors();
+	void initializeWorld();
 };

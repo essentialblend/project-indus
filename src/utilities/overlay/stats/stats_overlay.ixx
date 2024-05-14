@@ -15,6 +15,8 @@ public:
 	virtual void setOverlayVisibility(bool shouldDisplayOverlay) noexcept override;
 	void setRenderingStartStatus(bool hasRenderStarted) noexcept;
 	void setTotalCPUUsage(double totalCPUUsage) noexcept;
+	void setTotalDRAM(double totalDRAMGb) noexcept;
+	void setUsedDRAM(double usedDRAMGb) noexcept;
 
 	[[nodiscard]] virtual bool getOverlayVisibility() const noexcept override;
 
@@ -28,4 +30,6 @@ private:
 	bool m_hasPixelSampleCollectionCompleted{ false };
 	bool m_hasRenderStarted{ false };
 	double m_totalCPUUsage{};
+	double m_totalDRAMgigab{};
+	double m_usedDRAMgigab{};
 };

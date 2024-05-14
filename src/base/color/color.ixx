@@ -1,24 +1,24 @@
 export module color;
+import <memory>;
 
-import vec3;
-
-export class Color
+export class IColor abstract
 {
 public:
-	explicit Color() = default;
-	explicit Color(double x) noexcept;
-	explicit Color(double r, double g, double b) noexcept;
-	explicit Color(const Vec3& other) noexcept;
+    IColor() noexcept = default;
 
-	[[nodiscard]] Color operator+(const Color& rhs) const noexcept;
-	[[nodiscard]] Color operator*(const double scalar) const noexcept;
-	[[nodiscard]] Color operator*(const Color& other) const noexcept;
+    virtual void applyGammaCorrection(const double gammaFactor) = 0;
+    virtual void applyNormalization() = 0;
+    virtual void undoNormalization(const double normFactor) = 0;
+    virtual void applyWeights(const double weightFactor) = 0;
 
-	[[nodiscard]] Color convertFromNormalized() const;
-	[[nodiscard]] Vec3 getBaseVec() const noexcept;
+    virtual void addColorToSelf(const IColor& otherColor) = 0;
+    virtual void multiplyColorWithSelf(const IColor& otherColor) = 0;
+    virtual void transformSelfToMinValues() = 0;
+    virtual void transformSelfToMaxValues() = 0;
+    virtual void negateSelf() noexcept = 0;
 
-private:
-	Vec3 m_colorVec{};
-	
-	[[nodiscard]] Vec3 convertLinearToGamma() const noexcept;
+    virtual std::shared_ptr<const IColor> getColor() const = 0;
+    virtual void setColor(const IColor& otherColor) = 0;
+
+    virtual ~IColor() noexcept = default;
 };

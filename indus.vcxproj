@@ -21,8 +21,9 @@
   <ItemGroup>
     <ClCompile Include="src\base\camera\camera.cppm" />
     <ClCompile Include="src\base\camera\camera.ixx" />
-    <ClCompile Include="src\base\color\color.cppm" />
     <ClCompile Include="src\base\color\color.ixx" />
+    <ClCompile Include="src\base\color\rgb\color_rgb.cppm" />
+    <ClCompile Include="src\base\color\rgb\color_rgb.ixx" />
     <ClCompile Include="src\base\core_constructs\core_constructs.ixx" />
     <ClCompile Include="src\base\core_util.ixx" />
     <ClCompile Include="src\base\engine\i_indus.ixx" />
@@ -31,8 +32,6 @@
     <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.cppm" />
     <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.ixx" />
     <ClCompile Include="src\base\hit_record\hit_record.ixx" />
-    <ClCompile Include="src\base\image\image.cppm" />
-    <ClCompile Include="src\base\image\image.ixx" />
     <ClCompile Include="src\base\ray\ray.cppm" />
     <ClCompile Include="src\base\ray\ray.ixx" />
     <ClCompile Include="src\base\renderer\renderer.cppm" />

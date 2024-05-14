@@ -7,8 +7,6 @@ import timer;
 
 import <SFML/Graphics.hpp>;
 
-
-
 export class Overlay abstract
 {
 public:

@@ -1,6 +1,6 @@
 import indus;
 
-import color;
+import color_rgb;
 import sphere;
 import material;
 import lambertian;
@@ -16,7 +16,8 @@ Indus::Indus(const PixelResolution& windowPixResObj, const PixelResolution& imag
 
 void Indus::initializeWorld()
 {
-	auto groundMat = std::make_shared<MLambertian>(Color(0.5, 0.5, 0.5));
+	const auto groundAlbedo{ std::make_shared<ColorRGB>(0.5) };
+	auto groundMat = std::make_shared<MLambertian>(groundAlbedo);
 	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0, -1000, 0), 1000, groundMat));
 
 	for (int a = -11; a < 11; a++) {
@@ -25,19 +26,19 @@ void Indus::initializeWorld()
 			Point center(a + 0.9 * UGenRNG<double>(), 0.2, b + 0.9 * UGenRNG<double>());
 
 			if ((center - Point(4, 0.2, 0)).getMagnitude() > 0.9) {
-				std::shared_ptr<Material> sphereMat;
+				std::shared_ptr<IMaterial> sphereMat;
 
 				if (matChosen < 0.8) {
 					// diffuse
-					auto matAlbedo = Color(UGenRNG<double>(), UGenRNG<double>(), UGenRNG<double>()) * Color(UGenRNG<double>(), UGenRNG<double>(), UGenRNG<double>());
-					sphereMat = std::make_shared<MLambertian>(matAlbedo);
+					const auto matAlbedo{ ColorRGB(UGenRNG<double>(), UGenRNG<double>(), UGenRNG<double>()) * ColorRGB(UGenRNG<double>(), UGenRNG<double>(), UGenRNG<double>()) };
+					sphereMat = std::make_shared<MLambertian>(std::make_shared<ColorRGB>(matAlbedo));
 					m_mainWorld.addWorldObj(std::make_unique<WOSphere>(center, 0.2, sphereMat));
 				}
 				else if (matChosen < 0.95) {
 					// metal
-					auto matAlbedo = Color(UGenRNG<double>(0.5, 1), UGenRNG<double>(0.5, 1), UGenRNG<double>(0.5, 1));
+					const auto matAlbedo{ ColorRGB(UGenRNG<double>(0.5, 1), UGenRNG<double>(0.5, 1), UGenRNG<double>(0.5, 1)) };
 					auto fuzz = UGenRNG<double>(0, 0.5);
-					sphereMat = std::make_shared<MMetal>(matAlbedo, fuzz);
+					sphereMat = std::make_shared<MMetal>(std::make_shared<ColorRGB>(matAlbedo), fuzz);
 					m_mainWorld.addWorldObj(std::make_unique<WOSphere>(center, 0.2, sphereMat));
 				}
 				else {
@@ -49,24 +50,23 @@ void Indus::initializeWorld()
 		}
 	}
 
-	auto material1 = std::make_shared<MDielectric>(1.5);
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0, 1, 0), 1.0, material1));
+	auto firstMat = std::make_shared<MDielectric>(1.5);
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0, 1, 0), 1.0, firstMat));
 
-	auto material2 = std::make_shared<MLambertian>(Color(0.4, 0.2, 0.1));
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(-4, 1, 0), 1.0, material2));
+	auto secondMat = std::make_shared<MLambertian>(std::make_shared<ColorRGB>((0.4, 0.2, 0.1)));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(-4, 1, 0), 1.0, secondMat));
 
-	auto material3 = std::make_shared<MMetal>(Color(0.7, 0.6, 0.5), 0.0);
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(4, 1, 0), 1.0, material3));
+	auto thirdMat = std::make_shared<MMetal>(std::make_shared<ColorRGB>((0.7, 0.6, 0.5)), 0.0);
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(4, 1, 0), 1.0, thirdMat));
 }
 
 void Indus::initializeEngine()
 {
 	m_mainRenderer.setupRenderer(m_mainRenderImageProps.pixelResolutionObj, m_mainRenderImageProps.aspectRatioObj);
-	m_mainRenderFramebuffer.resize(static_cast<long long>(m_mainRenderer.getRendererCameraProps().camImgPropsObj.pixelResolutionObj.widthInPixels * m_mainRenderer.getRendererCameraProps().camImgPropsObj.pixelResolutionObj.heightInPixels));
 	m_mainRenderer.setThreadingMode(m_isMultithreaded);
-
-	setGlobalCallbackFunctors();
+	m_mainRenderFramebuffer.resize(m_mainRenderImageProps.pixelResolutionObj.totalPixels);
 	m_statsOverlay.setupOverlay(m_isMultithreaded);
+	setGlobalCallbackFunctors();
 }
 
 void Indus::setGlobalCallbackFunctors()
@@ -109,43 +109,33 @@ void Indus::setWindowFunctors()
 
 	const std::function<void()> renderMultiCoreFrameFunctor{ [&]()
 	{
-		m_mainRenderer.renderFrameMultiCore(m_mainRenderFramebuffer, m_mainWorld);
-	} };
-
-	const std::function<void()> renderSampleCollectionPassFunctor{[&]()
-	{
-		m_mainRenderer.samplesCollectionRenderPassMultiCore(m_mainWorld);
-	} };
+		m_mainRenderer.renderFrameMultiCoreGaussian(m_mainRenderFramebuffer, m_mainWorld);
+	}};
 
 	const std::function<bool()> texUpdateCheckFunctor{ [&]()
 	{
 		return m_mainRenderer.checkForDrawUpdate();
-	} };
+	}};
 
-	const std::function<std::vector<Color>()> mainRenderFramebufferGetter{ [&]()
-	{
-		return m_mainRenderFramebuffer;
-	} };
+	const std::function<std::vector<std::unique_ptr<IColor>>&()> mainRenderFramebufferGetter{[&]()
+	-> std::vector<std::unique_ptr<IColor>>& {
+		return getMainRenderFramebuffer();
+	}};
 
 	const std::function<CameraProperties()> mainRendererCamPropsGetter{ [&]()
 	{
 		return m_mainRenderer.getRendererCameraProps();
-	} };
-	
+	}};
+
 	const std::function<bool()> getRenderCompleteStatusGetter{ [&]()
 	{
 		return m_mainRenderer.getRenderCompleteStatus();
-	} };
-
-	const std::function<bool()> getSampleCollectionPassStatusGetter{ [&]()
-	{
-		return m_mainRenderer.getSampleCollectionPassCompleteStatus();
-	} };
+	}};
 
 	const std::function<int()> textureUpdateRateGetter{ [&]()
 	{
 		return m_mainRenderer.getTexUpdateRate();
-	} };
+	}};
 
 	m_mainWindow.setMainEngineFramebufferGetFunctor(mainRenderFramebufferGetter);
 	m_mainWindow.setTextureUpdateCheckFunctor(texUpdateCheckFunctor);
@@ -154,11 +144,9 @@ void Indus::setWindowFunctors()
 	m_mainWindow.setMainRendererCameraPropsGetFunctor(mainRendererCamPropsGetter);
 	m_mainWindow.setRenderCompleteStatusGetFunctor(getRenderCompleteStatusGetter);
 	m_mainWindow.setTextureUpdateRateGetFunctor(textureUpdateRateGetter);
-	m_mainWindow.setRenderSampleCollectionPassFunctor(renderSampleCollectionPassFunctor);
-	m_mainWindow.setSampleCollectionPassCompleteStatusFunctor(getSampleCollectionPassStatusGetter);
 }
 
-std::vector<Color> Indus::getMainRenderFramebuffer() const noexcept
+std::vector<std::unique_ptr<IColor>>& Indus::getMainRenderFramebuffer() noexcept
 {
 	return m_mainRenderFramebuffer;
 }

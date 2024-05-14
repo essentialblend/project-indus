@@ -1,105 +1,116 @@
 import vec3;
 
-import core_util;
-
+import <array>;
+import <cmath>;
 import <iostream>;
 
-Vec3::Vec3(double x) noexcept : m_Vec{ x, x, x } {}
-Vec3::Vec3(double x, double y, double z) noexcept : m_Vec{ x, y, z } {}
+import core_util;
 
-double Vec3::getX() const noexcept { return m_Vec[0]; }
-double Vec3::getY() const noexcept { return m_Vec[1]; }
-double Vec3::getZ() const noexcept { return m_Vec[2]; }
+// Member functions.
+Vec3::Vec3(double x) noexcept : m_vector{ x, x, x } {}
+Vec3::Vec3(double x, double y, double z) noexcept : m_vector{ x, y, z } {}
+
+Vec3& Vec3::operator+=(const Vec3& other) noexcept
+{
+	m_vector[0] += other[0];
+	m_vector[1] += other[1];
+	m_vector[2] += other[2];
+
+	return *this;
+}
+
+Vec3& Vec3::operator-=(const Vec3& other) noexcept
+{
+	m_vector[0] -= other[0];
+	m_vector[1] -= other[1];
+	m_vector[2] -= other[2];
+
+	return *this;
+}
+
+Vec3& Vec3::operator*=(const Vec3& other) noexcept
+{
+	m_vector[0] *= other[0];
+	m_vector[1] *= other[1];
+	m_vector[2] *= other[2];
+
+	return *this;
+}
+
+Vec3& Vec3::operator*=(const double scalar) noexcept
+{
+	m_vector[0] *= scalar;
+	m_vector[1] *= scalar;
+	m_vector[2] *= scalar;
+
+	return *this;
+}
+
+Vec3 Vec3::operator+(const Vec3& other) const noexcept
+{
+	return Vec3(m_vector[0] + other.m_vector[0], m_vector[1] + other.m_vector[1], m_vector[2] + other.m_vector[2]);
+}
+
+Vec3 Vec3::operator-(const Vec3& other) const noexcept
+{
+	return Vec3(m_vector[0] - other.m_vector[0], m_vector[1] - other.m_vector[1], m_vector[2] - other.m_vector[2]);
+}
+
+Vec3 Vec3::operator*(const Vec3& other) const noexcept
+{
+	return Vec3(m_vector[0] * other.m_vector[0], m_vector[1] * other.m_vector[1], m_vector[2] * other.m_vector[2]);
+}
+
+Vec3 Vec3::operator*(double scalar) const noexcept
+{
+	return Vec3(m_vector[0] * scalar, m_vector[1] * scalar, m_vector[2] * scalar);
+}
+
+Vec3 Vec3::operator/(double scalar) const
+{
+	if ((1 / scalar) == 0)
+	{
+		throw std::runtime_error("Division by zero. Exiting.");
+	}
+	return Vec3(m_vector[0] / scalar, m_vector[1] / scalar, m_vector[2] / scalar);
+}
 
 const double& Vec3::operator[](const std::size_t index) const noexcept
 {
-	return m_Vec[index];
+	return m_vector[index];
 }
 
-double& Vec3::operator[](std::size_t index) noexcept {
-
+double& Vec3::operator[](const std::size_t index) noexcept
+{
 	return const_cast<double&>(std::as_const(*this)[index]);
-}
-
-Vec3& Vec3::operator+=(const Vec3& otherVec) noexcept
-{
-	m_Vec[0] += otherVec[0];
-	m_Vec[1] += otherVec[1];
-	m_Vec[2] += otherVec[2];
-
-	return *this;
-}
-
-Vec3& Vec3::operator*=(double scalar) noexcept
-{
-	m_Vec[0] *= scalar;
-	m_Vec[1] *= scalar;
-	m_Vec[2] *= scalar;
-
-	return *this;
-}
-
-Vec3& Vec3::operator/=(double scalar) noexcept
-{
-	return ((*this) *= (1 / scalar));
 }
 
 Vec3 Vec3::operator-() const noexcept
 {
-	return Vec3(-m_Vec[0], -m_Vec[1], -m_Vec[2]);
+	return Vec3(-m_vector[0], -m_vector[1], -m_vector[2]);
 }
 
-double Vec3::getMagnitudeSq() const noexcept
-{
-	return m_Vec[0] * m_Vec[0] + m_Vec[1] * m_Vec[1] + m_Vec[2] * m_Vec[2];
-}
-
-double Vec3::getMagnitude() const noexcept
+double Vec3::getMagnitude() const
 {
 	return std::sqrt(getMagnitudeSq());
 }
 
-bool Vec3::isNearZero() const noexcept
+double Vec3::getMagnitudeSq() const noexcept
 {
-	const auto eps{ std::numeric_limits<double>::epsilon() };
-	return ((std::fabs(m_Vec[0]) < eps) && (std::fabs(m_Vec[1]) < eps) && (std::fabs(m_Vec[2]) < eps));
+	return m_vector[0] * m_vector[0] + m_vector[1] * m_vector[1] + m_vector[2] * m_vector[2];
 }
 
-
-// Non-member vec3 utils.
-std::ostream& operator<<(std::ostream& outStream, const Vec3& outVec)
+bool Vec3::isNearZero() const
 {
-	return outStream << outVec[0] << " " << outVec[1] << " " << outVec[2] << "\n";
+	constexpr auto epsilon = std::numeric_limits<double>::epsilon();
+	return (std::fabs(m_vector[0]) < epsilon) && (std::fabs(m_vector[1]) < epsilon) && (std::fabs(m_vector[2]) < epsilon);
 }
 
-Vec3 operator+(const Vec3& f, const Vec3& s) noexcept
-{
-	return Vec3(f[0] + s[0], f[1] + s[1], f[2] + s[2]);
-}
+// Non-member functions and vec3 utils.
 
-Vec3 operator-(const Vec3& f, const Vec3& s) noexcept
+Vec3 operator*(double scalar, const Vec3& other) noexcept
 {
-	return Vec3(f[0] - s[0], f[1] - s[1], f[2] - s[2]);
-}
-
-Vec3 operator*(const Vec3& f, const Vec3& s) noexcept
-{
-	return Vec3(f[0] * s[0], f[1] * s[1], f[2] * s[2]);
-}
-
-Vec3 operator*(double t, const Vec3& s) noexcept
-{
-	return Vec3(t * s[0], t * s[1], t * s[2]);
-}
-
-Vec3 operator*(const Vec3& f, double t) noexcept
-{
-	return t * f;
-}
-
-Vec3 operator/(const Vec3& f, double t) noexcept
-{
-	return (1 / t) * f;
+	return Vec3(other[0] * scalar, other[1] * scalar, other[2] * scalar);
 }
 
 double computeDot(const Vec3& f, const Vec3& s) noexcept
@@ -116,10 +127,15 @@ Vec3 computeCross(const Vec3& f, const Vec3& s) noexcept
 
 Vec3 getUnit(const Vec3& inputVec) noexcept
 {
+	if (inputVec.isNearZero())
+	{
+		std::cerr << "Fatal: Normalizing a zero vector resulting in division by zero. Exiting." << std::endl;
+		std::exit(1);
+	}
 	return inputVec / inputVec.getMagnitude();
 }
 
-Vec3 genRandomVec(double min, double max) noexcept
+Vec3 genRandomVec(double min, double max)
 {
 	return Vec3(UGenRNG(min, max), UGenRNG(min, max), UGenRNG(min, max));
 }
@@ -129,8 +145,8 @@ Vec3 genRandomUnitSphereVec()
 	while (true)
 	{
 		const auto randomVec = genRandomVec(-1, 1);
-		if (randomVec.getMagnitudeSq() < 1) 
-			return randomVec;
+		if (randomVec.getMagnitudeSq() < 1)
+			return Vec3(randomVec);
 	}
 }
 
@@ -143,9 +159,9 @@ Vec3 genRandomUnitHemisphereVecNorm(const Vec3& normalVec)
 {
 	const Vec3 unitSphereRandVec{ genRandomUnitSphereVecNorm() };
 	if (computeDot(unitSphereRandVec, normalVec) > 0.0)
-		return unitSphereRandVec;
+		return Vec3(unitSphereRandVec);
 	else
-		return -unitSphereRandVec;
+		return -Vec3(unitSphereRandVec);
 }
 
 Vec3 genRandomUnitDiskVec()
@@ -154,8 +170,6 @@ Vec3 genRandomUnitDiskVec()
 	{
 		const auto randomVec = Vec3(UGenRNG<double>(-1, 1), UGenRNG<double>(-1, 1), 0);
 		if (randomVec.getMagnitudeSq() < 1)
-			return randomVec;
+			return Vec3(randomVec);
 	}
 }
-
-

@@ -2,12 +2,13 @@ export module window;
 
 import <functional>;
 import <future>;
+import <memory>;
 
 import core_constructs;
 import stats_overlay;
 import timer;
 import color;
-
+import threadpool;
 
 export class SFMLWindow
 {
@@ -18,7 +19,7 @@ public:
     void displayWindow(StatsOverlay& statsOverlayObj, Timer& timerObj);
     void startPDHQuery(PDHVariables& pdhVars);
     void setupWindowSFMLParams();
-    void checkForUpdates(StatsOverlay& statsOverlayObj, Timer& timerObj, PDHVariables& pdhVars);
+    void checkForUpdates(StatsOverlay& statsOverlayObj, Timer& timerObj, PDHVariables& pdhVars, double totalDRAMGigabytes);
     void updateRenderingStatus(Timer& timerObj, StatsOverlay& statsOverlayObj);
     void updateTextureForDisplay();
     void displayWithSequentialTexUpdates();
@@ -28,15 +29,13 @@ public:
     void setResolution(const PixelResolution& windowPixResObj) noexcept;
 
     void setRenderFrameMultiCoreFunctor(const std::function<void()>& multiCoreFunctor) noexcept;
-    void setRenderSampleCollectionPassFunctor(const std::function<void()>& sampleCollectionPassFunctor) noexcept;
     void setMultithreadedCheckFunctor(const std::function<bool()>& isMultithreadedCheckFunctor) noexcept;
 
     void setTextureUpdateCheckFunctor(const std::function<bool()>& texUpdateCheckFunctor) noexcept;
 
-    void setMainEngineFramebufferGetFunctor(const std::function<std::vector<Color>()>& mainEngineFramebufferGetFunctor) noexcept;
+    void setMainEngineFramebufferGetFunctor(const std::function<std::vector<std::unique_ptr<IColor>>&()>& mainEngineFramebufferGetFunctor) noexcept;
     void setMainRendererCameraPropsGetFunctor(const std::function<CameraProperties()>& mainRendererCameraPropsGetFunctor);
     void setRenderCompleteStatusGetFunctor(const std::function<bool()>& renderCompleteStatusFunctor) noexcept;
-    void setSampleCollectionPassCompleteStatusFunctor (const std::function<bool()>& sampleCollectionPassCompleteStatusFunctor) noexcept;
     void setTextureUpdateRateGetFunctor(const std::function<int()>& texUpdateRateFunctor) noexcept;
 
 private:
@@ -51,9 +50,14 @@ private:
     bool m_isRendering{ false };
     bool m_hasSecondPassStarted{ false };
     int m_texUpdateChunkTracker{ 0 };
+
+    std::future<void> m_mainRenderSchedulerFuture{};
     
-    [[nodiscard]] double getCPUUsageWithPDH(PDHVariables& pdhVars);
-    void updatePDHOverlayPeriodic(StatsOverlay& statsOverlayObj, PDHVariables& pdhVars);
+    bool retrievePDHQueryValues(PDHVariables& pdhVars);
+    void updatePDHOverlayPeriodic(StatsOverlay& statsOverlayObj, PDHVariables& pdhVars, double totalDRAMGigabytes);
+    void setupPDHQueryAndCounter(PDHQueryCounterVars& pdhQueryAndCounter, const std::wstring& queryAPIString);
+    void getFormattedValue(PDHVariables& pdhQueryCounterObjVec);
+    double retrieveTotalDRAM();
 };
 
 

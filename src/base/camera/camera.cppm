@@ -46,6 +46,12 @@ void Camera::setCameraCenter(const Point& centerPointInWorldSpace) noexcept
     m_cameraProps.camCenter = centerPointInWorldSpace;
 }
 
+void Camera::setPixelDimensions(const PixelDimension& pixDimObj) noexcept
+{
+    m_cameraProps.camPixelDimObj = pixDimObj;
+}
+
+
 CameraProperties Camera::getCameraProperties() const noexcept
 {
     return m_cameraProps;

@@ -21,12 +21,17 @@ public:
     auto enqueueThreadPoolTask(F&& func)->std::future<decltype(func())>;
 	void stopThreadPool();
 
+    int getNumThreadsUsedByThreadPool() const noexcept;
+    bool isThreadPoolEmpty() const noexcept;
+    bool areAllThreadsOccupied() const noexcept;
+
 private:
 	std::vector<std::jthread> m_workerThreads;
 	std::queue<std::function<void()>> m_tasksQueue{};
 
 	std::mutex m_queueMutex{};
 	std::condition_variable m_conditionVar{};
+    std::atomic<int> m_numActiveTasks{};
     bool m_stopFlag{ false };
 
 	void executeTasks();

@@ -1,27 +1,33 @@
 export module lambertian;
 
+import <memory>;
+
 import material;
 import color;
+import vec3;
 
-export class MLambertian : public Material
+
+export class MLambertian : public IMaterial
 {
 public:
 	explicit MLambertian() noexcept = default;
-	explicit MLambertian(const Color& albedo) noexcept;
-	bool handleRayScatter(const Ray& inputRay, const HitRecord& hitRec, Color& attenuation, Ray& scatteredRay) const override;
+	explicit MLambertian(const std::shared_ptr<IColor> albedo) noexcept;
+	bool handleRayScatter(const Ray& inputRay, const HitRecord& hitRec, IColor& albedo, Ray& scatteredRay) const override;
 
 private:
-	Color m_albedo{};
+	std::shared_ptr<IColor> m_albedo{};
 };
 
-MLambertian::MLambertian(const Color& albedo) noexcept : m_albedo{ albedo } {}
+MLambertian::MLambertian(const std::shared_ptr<IColor> albedo) noexcept : m_albedo{ albedo } {}
 
-bool MLambertian::handleRayScatter(const Ray& inputRay, const HitRecord& hitRec, Color& attenuation, Ray& scatteredRay) const
+bool MLambertian::handleRayScatter(const Ray& inputRay, const HitRecord& hitRec, IColor& albedo, Ray& scatteredRay) const
 {
-	Vec3 scatterDirection = hitRec.normalVec + genRandomUnitSphereVecNorm();
+    Vec3 scatterDirection = hitRec.normalVec + genRandomUnitSphereVecNorm();
 
-	if (scatterDirection.isNearZero()) scatterDirection = hitRec.normalVec;
-	scatteredRay = Ray(hitRec.hitPoint, scatterDirection);
-	attenuation = m_albedo;
-	return true;
+    if (scatterDirection.isNearZero()) scatterDirection = hitRec.normalVec;
+
+    scatteredRay = Ray(hitRec.hitPoint, scatterDirection);
+    albedo.setColor(*m_albedo);
+
+    return true;
 }

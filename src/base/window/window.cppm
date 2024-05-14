@@ -1,13 +1,11 @@
 import window;
 
-import <chrono>;
-import <algorithm>;
-import <execution>;
-import <iostream>;
-import <cmath>;
+import <windows.h>;
+import <string>;
+import <memory>;
+import <Pdh.h>;
 
-import<windows.h>;
-import<Pdh.h>;
+import color_rgb;
 
 import <SFML/Graphics.hpp>;
 
@@ -34,10 +32,10 @@ void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, Timer& timerO
 				timerObj.startTimer();
 				if (m_windowFunctors.isMultithreadedFunctor()) [[likely]]
 				{
-					m_needsDrawUpdate = true;
 					m_isRendering = true;
 					statsOverlayObj.setRenderingStartStatus(m_isRendering);
-					m_windowFunctors.renderSampleCollectionPassFunctor();
+					m_mainRenderSchedulerFuture = std::async(std::launch::async, m_windowFunctors.renderFrameMultiCoreFunctor);
+					m_needsDrawUpdate = true;
 				}
 			}
 		}
@@ -46,61 +44,55 @@ void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, Timer& timerO
 
 void SFMLWindow::displayWindow(StatsOverlay& statsOverlayObj, Timer& timerObj)
 {
+	double totalDRAM{ retrieveTotalDRAM() };
+	statsOverlayObj.setTotalDRAM(totalDRAM);
 
 	startPDHQuery(m_pdhVars);
 	setupWindowSFMLParams();
-	m_cpuUsagePDHTimer.startTimer();
 
+	m_cpuUsagePDHTimer.startTimer();
 	while (m_windowProps.renderWindowObj.isOpen())
 	{
 		processInputEvents(statsOverlayObj, timerObj);
-   		checkForUpdates(statsOverlayObj, timerObj, m_pdhVars);
+   		checkForUpdates(statsOverlayObj, timerObj, m_pdhVars, totalDRAM);
 		drawGUI(statsOverlayObj, timerObj);
 	}
 
-	PdhCloseQuery(m_pdhVars.cpuQuery);
+	PdhCloseQuery(m_pdhVars.totalCPUUsage.pdhQueryObj);
 }
 
 void SFMLWindow::startPDHQuery(PDHVariables& pdhVars)
 {
-	if (PdhOpenQuery(NULL, 0, &pdhVars.cpuQuery) != ERROR_SUCCESS)
-	{
-		PdhCloseQuery(pdhVars.cpuQuery);
-	}
-
-	if (PdhAddCounter(pdhVars.cpuQuery, TEXT("\\Processor(_Total)\\% Processor Time"), 0, &pdhVars.cpuTotal) != ERROR_SUCCESS)
-	{
-		PdhCloseQuery(pdhVars.cpuQuery);
-	}
-
-	if (PdhCollectQueryData(pdhVars.cpuQuery) != ERROR_SUCCESS)
-	{
-		PdhCloseQuery(pdhVars.cpuQuery);
-	}
+	std::string CPUStr{ "\\Processor(_Total)\\% Processor Time" };
+	setupPDHQueryAndCounter(pdhVars.totalCPUUsage, std::wstring{CPUStr.begin(), CPUStr.end()});
 }
 
-void SFMLWindow::checkForUpdates(StatsOverlay& statsOverlayObj, Timer& timerObj, PDHVariables& pdhVars)
+void SFMLWindow::checkForUpdates(StatsOverlay& statsOverlayObj, Timer& timerObj, PDHVariables& pdhVars, double totalDRAMGigabytes)
 {
 	updateTextureForDisplay();
-	updatePDHOverlayPeriodic(statsOverlayObj, pdhVars);
+	updatePDHOverlayPeriodic(statsOverlayObj, pdhVars, totalDRAMGigabytes);
 	updateRenderingStatus(timerObj, statsOverlayObj);
 }
 
-void SFMLWindow::updatePDHOverlayPeriodic(StatsOverlay& statsOverlayObj, PDHVariables& pdhVars)
+void SFMLWindow::updatePDHOverlayPeriodic(StatsOverlay& statsOverlayObj, PDHVariables& pdhVars, double totalDRAMGigabytes)
 {
-	statsOverlayObj.setTotalCPUUsage(getCPUUsageWithPDH(pdhVars));
+	if (retrievePDHQueryValues(pdhVars))
+	{
+		statsOverlayObj.setTotalCPUUsage(pdhVars.totalCPUUsage.pdhFmtCounterValObj.doubleValue);
+
+		MEMORYSTATUSEX memInfo{};
+		memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+		GlobalMemoryStatusEx(&memInfo);
+		DWORDLONG availPhysMem = memInfo.ullAvailPhys;
+		double usedDRAMGigabytes{ totalDRAMGigabytes - (static_cast<double>(availPhysMem) / (1024.0 * 1024.0 * 1024.0)) };
+
+		statsOverlayObj.setUsedDRAM(usedDRAMGigabytes);
+	}
 }
 
 void SFMLWindow::updateRenderingStatus(Timer& timerObj, StatsOverlay& statsOverlayObj)
 {
-	if (m_isRendering && m_windowFunctors.getRenderSampleCollectionPassCompleteStatusFunctor() && !m_hasSecondPassStarted)
-	{
-		statsOverlayObj.setPixelSampleCollectionCompleteStatus(true);
-		m_windowFunctors.renderFrameMultiCoreFunctor();
-		m_hasSecondPassStarted = true;
-	}
-
-	else if (m_isRendering && m_windowFunctors.getRenderCompleteStatusFunctor())
+	if (m_isRendering && m_windowFunctors.getRenderCompleteStatusFunctor())
 	{
 		timerObj.endTimer();
 		statsOverlayObj.setRenderingCompleteStatus(true);
@@ -110,57 +102,59 @@ void SFMLWindow::updateRenderingStatus(Timer& timerObj, StatsOverlay& statsOverl
 
 void SFMLWindow::updateTextureForDisplay()
 {
-	//if (m_needsDrawUpdate && m_windowFunctors.isTextureReadyForUpdateFunctor())
-	//{
-	//	displayWithSequentialTexUpdates();
-	//}
+	if (m_needsDrawUpdate && m_windowFunctors.isTextureReadyForUpdateFunctor())
+	{
+		displayWithSequentialTexUpdates();
+	}
 }
 
 void SFMLWindow::displayWithSequentialTexUpdates()
 {
-	// chunkTracker increments from 0 to (numRows - 1).
+	static int itStartOffset{ 0 };
 	static int chunkTracker{ 0 };
-	const auto& localMainFramebuffer{ m_windowFunctors.getMainEngineFramebufferFunctor() };
-	const auto& localImgPixResObj{ m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj };
+	std::vector<sf::Uint8> localSFMLBuffer{};
 
-	static int beginningTexUpdateRate{ m_windowFunctors.getTextureUpdateRateFunctor() };
-	const int beginningSingleChunkPixels{ localImgPixResObj.widthInPixels * beginningTexUpdateRate };
-	int currentSingleChunkPixels{ beginningSingleChunkPixels };
-	int currentTexUpdateRate{ m_windowFunctors.getTextureUpdateRateFunctor() };
+	
+	const auto& localFramebuffer = m_windowFunctors.getMainEngineFramebufferFunctor();
+	const auto localPixelRes = m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj;
+	const auto localTexUpdateRate = m_windowFunctors.getTextureUpdateRateFunctor();
+	static int originalTexUpdateRate{ localTexUpdateRate };
+	const int numPixelsInUpdateChunk { localPixelRes.widthInPixels * localTexUpdateRate };
 
-	std::vector<sf::Uint8> localTexSFMLBuffer;
+	const auto itBegin{ localFramebuffer.begin() + static_cast<long long>(chunkTracker * (originalTexUpdateRate * localPixelRes.widthInPixels)) };
+	const auto itEnd{ (localFramebuffer.end() - itBegin > numPixelsInUpdateChunk) ? itBegin + numPixelsInUpdateChunk : localFramebuffer.end() };
+	localSFMLBuffer.reserve(static_cast<long long>(localTexUpdateRate * localPixelRes.widthInPixels * 4));
 
-	const auto itBegin{ localMainFramebuffer.begin() + static_cast<long long>(beginningSingleChunkPixels * chunkTracker) };
-	const auto remainingPixels{ std::distance(itBegin, localMainFramebuffer.end()) };
-
-	if (remainingPixels < beginningSingleChunkPixels)
+	std::for_each(itBegin, itEnd,[&localSFMLBuffer](const std::unique_ptr<IColor>& colorObj)
 	{
-		currentSingleChunkPixels = static_cast<int>(remainingPixels);
+
+		const auto& localColorObj{ static_cast<ColorRGB*>(colorObj.get()) };
+		localColorObj->applyGammaCorrection(2.4);
+		localColorObj->undoNormalization();
+
+		localSFMLBuffer.push_back(static_cast<sf::Uint8>(localColorObj->getRedComponent()));
+		localSFMLBuffer.push_back(static_cast<sf::Uint8>(localColorObj->getGreenComponent()));
+		localSFMLBuffer.push_back(static_cast<sf::Uint8>(localColorObj->getBlueComponent()));
+		localSFMLBuffer.push_back(255);
+	});
+
+	m_windowProps.mainRenderTexObj.update(localSFMLBuffer.data(), localPixelRes.widthInPixels, localTexUpdateRate, 0, chunkTracker * originalTexUpdateRate);
+
+	++chunkTracker; itStartOffset += originalTexUpdateRate * localPixelRes.widthInPixels;
+
+	if(itStartOffset > localPixelRes.widthInPixels * localPixelRes.heightInPixels)
+	{
+		itStartOffset = 0;
+		chunkTracker = 0;
 		m_needsDrawUpdate = false;
 	}
-
-	const auto itEnd{ itBegin + remainingPixels };
-
-	localTexSFMLBuffer.reserve(static_cast<long long>(4 * currentSingleChunkPixels));
-
-	std::for_each(itBegin, itEnd, [&](const Color& color)
-		{
-			localTexSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getX()));
-			localTexSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getY()));
-			localTexSFMLBuffer.push_back(static_cast<sf::Uint8>(color.convertFromNormalized().getBaseVec().getZ()));
-			localTexSFMLBuffer.push_back(255);
-		});
-
-	m_windowProps.mainRenderTexObj.update(localTexSFMLBuffer.data(), localImgPixResObj.widthInPixels, currentTexUpdateRate, 0, chunkTracker * beginningTexUpdateRate);
-
-	++chunkTracker;
 }
 
 void SFMLWindow::setupWindowSFMLParams()
 {
 	m_windowProps.renderWindowObj.create(sf::VideoMode(static_cast<int>(m_windowPixelRes.widthInPixels * m_windowProps.windowedResScale), static_cast<int>(m_windowPixelRes.heightInPixels * m_windowProps.windowedResScale)) , m_windowTitle);
 
-	m_windowProps.mainRenderViewObj = sf::View(sf::FloatRect(0, 0, static_cast<float>(m_windowPixelRes.widthInPixels), static_cast<float>(m_windowPixelRes.heightInPixels)));
+	m_windowProps.mainRenderViewObj = sf::View(sf::FloatRect(0, 0, static_cast<float>(m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj.widthInPixels), static_cast<float>(m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj.heightInPixels)));
 	m_windowProps.renderWindowObj.setView(m_windowProps.mainRenderViewObj);
 	
 	m_windowProps.renderWindowObj.setFramerateLimit(m_windowProps.prefFPSInIntegral);
@@ -210,7 +204,7 @@ void SFMLWindow::setTextureUpdateCheckFunctor(const std::function<bool()>& texUp
 	m_windowFunctors.isTextureReadyForUpdateFunctor = texUpdateCheckFunctor;
 }
 
-void SFMLWindow::setMainEngineFramebufferGetFunctor(const std::function<std::vector<Color>()>& mainEngineFramebufferGetFunctor) noexcept
+void SFMLWindow::setMainEngineFramebufferGetFunctor(const std::function<std::vector<std::unique_ptr<IColor>>&()>&  mainEngineFramebufferGetFunctor) noexcept
 {
 	m_windowFunctors.getMainEngineFramebufferFunctor = mainEngineFramebufferGetFunctor;
 }
@@ -230,37 +224,64 @@ void SFMLWindow::setTextureUpdateRateGetFunctor(const std::function<int()>& texU
 	m_windowFunctors.getTextureUpdateRateFunctor = texUpdateRateFunctor;
 }
 
-void SFMLWindow::setRenderSampleCollectionPassFunctor(const std::function<void()>& sampleCollectionPassFunctor) noexcept
+bool SFMLWindow::retrievePDHQueryValues(PDHVariables& pdhVars)
 {
-	m_windowFunctors.renderSampleCollectionPassFunctor = sampleCollectionPassFunctor;
-}
-
-void SFMLWindow::setSampleCollectionPassCompleteStatusFunctor(const std::function<bool()>& sampleCollectionPassCompleteStatusFunctor) noexcept
-{
-	m_windowFunctors.getRenderSampleCollectionPassCompleteStatusFunctor = sampleCollectionPassCompleteStatusFunctor;
-}
-
-
-double SFMLWindow::getCPUUsageWithPDH(PDHVariables& pdhVars)
-{
-	
 	if (m_cpuUsagePDHTimer.getElapsedTime().count() > 1.5)
 	{
-		if (PdhCollectQueryData(pdhVars.cpuQuery) != ERROR_SUCCESS)
-		{
-			PdhCloseQuery(pdhVars.cpuQuery);
-			return -1;
-		}
-
-		PDH_STATUS pdhStatus = PdhGetFormattedCounterValue(pdhVars.cpuTotal, PDH_FMT_DOUBLE, NULL, &pdhVars.counterValue);
-		if (pdhStatus != ERROR_SUCCESS)
-		{
-			PdhCloseQuery(pdhVars.cpuQuery);
-			return -1;
-		}
+		getFormattedValue(pdhVars);
 		m_cpuUsagePDHTimer.resetTimer();
 		m_cpuUsagePDHTimer.startTimer();
-		return pdhVars.counterValue.doubleValue;
+		return true;
 	}
-	return pdhVars.counterValue.doubleValue;
+	return false;
+}
+
+void SFMLWindow::getFormattedValue(PDHVariables& pdhVars)
+{
+	auto localCopy{ pdhVars.getPDHObjects() };
+
+	for (auto& queryCounter : localCopy)
+	{
+		PDHQueryCounterVars& counterVars = queryCounter.get();
+
+		if (PdhCollectQueryData(counterVars.pdhQueryObj) != ERROR_SUCCESS)
+		{
+			PdhCloseQuery(counterVars.pdhQueryObj);
+			return;
+		}
+
+		PDH_STATUS pdhStatus = PdhGetFormattedCounterValue(counterVars.pdhCounterObj, PDH_FMT_DOUBLE, NULL, &counterVars.pdhFmtCounterValObj);
+		if (pdhStatus != ERROR_SUCCESS)
+		{
+			PdhCloseQuery(counterVars.pdhQueryObj);
+			return;
+		}
+	}
+}
+
+void SFMLWindow::setupPDHQueryAndCounter(PDHQueryCounterVars& pdhQueryAndCounter, const std::wstring& queryAPIString)
+{
+	if (PdhOpenQuery(NULL, 0, &pdhQueryAndCounter.pdhQueryObj) != ERROR_SUCCESS)
+	{
+		PdhCloseQuery(pdhQueryAndCounter.pdhQueryObj);
+	}
+
+	if (PdhAddCounter(pdhQueryAndCounter.pdhQueryObj, queryAPIString.c_str(), 0, &pdhQueryAndCounter.pdhCounterObj) != ERROR_SUCCESS)
+	{
+		PdhCloseQuery(pdhQueryAndCounter.pdhQueryObj);
+	}
+
+	if (PdhCollectQueryData(pdhQueryAndCounter.pdhQueryObj) != ERROR_SUCCESS)
+	{
+		PdhCloseQuery(pdhQueryAndCounter.pdhQueryObj);
+	}
+} 
+
+double SFMLWindow::retrieveTotalDRAM()
+{
+	MEMORYSTATUSEX memInfo{};
+	memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+	GlobalMemoryStatusEx(&memInfo);
+	DWORDLONG totalPhysMem = memInfo.ullTotalPhys;
+	return static_cast<double>(totalPhysMem / static_cast<double>(1024 * 1024 * 1024));	
 }

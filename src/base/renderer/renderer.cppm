@@ -2,89 +2,91 @@ import renderer;
 
 import <algorithm>;
 import <numeric>;
+import <exception>;
+import <memory>;
 
 import core_util;
 import color;
+import color_rgb;
 import threadpool;
 import hit_record;
 import material;
 import lambertian;
 import world_object;
 
+
 import <SFML/Graphics.hpp>;
 
-Color Renderer::computeRayColor(const Ray& inputRay, const WorldObject& mainWorld, int maxRayBounceDepth)
+std::unique_ptr<const IColor> Renderer::computeRayColor(const Ray& inputRay, const WorldObject& mainWorld, int maxRayBounceDepth)
 {
-    if (maxRayBounceDepth <= 0) return Color(0);
+    if (maxRayBounceDepth <= 0)
+    {
+        // Return black (RGB: 0, 0, 0).
+        return createDerivedTypeUniquePtr(m_renderColorType, Vec3(0));
+    }
 
     HitRecord tempHitRecord{};
     
     if (mainWorld.checkHit(inputRay, Interval(0.001, +UInfinity), tempHitRecord))
     {
         Ray scatteredRay{};
-        Color materialAlbedo{};
 
-        if (tempHitRecord.hitMaterial->handleRayScatter(inputRay, tempHitRecord, materialAlbedo, scatteredRay))
+        auto materialAlbedo{ createDerivedTypeUniquePtr(m_renderColorType, Vec3(0)) };
+
+        if (tempHitRecord.hitMaterial->handleRayScatter(inputRay, tempHitRecord, *materialAlbedo, scatteredRay))
         {
-            return materialAlbedo * computeRayColor(scatteredRay, mainWorld, maxRayBounceDepth - 1);
+            materialAlbedo->multiplyColorWithSelf(*(computeRayColor(scatteredRay, mainWorld, maxRayBounceDepth - 1)));
+
+            return materialAlbedo;
         }
     }
-
     return getBackgroundGradient(inputRay);
 }
 
-const Color Renderer::getBackgroundGradient(const Ray& inputRay)
+std::unique_ptr<const IColor> Renderer::getBackgroundGradient(const Ray& inputRay)
 {
-    const Color gradientColor{ 0.5, 0.7, 1.0 };
+    const Vec3 gradientColorVec{ 0.5, 0.7, 1.0 };
 
     const Vec3 inputRayDir{ getUnit(inputRay.getDirection()) };
-    const double lerpFactor{ 0.5 * (inputRayDir.getY() + 1.0) };
-    const Vec3 returnedColor{ ((1.0 - lerpFactor) * Color(1.0).getBaseVec()) + (lerpFactor * gradientColor.getBaseVec()) };
+    const double lerpFactor{ 0.5 * (inputRayDir[1] + 1.0)};
 
-    const Color finalReturnColor(returnedColor.getX(), returnedColor.getY(), returnedColor.getZ());
+    const Vec3 returnedColor{ ((1.0 - lerpFactor) * Vec3(1.0) + lerpFactor * gradientColorVec) };
 
-    return finalReturnColor;
-}
-
-CameraProperties Renderer::getRendererCameraProps() const noexcept
-{
-    return m_mainCamera.getCameraProperties();
+    return createDerivedTypeUniquePtr(m_renderColorType, returnedColor);
 }
 
 void Renderer::setupRenderer(const PixelResolution& pixResObj, const AspectRatio& aspectRatioObj)
 {
     m_mainCamera = Camera{ pixResObj, aspectRatioObj };
     m_mainCamera.setupCamera();
-
-    m_gatherPixelSamplesPassFutureVec.reserve(m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels);
+    
+    auto localPixDimObj{ m_mainCamera.getCameraProperties().camPixelDimObj };
 
     m_mainRenderingPassFutureVec.reserve(m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels);
-    
     m_texUpdateLatch = std::make_unique<std::latch>(m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels);
-    
-    m_pixelSamplesPassLatch = std::make_unique<std::latch>(m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels);
 
+    setupGaussianKernel(localPixDimObj);
 }
 
-void Renderer::renderFrameMultiCore(std::vector<Color>& mainFramebuffer, const WorldObject& mainWorld)
+void Renderer::setupGaussianKernel(PixelDimension& localPixDimObj)
 {
-    for (int eachPixelRow{}; eachPixelRow < m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels; ++eachPixelRow)
-    {
-        m_mainRenderingPassFutureVec.push_back(m_renderThreadPool.enqueueThreadPoolTask([this, eachPixelRow, &mainFramebuffer]() {
-            this->renderPixelRowThreadPoolTaskGaussian(eachPixelRow, mainFramebuffer);
-        }));    
-    }
- }
+    const Vec3 adjacentPixelForDist{ localPixDimObj.topLeftmostPixelCenter + (1 * localPixDimObj.lateralSpanInAbsVal) + (1 * localPixDimObj.verticalSpanInAbsVal) };
+    localPixDimObj.pixelUnitSpanInAbsVal = (localPixDimObj.topLeftmostPixelCenter - adjacentPixelForDist).getMagnitude();
+    m_mainCamera.setPixelDimensions(localPixDimObj);
+    m_gaussianKernelProps.sigmaInAbsVal = 0.25 * localPixDimObj.pixelUnitSpanInAbsVal;
+    m_gaussianKernelProps.kernelSpanInIntegralVal = static_cast<int>((m_gaussianKernelProps.kernelCoverageScalar * m_gaussianKernelProps.sigmaInAbsVal) / localPixDimObj.pixelUnitSpanInAbsVal);
+}
 
-void Renderer::samplesCollectionRenderPassMultiCore(const WorldObject& mainWorld)
+void Renderer::renderFrameMultiCoreGaussian(std::vector<std::unique_ptr<IColor>>& mainFramebuffer, const WorldObject& mainWorld)
 {
     m_renderThreadPool.initiateThreadPool();
-    for (int eachPixelRow{}; eachPixelRow < m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels; ++eachPixelRow)
+
+	for (int eachPixelRow{}; eachPixelRow < m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels; ++eachPixelRow)
     {
-        m_gatherPixelSamplesPassFutureVec.push_back(m_renderThreadPool.enqueueThreadPoolTask([this, eachPixelRow, &mainWorld]() {
-            this->collectPixelSamplesRowThreadPoolTask(eachPixelRow, mainWorld);
+        m_mainRenderingPassFutureVec.push_back(m_renderThreadPool.enqueueThreadPoolTask([this, eachPixelRow, &mainFramebuffer, &mainWorld]() {
+            this->renderPixelRowThreadPoolTaskGaussian(eachPixelRow, mainFramebuffer, mainWorld);
         }));
-    }
+	}
 }
 
 void Renderer::setRendererSFMLFunctors(const RendererSFMLFunctors& rendererFuncObj) noexcept
@@ -92,131 +94,109 @@ void Renderer::setRendererSFMLFunctors(const RendererSFMLFunctors& rendererFuncO
     m_rendererFunctors = rendererFuncObj;
 }
 
-void Renderer::renderPixelRowThreadPoolTask(int currentRowCount, std::vector<Color>& mainFramebuffer, const WorldObject& mainWorld)
-{
-    const auto localCamProps{ m_mainCamera.getCameraProperties() };
-    const auto localPixResObj{ m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj };
-    const auto localPixDimObj{ m_mainCamera.getCameraProperties().camPixelDimObj };
-    m_texUpdateLatch->count_down();
-
-    for (int i{}; i < localPixResObj.widthInPixels; ++i)
-    {
-        Color normCurrPixColor(0);
-        int index{};
-        for (int pixelSample{}; pixelSample < m_samplesPerPixel; ++pixelSample)
-        {
-            Ray currentPixelRay = getRayForPixel(i, currentRowCount);
-            normCurrPixColor = normCurrPixColor + computeRayColor(currentPixelRay, mainWorld, m_maxRayBounceDepth - 1);
-            index = ((currentRowCount * localPixResObj.widthInPixels) + i);
-        }
-        mainFramebuffer[index] = normCurrPixColor * (1.0 / m_samplesPerPixel);
-    }
-}
-
-void Renderer::renderPixelRowThreadPoolTaskGaussian(int currentRowCount, std::vector<Color>& mainFramebuffer)
+void Renderer::renderPixelRowThreadPoolTaskGaussian(int currentRowCount, std::vector<std::unique_ptr<IColor>>& mainFramebuffer, const WorldObject& mainWorld)
 {
     const auto localCamProps{ m_mainCamera.getCameraProperties() };
     const auto localPixResObj{ m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj };
     const auto localPixDimObj{ m_mainCamera.getCameraProperties().camPixelDimObj };
 
-    // We use the distance between two adjacent pixel centers as one pixel unit for the gaussian kernel.
-    const Vec3 adjacentPixelForDist{ localPixDimObj.topLeftmostPixelCenter + (1 * localPixDimObj.lateralSpanInAbsVal) + (1 * localPixDimObj.verticalSpanInAbsVal) };
-    const double pixelUnit{ (localPixDimObj.topLeftmostPixelCenter - adjacentPixelForDist).getMagnitude() };
-    const double sigma{ 3 * pixelUnit };
-    const int gaussianPixCoverage{ static_cast<int>((3 * sigma) / pixelUnit) };
-
     m_texUpdateLatch->count_down();
 
-    //// For each pixel in row...
-    //for (int i{}; i < localPixResObj.widthInPixels; ++i)
-    //{
-    //    int index{};
-    //    Color normCurrPixColor(0);
-
-    //    for (std::size_t dv{ static_cast<std::size_t>(-gaussianPixCoverage) }; dv <= (gaussianPixCoverage); ++dv)
-    //    {
-    //        for (std::size_t du{ static_cast<std::size_t>(-gaussianPixCoverage) }; du <= (gaussianPixCoverage); ++du)
-    //        {
-    //            const int nv{ static_cast<int>(currentRowCount + dv) };
-    //            const int nu{ static_cast<int>(i + du) };
-
-    //            if (nv < 0 || nu < 0 || nv > (localPixResObj.heightInPixels - 1) || nu >(localPixResObj.widthInPixels - 1)) continue;
-
-    //            index = nu + (nv * localPixResObj.widthInPixels);
-
-    //            const Point currentPixelCenter{ localPixDimObj.topLeftmostPixelCenter + (nu * localPixDimObj.lateralSpanInAbsVal) + (nv * localPixDimObj.verticalSpanInAbsVal) };
-    //        }
-
-    //    }
-        //// For every pixel sample.
-        //for (int subPixelGridV{}; subPixelGridV < m_sppSqrtFloored; ++subPixelGridV)
-        //{
-        //    std::vector<int> contribPix1DIndices{};
-        //    std::vector<double> contribSampleWeights{};
-        //    Point currentSamplePointOutVar{};
-
-        //    for (int subPixelGridU{}; subPixelGridU < m_sppSqrtFloored; ++subPixelGridU)
-        //    {
-        //        const Ray currentPixelRay = getStratifiedRayForPixel(i, currentRowCount, subPixelGridU, subPixelGridV, currentSamplePointOutVar);
-        //        normCurrPixColor = normCurrPixColor + computeRayColor(currentPixelRay, mainWorld, m_maxRayBounceDepth - 1);
-
-        //        for (int dv{ -gaussianPixCoverage + 1 }; dv < gaussianPixCoverage; ++dv)
-        //        {
-        //            for (int du{ -gaussianPixCoverage + 1 }; du < gaussianPixCoverage; ++du)
-        //            {
-        //                const int nv{ currentRowCount + dv };
-        //                const int nu{ i + du };
-
-        //                if (nu < 0 || nv < 0 || nu >(localPixResObj.widthInPixels - 1) || nv >(localPixResObj.heightInPixels - 1)) continue;
-
-        //                const Point neighborPixCentre{ currentPixelCenter + (nu * localPixDimObj.lateralSpanInAbsVal) + (nv * localPixDimObj.verticalSpanInAbsVal) };
-        //                const double currSampleToNeighborPixDistSq{ (currentSamplePointOutVar - neighborPixCentre).getMagnitudeSq() };
-
-        //                if (currSampleToNeighborPixDistSq > ((3 * sigma) * (3 * sigma))) continue;
-
-        //                const double gaussianWeightForSampleContrib{ std::exp(-currSampleToNeighborPixDistSq / (2 * sigma * sigma)) };
-        //            }
-        //        }
-
-        //    }
-
-        //}
-    //}
-}
-
-void Renderer::collectPixelSamplesRowThreadPoolTask(int currentRowCount, const WorldObject& mainWorld)
-{
-	const auto localCamProps{ m_mainCamera.getCameraProperties() };
-	const auto localPixResObj{ m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj };
-	const auto localPixDimObj{ m_mainCamera.getCameraProperties().camPixelDimObj };
-    m_pixelSamplesPassLatch->count_down();
-    // For each pixel in row...
-    for (int i{}; i < localPixResObj.widthInPixels; ++i)
+    for (std::size_t pixelInRow{}; pixelInRow < localPixResObj.widthInPixels; ++pixelInRow)
     {
-        Color normCurrPixColor(0);
-        const Point currentPixelCenter{ localPixDimObj.topLeftmostPixelCenter + (i * localPixDimObj.lateralSpanInAbsVal) + (currentRowCount * localPixDimObj.verticalSpanInAbsVal) };
-        PixelSamples currentPixelSamples{ .pixel1DIndex{(currentRowCount * localPixResObj.widthInPixels) + i} };
-        
-        // For every pixel sample.
-        for (int subPixelGridV{}; subPixelGridV < m_sppSqrtFloored; ++subPixelGridV)
-        {
-            std::vector<int> contribPix1DIndices{};
-            std::vector<double> contribSampleWeights{};
-            Point currentSamplePointOutVar{};
+        Point currentSamplePointOutVar{};
+        auto currPixelSampleColor{ createDerivedTypeUniquePtr(m_renderColorType, Vec3(0)) };
 
-            for (int subPixelGridU{}; subPixelGridU < m_sppSqrtFloored; ++subPixelGridU)
+        for (int subPixelGridV{}; subPixelGridV < m_sppSqrtCeil; ++subPixelGridV)
+        {
+            for (int subPixelGridU{}; subPixelGridU < m_sppSqrtCeil; ++subPixelGridU)
             {
-                const Ray currentPixelRay = getStratifiedRayForPixel(i, currentRowCount, subPixelGridU, subPixelGridV, currentSamplePointOutVar);
-                normCurrPixColor = normCurrPixColor + computeRayColor(currentPixelRay, mainWorld, m_maxRayBounceDepth - 1);
+                const Ray currentPixelRay = getStratifiedRayForPixel(static_cast<int>(pixelInRow), currentRowCount, subPixelGridU, subPixelGridV, currentSamplePointOutVar);
 
-                currentPixelSamples.pixelSamples.emplace_back(currentSamplePointOutVar, normCurrPixColor);
+                currPixelSampleColor->addColorToSelf(*computeRayColor(currentPixelRay, mainWorld, m_maxRayBounceDepth - 1));
             }
-
         }
+        currPixelSampleColor->applyWeights(m_sppSqrtCeil * m_sppSqrtCeil);
+
+        mainFramebuffer[static_cast<long long>(currentRowCount * localPixResObj.widthInPixels) + pixelInRow] = std::move(currPixelSampleColor);
     }
-
-
 }
+
+//void Renderer::accumNeighborPixelSamplesGaussianContrib(const GaussianKernelProperties& gaussKernelPropsObj, int currentRowCount, size_t pixelInRow, const PixelResolution& localPixResObj, const PixelDimension& localPixDimObj, double& accumWeightForPixelColor, Color& normalizedPixelColor)
+//{
+//    const auto& sigma{ gaussKernelPropsObj.sigmaInAbsVal };
+//    const auto& kernelDiam{ gaussKernelPropsObj.kernelSpanInIntegralVal };
+//    const auto& kernelScalar{ gaussKernelPropsObj.kernelCoverageScalar };
+//
+//    std::vector<PixelSampleData> localNeighborPixelSamplesVec{};
+//
+//    for (int dv{ (-kernelDiam) }; dv <= kernelDiam; ++dv)
+//    {
+//        for (int du{ (-kernelDiam) }; du <= kernelDiam; ++du)
+//        {
+//            const int nv{ (currentRowCount + dv) };
+//            const int nu{ static_cast<int>(pixelInRow + du) };
+//
+//            if (nv < 0 || nu < 0 || nv >(localPixResObj.heightInPixels - 1) || nu >(localPixResObj.widthInPixels - 1)) continue;
+//
+//            const Point neighborPixelCenter{ localPixDimObj.topLeftmostPixelCenter + ((nu) * localPixDimObj.lateralSpanInAbsVal) + ((nv) * localPixDimObj.verticalSpanInAbsVal) };
+//
+//            {
+//                std::scoped_lock emplaceLock{ m_mapReadWriteMutex };
+//                localNeighborPixelSamplesVec = m_pixelSamplesMap[static_cast<long long>(nv * localPixResObj.widthInPixels) + nu].pixelSamples;
+//            }
+//
+//            std::for_each(localNeighborPixelSamplesVec.begin(), localNeighborPixelSamplesVec.end(), [&](PixelSampleData sample) {
+//
+//                const Point pixelSamplePoint{ sample.pointOnViewPlane };
+//                const double currSampleToNeighborPixDistSq{ (pixelSamplePoint - neighborPixelCenter).getMagnitudeSq() };
+//
+//                if (currSampleToNeighborPixDistSq < ((kernelScalar * sigma) * (kernelScalar * sigma)))
+//                {
+//                    const double gaussianWeightForSampleContrib{ std::exp(-currSampleToNeighborPixDistSq / (2 * sigma * sigma)) };
+//                    accumWeightForPixelColor += gaussianWeightForSampleContrib;
+//                    normalizedPixelColor = normalizedPixelColor + (sample.computedBaseColor * gaussianWeightForSampleContrib);
+//                }
+//            });
+//        }
+//    }
+//}
+
+//void Renderer::collectPixelSamplesRowThreadPoolTask(int currentRowCount, const WorldObject& mainWorld)
+//{
+//	const auto localCamProps{ m_mainCamera.getCameraProperties() };
+//	const auto localPixResObj{ m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj };
+//	const auto localPixDimObj{ m_mainCamera.getCameraProperties().camPixelDimObj };
+//    m_pixelSamplesPassLatch->count_down();
+//    // For each pixel in row...
+//    for (int i{}; i < localPixResObj.widthInPixels; ++i)
+//    {
+//        const Point currentPixelCenter{ localPixDimObj.topLeftmostPixelCenter + (i * localPixDimObj.lateralSpanInAbsVal) + (currentRowCount * localPixDimObj.verticalSpanInAbsVal) };
+//        PixelSamples currentPixelSamples{};
+//        currentPixelSamples.pixelSamples.reserve(static_cast<long long>(m_sppSqrtCeil * m_sppSqrtCeil));
+//        
+//        // For every pixel sample.
+//        for (int subPixelGridV{}; subPixelGridV < m_sppSqrtCeil; ++subPixelGridV)
+//        {
+//            Point currentSamplePointOutVar{};
+//
+//            for (int subPixelGridU{}; subPixelGridU < m_sppSqrtCeil; ++subPixelGridU)
+//            {
+//                Color normCurrPixColor(0);
+//                const Ray currentPixelRay = getStratifiedRayForPixel(i, currentRowCount, subPixelGridU, subPixelGridV, currentSamplePointOutVar);
+//                normCurrPixColor = normCurrPixColor + computeRayColor(currentPixelRay, mainWorld, m_maxRayBounceDepth - 1);
+//
+//                currentPixelSamples.pixelSamples.emplace_back(PixelSampleData(currentSamplePointOutVar, normCurrPixColor));
+//            }
+//        }
+//
+//        {
+//            std::scoped_lock emplaceLock{ m_mapReadWriteMutex };
+//
+//            m_pixelSamplesMap.emplace(std::pair<std::size_t, PixelSamples>(static_cast<std::size_t>((currentRowCount * localPixResObj.widthInPixels) + i), currentPixelSamples));
+//        }
+//    }
+//}
 
 void Renderer::setThreadingMode(bool isMultithreaded) noexcept
 {
@@ -230,45 +210,21 @@ bool Renderer::getThreadingMode() const noexcept
 
 bool Renderer::checkForDrawUpdate()
 {
-    if (m_gatherPixelSamplesPassFutureVec.size() != m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels) return false;
+    if (m_mainRenderingPassFutureVec.size() != m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels) return false;
     
-    // updateChunk spans 0 to m_texUpdateRate rows for one chunk. 
-    static int updateChunk{ 0 };
+    // updateChunk spans 0 to m_texUpdateRateOut rows for one chunk. 
+    static int updateChunkForRangeStartOut{ 0 };
+    const auto& localCopy{ std::span<std::future<void>>{m_mainRenderingPassFutureVec.begin(), m_mainRenderingPassFutureVec.end()} };
     
-    const auto itBegin{ m_gatherPixelSamplesPassFutureVec.begin() + updateChunk };
-    const auto numElementsRemaining = std::distance(itBegin, m_gatherPixelSamplesPassFutureVec.end());
+    bool canDrawCurrChunk{ areFuturesReadyInRange(updateChunkForRangeStartOut, localCopy, m_texUpdateRateOut) };
 
-    if (numElementsRemaining < m_texUpdateRate)
+    if(canDrawCurrChunk)
     {
-        m_texUpdateRate = static_cast<int>(numElementsRemaining);
+        updateChunkForRangeStartOut += m_texUpdateRateOut;
+        if (updateChunkForRangeStartOut >= localCopy.size()) updateChunkForRangeStartOut = 0;
     }
 
-    const auto itEnd{ itBegin + m_texUpdateRate };
-
-    bool canCurrentChunkBeDrawn = std::all_of(itBegin, itEnd, [](const std::future<void>& fut) {
-		return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-	});
-
-    if (itEnd == m_gatherPixelSamplesPassFutureVec.end() && canCurrentChunkBeDrawn)
-    {
-        updateChunk = 0;
-    }
-    else if(canCurrentChunkBeDrawn)
-    {
-        updateChunk += m_texUpdateRate;
-    }
-
-    return canCurrentChunkBeDrawn;
-}
-
-bool Renderer::getSampleCollectionPassCompleteStatus() noexcept
-{
-    if (!m_pixelSamplesPassLatch->try_wait()) return false;
-    bool isSampleCollectionComplete = std::all_of(m_gatherPixelSamplesPassFutureVec.begin(), m_gatherPixelSamplesPassFutureVec.end(), [](const std::future<void>& fut) {
-        return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-    });
-
-    return isSampleCollectionComplete;
+    return canDrawCurrChunk;
 }
 
 bool Renderer::getRenderCompleteStatus() noexcept
@@ -278,42 +234,21 @@ bool Renderer::getRenderCompleteStatus() noexcept
         return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
         });
 
-    if (isRenderComplete)
-    {
-        m_renderThreadPool.stopThreadPool();
-    }
-
     return isRenderComplete;
-}
-
-Ray Renderer::getRayForPixel(int i, int currentRowCount) const noexcept
-{
-    const auto localCamProps{ m_mainCamera.getCameraProperties() };
-    
-    auto sampleOffset{ Vec3((UGenRNG<double>() - 0.5), (UGenRNG<double>() - 0.5), 0) };
-    
-    const Point currentRayForPixel{ localCamProps.camPixelDimObj.topLeftmostPixelCenter + ((i + sampleOffset.getX()) * localCamProps.camPixelDimObj.lateralSpanInAbsVal) + ((currentRowCount + sampleOffset.getY()) * localCamProps.camPixelDimObj.verticalSpanInAbsVal) };
-
-    const auto randUnitDiskVec{ genRandomUnitDiskVec() };
-    const auto randRayOriginOnUnitDisk{ localCamProps.camCenter + (randUnitDiskVec.getX() * localCamProps.defocusDiskU) + (randUnitDiskVec.getY() * localCamProps.defocusDiskV) };
-
-    const Vec3 rayOrigin{ localCamProps.defocusAngle <= 0 ? localCamProps.camCenter : randRayOriginOnUnitDisk };
-
-    return Ray(rayOrigin, currentRayForPixel - rayOrigin);
 }
 
 Ray Renderer::getStratifiedRayForPixel(int i, int currentRowCount, int subPixelGridU, int subPixelGridV, Point& currentSamplePoint) const noexcept
 {
     const auto localCamProps{ m_mainCamera.getCameraProperties() };
-    const double stratumWidth{ 1.0 / m_sppSqrtFloored };
-    const double stratumHeight{ 1.0 / m_sppSqrtFloored };
+    const double stratumWidth{ 1.0 / m_sppSqrtCeil };
+    const double stratumHeight{ 1.0 / m_sppSqrtCeil };
 
     auto sampleOffset{ Vec3(((subPixelGridU + UGenRNG<double>()) * stratumWidth), ((subPixelGridV + UGenRNG<double>()) * stratumHeight), 0) };
 
-    currentSamplePoint = localCamProps.camPixelDimObj.topLeftmostPixelCenter + ((i + sampleOffset.getX()) * localCamProps.camPixelDimObj.lateralSpanInAbsVal) + ((currentRowCount + sampleOffset.getY()) * localCamProps.camPixelDimObj.verticalSpanInAbsVal);
+    currentSamplePoint = localCamProps.camPixelDimObj.topLeftmostPixelCenter + ((i + sampleOffset[0]) * localCamProps.camPixelDimObj.lateralSpanInAbsVal) + ((currentRowCount + sampleOffset[1]) * localCamProps.camPixelDimObj.verticalSpanInAbsVal);
 
     const auto randUnitDiskVec{ genRandomUnitDiskVec() };
-    const auto randRayOriginOnUnitDisk{ localCamProps.camCenter + (randUnitDiskVec.getX() * localCamProps.defocusDiskU) + (randUnitDiskVec.getY() * localCamProps.defocusDiskV) };
+    const auto randRayOriginOnUnitDisk{ localCamProps.camCenter + (randUnitDiskVec[0] * localCamProps.defocusDiskU) + (randUnitDiskVec[1] * localCamProps.defocusDiskV) };
 
     const Vec3 rayOrigin{ localCamProps.defocusAngle <= 0 ? localCamProps.camCenter : randRayOriginOnUnitDisk };
 
@@ -322,5 +257,36 @@ Ray Renderer::getStratifiedRayForPixel(int i, int currentRowCount, int subPixelG
 
 int Renderer::getTexUpdateRate() const noexcept
 {
-    return m_texUpdateRate;
+    return m_texUpdateRateOut;
+}
+
+bool Renderer::areFuturesReadyInRange(int startOffset, std::span<std::future<void>> iterableFutureContainer, int& optExistingTracker)
+{
+    int numElemToIter{ std::min(optExistingTracker, static_cast<int>(iterableFutureContainer.size()) - startOffset) };
+    optExistingTracker = numElemToIter;
+
+    const auto subSpan{ iterableFutureContainer.subspan(startOffset, numElemToIter) };
+
+    const bool isReady = std::all_of(subSpan.begin(), subSpan.end(), [](const std::future<void>& fut) {
+        return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+        });
+
+    return isReady;
+}
+
+CameraProperties Renderer::getRendererCameraProps() const noexcept
+{
+    return m_mainCamera.getCameraProperties();
+}
+
+std::unique_ptr<IColor> Renderer::createDerivedTypeUniquePtr(const std::string& colorType, const Vec3& value) const
+{
+    if (colorType == "ColorRGB")
+    {
+        return std::make_unique<ColorRGB>(value);
+    }
+    else
+    {
+        throw std::runtime_error("Invalid color type specified.");
+    }
 }

@@ -5,6 +5,7 @@ import <vector>;
 import <print>;
 import <span>;
 import <functional>;
+import <memory>;
 import <atomic>;
 import <future>;
 import <latch>;
@@ -29,13 +30,11 @@ public:
 	explicit Renderer() noexcept = default;
     
     void setupRenderer(const PixelResolution& pixResObj, const AspectRatio& aspectRatioObj);
-    void renderFrameMultiCore(std::vector<Color>& mainFramebuffer, const WorldObject& mainWorld);
-    void samplesCollectionRenderPassMultiCore(const WorldObject& mainWorld);
+    void renderFrameMultiCoreGaussian(std::vector<std::unique_ptr<IColor>>& mainFramebuffer, const WorldObject& mainWorld);
 
     void setRendererSFMLFunctors(const RendererSFMLFunctors& rendererFuncObj) noexcept;
     void setThreadingMode(bool isMultithreaded) noexcept;
 
-    [[nodiscard]] bool getSampleCollectionPassCompleteStatus() noexcept;
     [[nodiscard]] bool getRenderCompleteStatus() noexcept;
     [[nodiscard]] bool getThreadingMode() const noexcept;
     [[nodiscard]] CameraProperties getRendererCameraProps() const noexcept;
@@ -46,28 +45,29 @@ public:
 private:   
     Camera m_mainCamera{};
     RendererSFMLFunctors m_rendererFunctors{};
-    std::vector<PixelSamples> m_pixelSamplesBuffer{};
+    MT_ThreadPool m_renderThreadPool{};
+    GaussianKernelProperties m_gaussianKernelProps{};
+
     bool m_isMultithreaded{ true };
     std::mutex m_framebufferMutex{};
 
-    MT_ThreadPool m_renderThreadPool{};
-    std::vector<std::future<void>> m_gatherPixelSamplesPassFutureVec{};
+    bool m_isRenderComplete{ false };
     std::vector<std::future<void>> m_mainRenderingPassFutureVec{};
-    
-    std::unique_ptr<std::latch> m_pixelSamplesPassLatch{};
-    std::unique_ptr<std::latch> m_texUpdateLatch{};
-    int m_texUpdateRate{ 50 };
-    int m_samplesPerPixel{ 25 };
-    int m_sppSqrtFloored{ static_cast<int>(std::floor(std::sqrt(m_samplesPerPixel))) };
-    int m_maxRayBounceDepth{ 25 };
 
-    [[nodiscard]] Ray getRayForPixel(int i, int currentRowCount) const noexcept;
+    std::unique_ptr<std::latch> m_texUpdateLatch{};
+    int m_texUpdateRateOut{ 50 };
+    int m_samplesPerPixel{ 5 };
+    int m_sppSqrtCeil{ static_cast<int>(std::ceil(std::sqrt(m_samplesPerPixel))) };
+    int m_maxRayBounceDepth{ 50 };
+    std::string m_renderColorType{ "ColorRGB" };
+
     [[nodiscard]] Ray getStratifiedRayForPixel(int i, int currentRowCount, int subPixelGridU, int subPixelGridV, Point& currentSamplePoint) const noexcept;
-    [[nodiscard]] static Color computeRayColor(const Ray& inputRay, const WorldObject& mainWorld, int maxRayBounceDepth);
-    static const Color getBackgroundGradient(const Ray& inputRay);
-    void renderPixelRowThreadPoolTask(int currentColumnCount, std::vector<Color>& primaryPixelBuffer, const WorldObject& mainWorld);
-    void renderPixelRowThreadPoolTaskGaussian(int currentColumnCount, std::vector<Color>& primaryPixelBuffer);
-    void collectPixelSamplesRowThreadPoolTask(int currentRowCount, const WorldObject& mainWorld);
+    [[nodiscard]] std::unique_ptr<const IColor> computeRayColor(const Ray& inputRay, const WorldObject& mainWorld, int maxRayBounceDepth);
+    std::unique_ptr<const IColor> getBackgroundGradient(const Ray& inputRay);
+    void renderPixelRowThreadPoolTaskGaussian(int currentColumnCount, std::vector<std::unique_ptr<IColor>>& primaryPixelBuffer, const WorldObject& mainWorld);
+    static bool areFuturesReadyInRange(int startOffset, std::span<std::future<void>> iterableFutureContainer, int& optExistingTracker);
+    void setupGaussianKernel(PixelDimension& localPixDimObj);
+    std::unique_ptr<IColor> createDerivedTypeUniquePtr(const std::string& colorType, const Vec3& value) const;
 };
 
 

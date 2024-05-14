@@ -4,6 +4,7 @@ import color;
 import vec3;
 import color;
 import ray;
+import threadpool;
 
 import <vector>;
 import <future>;
@@ -17,6 +18,7 @@ export struct PixelResolution
 {
 	int widthInPixels{};
 	int heightInPixels{};
+	long long totalPixels{ widthInPixels * heightInPixels };
 };
 
 export struct AspectRatio
@@ -45,6 +47,7 @@ export struct PixelDimension
 	Vec3 lateralSpanInAbsVal{};
 	Vec3 verticalSpanInAbsVal{};
 	Point topLeftmostPixelCenter{};
+	double pixelUnitSpanInAbsVal{};
 };
 
 export struct CameraProperties
@@ -91,10 +94,11 @@ export struct OverlayProperties
 	OverlayStatistic renderObj{};
 	OverlayStatistic timeObj{};
 	OverlayStatistic cpuUsageObj{};
+	OverlayStatistic dramUsageObj{};
 
 	std::vector<std::reference_wrapper<OverlayStatistic>> getStatsCollection()
 	{
-		return { std::ref(titleObj), std::ref(modeObj), std::ref(timeObj), std::ref(renderObj), std::ref(cpuUsageObj) };
+		return { std::ref(titleObj), std::ref(modeObj), std::ref(timeObj), std::ref(renderObj), std::ref(cpuUsageObj), std::ref(dramUsageObj)};
 	}
 };
 
@@ -115,31 +119,36 @@ export struct RenderingMode
 export struct WindowFunctors
 {
 	std::function<void()> renderFrameMultiCoreFunctor{};
-	std::function<void()> renderSampleCollectionPassFunctor{};
 	std::function<bool()> isMultithreadedFunctor{};
 	std::function<bool()> isTextureReadyForUpdateFunctor{};
-	std::function<std::vector<Color>()> getMainEngineFramebufferFunctor{};
+	std::function<std::vector<std::unique_ptr<IColor>>&()> getMainEngineFramebufferFunctor{};
 	std::function<CameraProperties()> getRendererCameraPropsFunctor{};
 	std::function<bool()> getRenderCompleteStatusFunctor{};
-	std::function<bool()> getRenderSampleCollectionPassCompleteStatusFunctor{};
 	std::function<int()> getTextureUpdateRateFunctor{};
+	std::function<MT_ThreadPool&()> getThreadPoolFunctor{};
+};
+
+export struct PDHQueryCounterVars
+{
+	HQUERY pdhQueryObj{};
+	HCOUNTER pdhCounterObj{};
+	PDH_FMT_COUNTERVALUE pdhFmtCounterValObj{};
 };
 
 export struct PDHVariables
 {
-	HQUERY cpuQuery{};
-	HCOUNTER cpuTotal{};
-	PDH_FMT_COUNTERVALUE counterValue{};
+	PDHQueryCounterVars totalCPUUsage{};
+	PDHQueryCounterVars availDRAM{};
+
+	std::vector<std::reference_wrapper<PDHQueryCounterVars>> getPDHObjects()
+	{
+		return { std::ref(totalCPUUsage), std::ref(availDRAM) };
+	}
 };
 
-export struct PixelSampleData
+export struct GaussianKernelProperties
 {
-	Point pointOnViewPlane{};
-	Color computedBaseColor{};
-};
-
-export struct PixelSamples
-{
-	int pixel1DIndex{};
-	std::vector <PixelSampleData> pixelSamples{};
+	double sigmaInAbsVal{};
+	int kernelSpanInIntegralVal{};
+	int kernelCoverageScalar{ 3 };
 };
