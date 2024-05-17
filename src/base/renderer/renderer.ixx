@@ -37,8 +37,10 @@ public:
 
     [[nodiscard]] bool getRenderCompleteStatus() noexcept;
     [[nodiscard]] bool getThreadingMode() const noexcept;
-    [[nodiscard]] CameraProperties getRendererCameraProps() const noexcept;
     [[nodiscard]] int getTexUpdateRate() const noexcept;
+    [[nodiscard]] GaussianKernelProperties getGaussianKernelProps() const noexcept;
+    [[nodiscard]] CameraProperties getRendererCameraProps() const noexcept;
+    [[nodiscard]] std::string getRenderColorType() const noexcept;
     
     [[nodiscard]] bool checkForDrawUpdate();
 
@@ -56,18 +58,22 @@ private:
 
     std::unique_ptr<std::latch> m_texUpdateLatch{};
     int m_texUpdateRateOut{ 50 };
-    int m_samplesPerPixel{ 5 };
+    int m_samplesPerPixel{ 100 };
     int m_sppSqrtCeil{ static_cast<int>(std::ceil(std::sqrt(m_samplesPerPixel))) };
-    int m_maxRayBounceDepth{ 50 };
+    int m_maxRayBounceDepth{ 100 };
     std::string m_renderColorType{ "ColorRGB" };
 
     [[nodiscard]] Ray getStratifiedRayForPixel(int i, int currentRowCount, int subPixelGridU, int subPixelGridV, Point& currentSamplePoint) const noexcept;
     [[nodiscard]] std::unique_ptr<const IColor> computeRayColor(const Ray& inputRay, const WorldObject& mainWorld, int maxRayBounceDepth);
     std::unique_ptr<const IColor> getBackgroundGradient(const Ray& inputRay);
     void renderPixelRowThreadPoolTaskGaussian(int currentColumnCount, std::vector<std::unique_ptr<IColor>>& primaryPixelBuffer, const WorldObject& mainWorld);
+    void collectNeighborPixelContrib(int currentRowCount, size_t pixelInRow, const PixelResolution& localPixResObj, const PixelDimension& localPixDimObj, const Point& currentSamplePointOutVar, std::unordered_map<long long, std::pair<std::shared_ptr<IColor>, double>>& neighborPixelsContribMap, const std::shared_ptr<IColor>& currPixelSampleColor);
     static bool areFuturesReadyInRange(int startOffset, std::span<std::future<void>> iterableFutureContainer, int& optExistingTracker);
     void setupGaussianKernel(PixelDimension& localPixDimObj);
-    std::unique_ptr<IColor> createDerivedTypeUniquePtr(const std::string& colorType, const Vec3& value) const;
+
+
+    std::unique_ptr<IColor> createDerivedColorUniquePtr(const std::string& colorType, const Vec3& value) const;
+    std::shared_ptr<IColor> createDerivedColorSharedPtr(const std::string& colorType, const Vec3& value) const;
 };
 
 

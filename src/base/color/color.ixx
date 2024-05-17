@@ -13,11 +13,13 @@ public:
 
     virtual void addColorToSelf(const IColor& otherColor) = 0;
     virtual void multiplyColorWithSelf(const IColor& otherColor) = 0;
+    virtual void multiplyScalarWithSelf(const double scalar) = 0;
     virtual void transformSelfToMinValues() = 0;
     virtual void transformSelfToMaxValues() = 0;
     virtual void negateSelf() noexcept = 0;
 
-    virtual std::shared_ptr<const IColor> getColor() const = 0;
+    virtual std::shared_ptr<const IColor> getColorImmutable() const = 0;
+    virtual std::shared_ptr<IColor> getColorMutable() = 0;
     virtual void setColor(const IColor& otherColor) = 0;
 
     virtual ~IColor() noexcept = default;

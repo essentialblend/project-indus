@@ -116,6 +116,14 @@ export struct RenderingMode
 	bool isMultiThreaded{ true };
 };
 
+export struct GaussianKernelProperties
+{
+	double sigmaInAbsVal{};
+	int kernelSpanInIntegralVal{};
+	int kernelCoverageScalar{ 3 };
+	std::vector<double> kernelWeights{};
+};
+
 export struct WindowFunctors
 {
 	std::function<void()> renderFrameMultiCoreFunctor{};
@@ -126,6 +134,8 @@ export struct WindowFunctors
 	std::function<bool()> getRenderCompleteStatusFunctor{};
 	std::function<int()> getTextureUpdateRateFunctor{};
 	std::function<MT_ThreadPool&()> getThreadPoolFunctor{};
+	std::function<GaussianKernelProperties()> getGaussianKernelPropsFunctor{};
+	std::function<std::string()> getRenderColorTypeFunctor{};
 };
 
 export struct PDHQueryCounterVars
@@ -146,9 +156,3 @@ export struct PDHVariables
 	}
 };
 
-export struct GaussianKernelProperties
-{
-	double sigmaInAbsVal{};
-	int kernelSpanInIntegralVal{};
-	int kernelCoverageScalar{ 3 };
-};

@@ -83,6 +83,11 @@ void ColorRGB::multiplyColorWithSelf(const IColor& otherColor)
 	m_colorVector *= otherColorRGB.m_colorVector;
 }
 
+void ColorRGB::multiplyScalarWithSelf(const double scalar)
+{
+	m_colorVector *= scalar;
+}
+
 void ColorRGB::negateSelf() noexcept
 {
 	for (std::size_t i{}; i < 3; ++i)
@@ -95,9 +100,14 @@ void ColorRGB::negateSelf() noexcept
 }
 
 
-std::shared_ptr<const IColor> ColorRGB::getColor() const
+std::shared_ptr<const IColor> ColorRGB::getColorImmutable() const
 {
-	return std::static_pointer_cast<const IColor>(shared_from_this());
+	return std::static_pointer_cast<const ColorRGB>(shared_from_this());
+}
+
+std::shared_ptr<IColor> ColorRGB::getColorMutable()
+{
+    return std::static_pointer_cast<ColorRGB>(shared_from_this());
 }
 
 void ColorRGB::setColor(const IColor& otherColor)

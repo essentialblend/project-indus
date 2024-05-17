@@ -40,9 +40,11 @@ public:
 
 	virtual void addColorToSelf(const IColor& otherColor) override;
 	virtual void multiplyColorWithSelf(const IColor& otherColor) override;
+	virtual void multiplyScalarWithSelf(const double scalar) override;
 	virtual void negateSelf() noexcept override;
 
-	virtual std::shared_ptr<const IColor> getColor() const override;
+	virtual std::shared_ptr<const IColor> getColorImmutable() const override;
+	virtual std::shared_ptr<IColor> getColorMutable() override;
 	virtual void setColor(const IColor& otherColor) override;
 
 	double getRedComponent() const noexcept;

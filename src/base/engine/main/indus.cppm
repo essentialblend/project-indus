@@ -137,6 +137,16 @@ void Indus::setWindowFunctors()
 		return m_mainRenderer.getTexUpdateRate();
 	}};
 
+	const std::function<GaussianKernelProperties()> gaussianKernelPropsGetter{ [&]()
+	{
+		return m_mainRenderer.getGaussianKernelProps();
+	}};
+
+	const std::function<std::string()> renderColorTypeGetter{ [&]()
+	{
+		return m_mainRenderer.getRenderColorType();
+	}};
+
 	m_mainWindow.setMainEngineFramebufferGetFunctor(mainRenderFramebufferGetter);
 	m_mainWindow.setTextureUpdateCheckFunctor(texUpdateCheckFunctor);
 	m_mainWindow.setMultithreadedCheckFunctor(multithreadingCheckFunctor);
@@ -144,6 +154,8 @@ void Indus::setWindowFunctors()
 	m_mainWindow.setMainRendererCameraPropsGetFunctor(mainRendererCamPropsGetter);
 	m_mainWindow.setRenderCompleteStatusGetFunctor(getRenderCompleteStatusGetter);
 	m_mainWindow.setTextureUpdateRateGetFunctor(textureUpdateRateGetter);
+	m_mainWindow.setGaussianKernelPropsGetFunctor(gaussianKernelPropsGetter);
+	m_mainWindow.setRenderColorTypeGetFunctor(renderColorTypeGetter);
 }
 
 std::vector<std::unique_ptr<IColor>>& Indus::getMainRenderFramebuffer() noexcept

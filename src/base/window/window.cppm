@@ -102,7 +102,8 @@ void SFMLWindow::updateRenderingStatus(Timer& timerObj, StatsOverlay& statsOverl
 
 void SFMLWindow::updateTextureForDisplay()
 {
-	if (m_needsDrawUpdate && m_windowFunctors.isTextureReadyForUpdateFunctor())
+	//if (m_needsDrawUpdate && m_windowFunctors.isTextureReadyForUpdateFunctor())
+	if(m_needsDrawUpdate && m_windowFunctors.isTextureReadyForUpdateFunctor())
 	{
 		displayWithSequentialTexUpdates();
 	}
@@ -114,29 +115,37 @@ void SFMLWindow::displayWithSequentialTexUpdates()
 	static int chunkTracker{ 0 };
 	std::vector<sf::Uint8> localSFMLBuffer{};
 
-	
+	const auto& weightsVec{ m_windowFunctors.getGaussianKernelPropsFunctor().kernelWeights };
 	const auto& localFramebuffer = m_windowFunctors.getMainEngineFramebufferFunctor();
 	const auto localPixelRes = m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj;
 	const auto localTexUpdateRate = m_windowFunctors.getTextureUpdateRateFunctor();
 	static int originalTexUpdateRate{ localTexUpdateRate };
 	const int numPixelsInUpdateChunk { localPixelRes.widthInPixels * localTexUpdateRate };
+	const auto& localColorType{ m_windowFunctors.getRenderColorTypeFunctor() };
 
 	const auto itBegin{ localFramebuffer.begin() + static_cast<long long>(chunkTracker * (originalTexUpdateRate * localPixelRes.widthInPixels)) };
 	const auto itEnd{ (localFramebuffer.end() - itBegin > numPixelsInUpdateChunk) ? itBegin + numPixelsInUpdateChunk : localFramebuffer.end() };
 	localSFMLBuffer.reserve(static_cast<long long>(localTexUpdateRate * localPixelRes.widthInPixels * 4));
 
-	std::for_each(itBegin, itEnd,[&localSFMLBuffer](const std::unique_ptr<IColor>& colorObj)
-	{
+	for (auto it{ itBegin }; it != itEnd; ++it) {
+		
+		auto& colorObj{ *it };
+		const auto index{ std::distance(localFramebuffer.begin(), it) };
+		const double gaussianAccumWeight{ weightsVec[index] };
 
-		const auto& localColorObj{ static_cast<ColorRGB*>(colorObj.get()) };
-		localColorObj->applyGammaCorrection(2.4);
-		localColorObj->undoNormalization();
+		colorObj->applyWeights(gaussianAccumWeight);
+		colorObj->applyGammaCorrection(2.4);
+		colorObj->undoNormalization(256);
 
-		localSFMLBuffer.push_back(static_cast<sf::Uint8>(localColorObj->getRedComponent()));
-		localSFMLBuffer.push_back(static_cast<sf::Uint8>(localColorObj->getGreenComponent()));
-		localSFMLBuffer.push_back(static_cast<sf::Uint8>(localColorObj->getBlueComponent()));
-		localSFMLBuffer.push_back(255);
-	});
+		if (localColorType == "ColorRGB")
+		{
+			const auto& localColorObj = static_cast<const ColorRGB*>(colorObj.get());
+			localSFMLBuffer.push_back(static_cast<sf::Uint8>(localColorObj->getRedComponent()));
+			localSFMLBuffer.push_back(static_cast<sf::Uint8>(localColorObj->getGreenComponent()));
+			localSFMLBuffer.push_back(static_cast<sf::Uint8>(localColorObj->getBlueComponent()));
+			localSFMLBuffer.push_back(255);
+		}
+	}
 
 	m_windowProps.mainRenderTexObj.update(localSFMLBuffer.data(), localPixelRes.widthInPixels, localTexUpdateRate, 0, chunkTracker * originalTexUpdateRate);
 
@@ -222,6 +231,16 @@ void SFMLWindow::setRenderCompleteStatusGetFunctor(const std::function<bool()>& 
 void SFMLWindow::setTextureUpdateRateGetFunctor(const std::function<int()>& texUpdateRateFunctor) noexcept
 {
 	m_windowFunctors.getTextureUpdateRateFunctor = texUpdateRateFunctor;
+}
+
+void SFMLWindow::setGaussianKernelPropsGetFunctor(const std::function<GaussianKernelProperties()>& gaussianKernelPropsFunctor) noexcept
+{
+	m_windowFunctors.getGaussianKernelPropsFunctor = gaussianKernelPropsFunctor;
+}
+
+void SFMLWindow::setRenderColorTypeGetFunctor(const std::function<std::string()>& renderColorTypeFunctor) noexcept
+{
+	m_windowFunctors.getRenderColorTypeFunctor = renderColorTypeFunctor;
 }
 
 bool SFMLWindow::retrievePDHQueryValues(PDHVariables& pdhVars)

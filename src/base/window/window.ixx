@@ -37,6 +37,8 @@ public:
     void setMainRendererCameraPropsGetFunctor(const std::function<CameraProperties()>& mainRendererCameraPropsGetFunctor);
     void setRenderCompleteStatusGetFunctor(const std::function<bool()>& renderCompleteStatusFunctor) noexcept;
     void setTextureUpdateRateGetFunctor(const std::function<int()>& texUpdateRateFunctor) noexcept;
+    void setGaussianKernelPropsGetFunctor(const std::function<GaussianKernelProperties()>& gaussianKernelPropsFunctor) noexcept; 
+    void setRenderColorTypeGetFunctor(const std::function<std::string()>& renderColorTypeFunctor) noexcept;
 
 private:
     SFMLWindowProperties m_windowProps{};
