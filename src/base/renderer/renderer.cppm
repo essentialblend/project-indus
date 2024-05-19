@@ -67,7 +67,7 @@ void Renderer::setupGaussianKernel(PixelDimension& localPixDimObj)
     const Vec3 adjacentPixelForDist{ localPixDimObj.topLeftmostPixelCenter + (1 * localPixDimObj.lateralSpanInAbsVal) + (1 * localPixDimObj.verticalSpanInAbsVal) };
     localPixDimObj.pixelUnitSpanInAbsVal = (localPixDimObj.topLeftmostPixelCenter - adjacentPixelForDist).getMagnitude();
     m_mainCamera.setPixelDimensions(localPixDimObj);
-    m_gaussianKernelProps.sigmaInAbsVal = 0.5 * localPixDimObj.pixelUnitSpanInAbsVal;
+    m_gaussianKernelProps.sigmaInAbsVal = 1 * localPixDimObj.pixelUnitSpanInAbsVal;
     m_gaussianKernelProps.kernelSpanInIntegralVal = static_cast<int>((m_gaussianKernelProps.kernelCoverageScalar * m_gaussianKernelProps.sigmaInAbsVal) / localPixDimObj.pixelUnitSpanInAbsVal);
     m_gaussianKernelProps.kernelWeights.resize(m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.totalPixels);
 }
@@ -108,16 +108,13 @@ void Renderer::renderPixelRowThreadPoolTaskGaussian(int currentRowCount, std::ve
         std::unordered_map<long long, std::pair<std::shared_ptr<IColor>, double>> neighborPixelsContribMap{};
         Point currentSamplePointOutVar{};
 
-
         // Generate and sample stratified pixels/rays.
         for (int subPixelGridV{}; subPixelGridV < m_sppSqrtCeil; ++subPixelGridV)
         {
             for (int subPixelGridU{}; subPixelGridU < m_sppSqrtCeil; ++subPixelGridU)
             {
                 auto currPixelSampleColor{ createDerivedColorSharedPtr(m_renderColorType, Vec3(0)) };
-                
                 const Ray currentPixelRay{ getStratifiedRayForPixel(static_cast<int>(pixelInRow), currentRowCount, subPixelGridU, subPixelGridV, currentSamplePointOutVar) };
-                
                 currPixelSampleColor->addColorToSelf(*computeRayColor(currentPixelRay, mainWorld, m_maxRayBounceDepth - 1));
                 
                 // Collect and store sample contributions for neighboring pixels weighted by the gaussian kernel, for this sample.
@@ -139,7 +136,7 @@ void Renderer::renderPixelRowThreadPoolTaskGaussian(int currentRowCount, std::ve
                 }
                 else 
                 {
-                    auto finalColor{createDerivedColorUniquePtr(m_renderColorType, Vec3(0))};
+                    auto finalColor{ createDerivedColorUniquePtr(m_renderColorType, Vec3(0)) };
                     finalColor->setColor(*sampleColor);
                     mainFramebuffer[pixelIndex] = std::move(finalColor);
                     m_gaussianKernelProps.kernelWeights[pixelIndex] = gaussianWeight;
@@ -228,6 +225,9 @@ bool Renderer::getRenderCompleteStatus() noexcept
     bool isRenderComplete = std::all_of(m_mainRenderingPassFutureVec.begin(), m_mainRenderingPassFutureVec.end(), [](const std::future<void>& fut) {
         return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
         });
+
+    // Temp, to move.
+    m_renderThreadPool.stopThreadPool();
 
     return isRenderComplete;
 }

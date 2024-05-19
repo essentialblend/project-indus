@@ -58,9 +58,9 @@ private:
 
     std::unique_ptr<std::latch> m_texUpdateLatch{};
     int m_texUpdateRateOut{ 50 };
-    int m_samplesPerPixel{ 100 };
+    int m_samplesPerPixel{ 500 };
     int m_sppSqrtCeil{ static_cast<int>(std::ceil(std::sqrt(m_samplesPerPixel))) };
-    int m_maxRayBounceDepth{ 100 };
+    int m_maxRayBounceDepth{ 500 };
     std::string m_renderColorType{ "ColorRGB" };
 
     [[nodiscard]] Ray getStratifiedRayForPixel(int i, int currentRowCount, int subPixelGridU, int subPixelGridV, Point& currentSamplePoint) const noexcept;

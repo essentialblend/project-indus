@@ -120,7 +120,7 @@ export struct GaussianKernelProperties
 {
 	double sigmaInAbsVal{};
 	int kernelSpanInIntegralVal{};
-	int kernelCoverageScalar{ 3 };
+	int kernelCoverageScalar{ 6 };
 	std::vector<double> kernelWeights{};
 };
 
@@ -156,3 +156,7 @@ export struct PDHVariables
 	}
 };
 
+export struct EngineStatistics
+{
+	PixelResolution 
+};

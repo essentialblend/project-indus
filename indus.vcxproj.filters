@@ -93,9 +93,6 @@
     <ClCompile Include="src\components\world_object\world_object.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\engine\i_indus.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\utilities\interval\interval.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -121,6 +118,36 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\base\color\rgb\color_rgb.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interfaces\engine\i_engine.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interfaces\engine\i_enginesystem.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interfaces\engine\i_enginecomponent.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interfaces\engine_systems\es_gui.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\renderer\es_pathtracer.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engines\e_indus.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
