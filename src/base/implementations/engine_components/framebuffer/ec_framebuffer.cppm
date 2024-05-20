@@ -1,21 +1,10 @@
 import ec_framebuffer;
 
-import<stdexcept>;
+import <stdexcept>;
+import <vector>;
+import <memory>;
 
-void ECFramebuffer::initializeEngineComponent()
-{
-	// Empty, no initialization needed.
-}
-
-void ECFramebuffer::configureEngineComponent() 
-{
-	// Empty, no configuration needed.
-}
-
-void ECFramebuffer::cleanupComponentResources() 
-{
-	m_framebuffer.clear();
-}
+import color;
 
 const std::vector<std::unique_ptr<const IColor>>& ECFramebuffer::getFramebuffer() const noexcept
 {

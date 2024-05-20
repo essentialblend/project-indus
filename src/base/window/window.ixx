@@ -6,7 +6,7 @@ import <memory>;
 
 import core_constructs;
 import stats_overlay;
-import timer;
+import u_timer;
 import color;
 import threadpool;
 
@@ -16,15 +16,15 @@ public:
 	explicit SFMLWindow() noexcept = default;
     explicit SFMLWindow(const PixelResolution& pixResObj) noexcept : m_windowPixelRes(pixResObj) {}
 
-    void displayWindow(StatsOverlay& statsOverlayObj, Timer& timerObj);
+    void displayWindow(StatsOverlay& statsOverlayObj, UTimer& timerObj);
     void startPDHQuery(PDHVariables& pdhVars);
     void setupWindowSFMLParams();
-    void checkForUpdates(StatsOverlay& statsOverlayObj, Timer& timerObj, PDHVariables& pdhVars, double totalDRAMGigabytes);
-    void updateRenderingStatus(Timer& timerObj, StatsOverlay& statsOverlayObj);
+    void checkForUpdates(StatsOverlay& statsOverlayObj, UTimer& timerObj, PDHVariables& pdhVars, double totalDRAMGigabytes);
+    void updateRenderingStatus(UTimer& timerObj, StatsOverlay& statsOverlayObj);
     void updateTextureForDisplay();
     void displayWithSequentialTexUpdates();
-    void drawGUI(StatsOverlay& statsOverlayObj, const Timer& timerObj);
-    void processInputEvents(StatsOverlay& statsOverlayObj, Timer& timerObj);
+    void drawGUI(StatsOverlay& statsOverlayObj, const UTimer& timerObj);
+    void processInputEvents(StatsOverlay& statsOverlayObj, UTimer& timerObj);
     [[nodiscard]] SFMLWindowProperties& getSFMLWindowProperties() noexcept;
     void setResolution(const PixelResolution& windowPixResObj) noexcept;
 
@@ -45,7 +45,7 @@ private:
     WindowFunctors m_windowFunctors{};
     PDHVariables m_pdhVars{};
     PixelResolution m_windowPixelRes{};
-    Timer m_cpuUsagePDHTimer{};
+    UTimer m_cpuUsagePDHTimer{};
 
     std::string m_windowTitle{"indus prelim"};
     bool m_needsDrawUpdate{ false };

@@ -35,6 +35,7 @@
     <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.cppm" />
     <ClCompile Include="src\base\implementations\engine_systems\renderer\es_pathtracer.ixx" />
     <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.cppm" />
+    <ClCompile Include="src\base\implementations\engine_systems\timer_manager\es_timermanager.ixx" />
     <ClCompile Include="src\base\ray\ray.cppm" />
     <ClCompile Include="src\base\ray\ray.ixx" />
     <ClCompile Include="src\base\renderer\renderer.cppm" />
@@ -57,13 +58,18 @@
     <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.ixx" />
     <ClCompile Include="src\interfaces\engine_systems\es_gui.ixx" />
     <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.ixx" />
+    <ClCompile Include="src\interfaces\role_interfaces\ri_configurable.ixx" />
+    <ClCompile Include="src\interfaces\role_interfaces\ri_initializable.ixx" />
+    <ClCompile Include="src\interfaces\role_interfaces\ri_manageable.ixx" />
+    <ClCompile Include="src\interfaces\role_interfaces\ri_runnable.ixx" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\utilities\interval\interval.cppm" />
     <ClCompile Include="src\utilities\interval\interval.ixx" />
     <ClCompile Include="src\utilities\overlay\overlay.ixx" />
     <ClCompile Include="src\utilities\overlay\stats\stats_overlay.cppm" />
     <ClCompile Include="src\utilities\overlay\stats\stats_overlay.ixx" />
-    <ClCompile Include="src\utilities\timer\timer.ixx" />
+    <ClCompile Include="src\utilities\timer\u_timer.cppm" />
+    <ClCompile Include="src\utilities\timer\u_timer.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dep\stb_image_write.h" />

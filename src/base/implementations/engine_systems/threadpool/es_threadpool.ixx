@@ -10,22 +10,21 @@ import <mutex>;
 import <memory>;
 
 import i_enginesystem;
+import ri_runnable;
 
-export class ESThreadpool : public IEngineSystem
+export class ESThreadpool : public IEngineSystem, public RIRunnable
 {
 public:
 	explicit ESThreadpool() noexcept = default;
-	ESThreadpool(const ESThreadpool&) noexcept = delete;
-	ESThreadpool& operator=(const ESThreadpool&) noexcept = delete;
+	ESThreadpool(const ESThreadpool&) = delete;
+	ESThreadpool& operator=(const ESThreadpool&) = delete;
 	ESThreadpool(ESThreadpool&&) noexcept = delete;	
 	ESThreadpool& operator=(ESThreadpool&&) noexcept = delete;
 
-	virtual void initializeEngineSystem() override = 0;
-	virtual void configureSystemComponents() override = 0;
-	virtual void cleanupSystemResources() override = 0;
+	virtual void initializeEntity() override;
 
-	virtual void startEngineSystem() = 0;
-	virtual void stopEngineSystem() = 0;
+	virtual void startEntity() override;
+	virtual void stopEntity() override;
 
 	template<typename F>
 	[[nodiscard]] auto enqueueThreadPoolTask(F&& func) -> std::future<decltype(func())>;

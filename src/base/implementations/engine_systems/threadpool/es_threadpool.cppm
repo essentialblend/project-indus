@@ -15,7 +15,12 @@ bool ESThreadpool::areAllThreadsOccupied() const noexcept
 	return (m_numActiveTasks == m_workerThreads.size());
 }
 
-void ESThreadpool::initializeEngineSystem()
+void ESThreadpool::initializeEntity()
+{
+
+}
+
+void ESThreadpool::startEntity()
 {
 	const unsigned int numAvailableThreads = std::thread::hardware_concurrency();
 	const unsigned int numThreadsToUse = numAvailableThreads > 1 ? static_cast<int>(numAvailableThreads * 0.5) + (static_cast<int>(numAvailableThreads / 6)) : 1;
@@ -26,7 +31,7 @@ void ESThreadpool::initializeEngineSystem()
 	}
 }
 
-void ESThreadpool::stopEngineSystem()
+void ESThreadpool::stopEntity()
 {
 	{
 		std::unique_lock<std::mutex> lock(m_queueMutex);

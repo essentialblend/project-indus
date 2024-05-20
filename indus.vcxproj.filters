@@ -45,7 +45,7 @@
     <ClCompile Include="src\base\renderer\renderer.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\utilities\timer\timer.ixx">
+    <ClCompile Include="src\utilities\timer\u_timer.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\base\window\window.ixx">
@@ -148,6 +148,24 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\timer_manager\es_timermanager.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\timer\u_timer.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interfaces\role_interfaces\ri_configurable.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interfaces\role_interfaces\ri_runnable.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interfaces\role_interfaces\ri_initializable.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interfaces\role_interfaces\ri_manageable.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

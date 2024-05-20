@@ -46,7 +46,7 @@ void StatsOverlay::setSFMLTextProperties()
 	}
 }
 
-void StatsOverlay::showOverlay(sf::RenderWindow& renderWindowObj, const PixelResolution& pixResObj, const Timer& timerObj)
+void StatsOverlay::showOverlay(sf::RenderWindow& renderWindowObj, const PixelResolution& pixResObj, const UTimer& timerObj)
 {
     if (!m_isOverlayEnabled)
     {

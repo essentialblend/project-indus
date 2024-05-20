@@ -11,12 +11,7 @@ public:
 	ESPathTracer(ESPathTracer&&) noexcept = default;	
 	ESPathTracer& operator=(ESPathTracer&&) noexcept = default;
 
-	virtual void initializeEngineSystem() override;
-	virtual void configureSystemComponents() override;
-	virtual void cleanupSystemResources() override;
-
-	virtual void startEngineSystem();
-	virtual void stopEngineSystem();
+	virtual void initializeEntity() override;
 
 	bool isRenderComplete() const noexcept;
 

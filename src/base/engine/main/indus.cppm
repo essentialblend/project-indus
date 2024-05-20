@@ -10,9 +10,7 @@ import core_util;
 
 Indus::Indus(const PixelResolution& windowPixResObj, const PixelResolution& imagePixResObj, const AspectRatio& aspectRatioObj) noexcept :
 	m_mainWindow(windowPixResObj),
-	m_mainRenderImageProps{
-		.pixelResolutionObj{imagePixResObj},
-		.aspectRatioObj {aspectRatioObj} } {};
+	m_mainRenderImageProps{imagePixResObj, aspectRatioObj} {};
 
 void Indus::initializeWorld()
 {
@@ -64,7 +62,7 @@ void Indus::initializeEngine()
 {
 	m_mainRenderer.setupRenderer(m_mainRenderImageProps.pixelResolutionObj, m_mainRenderImageProps.aspectRatioObj);
 	m_mainRenderer.setThreadingMode(m_isMultithreaded);
-	m_mainRenderFramebuffer.resize(m_mainRenderImageProps.pixelResolutionObj.totalPixels);
+	m_mainRenderFramebuffer.resize(m_mainRenderImageProps.pixelResolutionObj.getTotalPixels());
 	m_statsOverlay.setupOverlay(m_isMultithreaded);
 	setGlobalCallbackFunctors();
 }
@@ -78,7 +76,7 @@ void Indus::setGlobalCallbackFunctors()
 void Indus::runEngine()
 {
 	// Run window.
-	Timer overlayTimer;
+	UTimer overlayTimer;
 	initializeWorld();
 	m_mainWindow.displayWindow(m_statsOverlay, overlayTimer);
 }

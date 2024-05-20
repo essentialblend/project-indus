@@ -24,11 +24,11 @@ public:
 	EIndus(EIndus&&) = delete;	
 	EIndus& operator=(EIndus&&) = delete;
 
-	virtual void initializeEngine() override;
-	virtual void setupEngineSystems() override;
-	virtual void runEngine() override;
-	virtual void shutdownEngine() override;
-	virtual void setupScene() override;
+	virtual void initializeEntity() override;
+	virtual void configureEntity() override;
+
+	virtual void startEntity() override;
+	virtual void stopEntity() override;
 
 	[[nodiscard]] std::vector<std::unique_ptr<IColor>>& getEngineFramebuffer() noexcept;
 

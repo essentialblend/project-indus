@@ -1,15 +1,20 @@
 export module i_engine;
 
-export class IEngine abstract
+import ri_initializable;
+import ri_configurable;
+import ri_runnable;
+
+
+export class IEngine abstract : public RIInitializable, public RIConfigurable, public RIRunnable
 {
 public:
 	IEngine() noexcept = default;
 	
-	virtual void initializeEngine() = 0;
-	virtual void setupEngineSystems() = 0;
-	virtual void runEngine() = 0;
-	virtual void shutdownEngine() = 0;
-	virtual void setupScene() = 0;
+	virtual void initializeEntity() = 0;
+	virtual void configureEntity() = 0;
+
+	virtual void startEntity() = 0;
+	virtual void stopEntity() = 0;
 
 	virtual ~IEngine() noexcept = default;
 };

@@ -9,7 +9,7 @@ import color_rgb;
 
 import <SFML/Graphics.hpp>;
 
-void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, Timer& timerObj)
+void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, UTimer& timerObj)
 {
 	sf::Event event{};
 	while (m_windowProps.renderWindowObj.pollEvent(event))
@@ -42,7 +42,7 @@ void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, Timer& timerO
 	}
 }
 
-void SFMLWindow::displayWindow(StatsOverlay& statsOverlayObj, Timer& timerObj)
+void SFMLWindow::displayWindow(StatsOverlay& statsOverlayObj, UTimer& timerObj)
 {
 	double totalDRAM{ retrieveTotalDRAM() };
 	statsOverlayObj.setTotalDRAM(totalDRAM);
@@ -67,7 +67,7 @@ void SFMLWindow::startPDHQuery(PDHVariables& pdhVars)
 	setupPDHQueryAndCounter(pdhVars.totalCPUUsage, std::wstring{CPUStr.begin(), CPUStr.end()});
 }
 
-void SFMLWindow::checkForUpdates(StatsOverlay& statsOverlayObj, Timer& timerObj, PDHVariables& pdhVars, double totalDRAMGigabytes)
+void SFMLWindow::checkForUpdates(StatsOverlay& statsOverlayObj, UTimer& timerObj, PDHVariables& pdhVars, double totalDRAMGigabytes)
 {
 	updateTextureForDisplay();
 	updatePDHOverlayPeriodic(statsOverlayObj, pdhVars, totalDRAMGigabytes);
@@ -90,11 +90,11 @@ void SFMLWindow::updatePDHOverlayPeriodic(StatsOverlay& statsOverlayObj, PDHVari
 	}
 }
 
-void SFMLWindow::updateRenderingStatus(Timer& timerObj, StatsOverlay& statsOverlayObj)
+void SFMLWindow::updateRenderingStatus(UTimer& timerObj, StatsOverlay& statsOverlayObj)
 {
 	if (m_isRendering && m_windowFunctors.getRenderCompleteStatusFunctor())
 	{
-		timerObj.endTimer();
+		timerObj.stopTimer();
 		statsOverlayObj.setRenderingCompleteStatus(true);
 		m_isRendering = false;
 	}
@@ -175,7 +175,7 @@ void SFMLWindow::setupWindowSFMLParams()
 
 }
 
-void SFMLWindow::drawGUI(StatsOverlay& statsOverlayObj, const Timer& timerObj)
+void SFMLWindow::drawGUI(StatsOverlay& statsOverlayObj, const UTimer& timerObj)
 {
 	m_windowProps.renderWindowObj.clear();
 

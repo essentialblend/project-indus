@@ -18,7 +18,7 @@ import camera;
 import vec3;
 import window;
 import stats_overlay;
-import timer;
+import u_timer;
 import threadpool;
 import world_object;
 
@@ -58,9 +58,9 @@ private:
 
     std::unique_ptr<std::latch> m_texUpdateLatch{};
     int m_texUpdateRateOut{ 50 };
-    int m_samplesPerPixel{ 500 };
+    int m_samplesPerPixel{ 250 };
     int m_sppSqrtCeil{ static_cast<int>(std::ceil(std::sqrt(m_samplesPerPixel))) };
-    int m_maxRayBounceDepth{ 500 };
+    int m_maxRayBounceDepth{ 250 };
     std::string m_renderColorType{ "ColorRGB" };
 
     [[nodiscard]] Ray getStratifiedRayForPixel(int i, int currentRowCount, int subPixelGridU, int subPixelGridV, Point& currentSamplePoint) const noexcept;

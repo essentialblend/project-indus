@@ -5,6 +5,8 @@ import <span>;
 import <memory>;
 
 import i_enginecomponent;
+import ri_configurable;
+
 import color;
 
 export class ECFramebuffer : public IEngineComponent
@@ -16,10 +18,6 @@ public:
 	ECFramebuffer& operator=(const ECFramebuffer&) = delete;
 	ECFramebuffer(ECFramebuffer&&) = default;
 	ECFramebuffer& operator=(ECFramebuffer&&) = default;
-
-	virtual void initializeEngineComponent() override;
-	virtual void configureEngineComponent() override;
-	virtual void cleanupComponentResources() override;
 
 	const std::vector<std::unique_ptr<const IColor>>& getFramebuffer() const noexcept;
 	std::size_t getFramebufferSize() const noexcept;

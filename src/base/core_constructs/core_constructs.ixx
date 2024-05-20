@@ -3,6 +3,7 @@ export module core_constructs;
 import color;
 import vec3;
 import color;
+import u_timer;
 import ray;
 import threadpool;
 
@@ -18,21 +19,39 @@ export struct PixelResolution
 {
 	int widthInPixels{};
 	int heightInPixels{};
-	long long totalPixels{ widthInPixels * heightInPixels };
+
+	constexpr explicit PixelResolution() noexcept = default;
+	constexpr explicit PixelResolution(const int widthPixels, const int heightPixels) noexcept : widthInPixels{ widthPixels }, heightInPixels{ heightPixels } {}
+
+	constexpr long long getTotalPixels() const noexcept
+	{
+		return static_cast<long long>(widthInPixels * heightInPixels);
+	}
 };
 
 export struct AspectRatio
 {
-	double widthInAbsVal{};
-	double heightInAbsVal{};
+	double widthAbsVal{};
+	double heightAbsVal{};
+
+	constexpr AspectRatio() noexcept = default;
+	constexpr AspectRatio(const double widthAbsVal, const double heightAbsVal) noexcept : widthAbsVal{ widthAbsVal }, heightAbsVal{ heightAbsVal } {}
+
+	constexpr double getAspectRatio() const noexcept
+	{
+		return widthAbsVal / heightAbsVal;
+	}
 };
 
 export struct ViewportProperties
 {
-	double widthInWorldSpaceUnits{};
-	double heightInWorldSpaceUnits{};
-	Vec3 horizontalPixelSpan{};
-	Vec3 verticalPixelSpan{};
+	double widthWorldSpaceUnits{};
+	double heightWorldSpaceUnits{};
+	Vec3 horPixelSpanAbsVal{};
+	Vec3 vertPixelSpanAbsVal{};
+
+	constexpr ViewportProperties() noexcept = default;
+	constexpr ViewportProperties(const double widthInWorldSpace, const double heightInWorldSpace) noexcept : widthWorldSpaceUnits{ widthInWorldSpace }, heightWorldSpaceUnits{ heightInWorldSpace } {}
 };
 
 export struct ImageProperties
@@ -40,14 +59,35 @@ export struct ImageProperties
 	PixelResolution pixelResolutionObj{};
 	AspectRatio aspectRatioObj{};
 	int numColorChannels{3};
+
+	constexpr ImageProperties() noexcept = default;
+	constexpr ImageProperties(const PixelResolution& pixResObj, const AspectRatio& arObj) noexcept : pixelResolutionObj{ pixResObj }, aspectRatioObj{ arObj } {}
 };
 
 export struct PixelDimension
 {
-	Vec3 lateralSpanInAbsVal{};
-	Vec3 verticalSpanInAbsVal{};
-	Point topLeftmostPixelCenter{};
-	double pixelUnitSpanInAbsVal{};
+	Vec3 lateralSpanAbsVal{};
+	Vec3 vertSpanAbsVal{};
+	Point topLeftPixCenter{};
+	double pixelUnitSpanAbsVal{};
+};
+
+export struct DefocusBlurProperties
+{
+	double defocusAngle{ 0.6 };
+	double focusDist{ 10 };
+	Vec3 defocusDiskU{};
+	Vec3 defocusDiskV{};
+};
+
+export struct OrthonormalBasis
+{
+	Vec3 camW{};
+	Vec3 camU{};
+	Vec3 camV{};
+
+	constexpr explicit OrthonormalBasis() noexcept = default;
+	constexpr explicit OrthonormalBasis(Vec3 w, Vec3 u, Vec3 v) noexcept : camW{ w }, camU{ u }, camV{ v } {}
 };
 
 export struct CameraProperties
@@ -55,19 +95,23 @@ export struct CameraProperties
 	ImageProperties camImgPropsObj{};
 	ViewportProperties camViewportPropsObj{};
 	PixelDimension camPixelDimObj{};
+	DefocusBlurProperties camDefocusPropsObj{};
 
 	double camVerticalFOV{ 20 };
 	Point camLookFrom{ 13, 2, 3 };
 	Point camCenter{ camLookFrom };
 	Point camLookAt{ 0, 0, 0 };
 	Vec3 camVUP{ 0, 1, 0 };
-	
 
 	Vec3 camW{ getUnit(camLookFrom - camLookAt) }; Vec3 camU{ getUnit(computeCross(camVUP, camW)) }; Vec3 camV{ computeCross(camW, camU) };
-	double defocusAngle{0.6};
-	double focusDist{10};
-	Vec3 defocusDiskU{};
-	Vec3 defocusDiskV{};
+
+	OrthonormalBasis camONBObj{ camW, camU, camV };
+
+	void setLookFromAt(const Vec3& lookFrom, const Vec3& lookAt)
+	{
+		camLookFrom = lookFrom;
+		camLookAt = lookAt;
+	}
 };
 
 export struct SFMLWindowProperties
@@ -108,12 +152,6 @@ export struct RendererSFMLFunctors
 	std::function<void()> sfmlDrawSpriteFunctor{};
 	std::function<void()> sfmlDisplayWindowFunctor{};
 	std::function<void(const sf::Uint8*, unsigned int, unsigned int, unsigned int, unsigned int)> sfmlTextureUpdateFunctor{};
-};
-
-export struct RenderingMode
-{
-	bool isSingleThreaded{ false };
-	bool isMultiThreaded{ true };
 };
 
 export struct GaussianKernelProperties
@@ -158,5 +196,15 @@ export struct PDHVariables
 
 export struct EngineStatistics
 {
-	PixelResolution 
+	PixelResolution imageResObj{};
+	AspectRatio aspectRatioObj{};
+	PixelResolution windowResObj{};
+	UTimer totalRuntimeTimerObj{};
+
+	// Sampling mode details.
+	// Filtering mode details.
+	// Frame render time details.
+	// System details.
+	// Render status.
+	// TBD
 };

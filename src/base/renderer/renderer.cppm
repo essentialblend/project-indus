@@ -64,12 +64,12 @@ void Renderer::setupRenderer(const PixelResolution& pixResObj, const AspectRatio
 
 void Renderer::setupGaussianKernel(PixelDimension& localPixDimObj)
 {
-    const Vec3 adjacentPixelForDist{ localPixDimObj.topLeftmostPixelCenter + (1 * localPixDimObj.lateralSpanInAbsVal) + (1 * localPixDimObj.verticalSpanInAbsVal) };
-    localPixDimObj.pixelUnitSpanInAbsVal = (localPixDimObj.topLeftmostPixelCenter - adjacentPixelForDist).getMagnitude();
+    const Vec3 adjacentPixelForDist{ localPixDimObj.topLeftPixCenter + (1 * localPixDimObj.lateralSpanAbsVal) + (1 * localPixDimObj.vertSpanAbsVal) };
+    localPixDimObj.pixelUnitSpanAbsVal = (localPixDimObj.topLeftPixCenter - adjacentPixelForDist).getMagnitude();
     m_mainCamera.setPixelDimensions(localPixDimObj);
-    m_gaussianKernelProps.sigmaInAbsVal = 1 * localPixDimObj.pixelUnitSpanInAbsVal;
-    m_gaussianKernelProps.kernelSpanInIntegralVal = static_cast<int>((m_gaussianKernelProps.kernelCoverageScalar * m_gaussianKernelProps.sigmaInAbsVal) / localPixDimObj.pixelUnitSpanInAbsVal);
-    m_gaussianKernelProps.kernelWeights.resize(m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.totalPixels);
+    m_gaussianKernelProps.sigmaInAbsVal = 1.5 * localPixDimObj.pixelUnitSpanAbsVal;
+    m_gaussianKernelProps.kernelSpanInIntegralVal = static_cast<int>((m_gaussianKernelProps.kernelCoverageScalar * m_gaussianKernelProps.sigmaInAbsVal) / localPixDimObj.pixelUnitSpanAbsVal);
+    m_gaussianKernelProps.kernelWeights.resize(m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.getTotalPixels());
 }
 
 GaussianKernelProperties Renderer::getGaussianKernelProps() const noexcept
@@ -161,7 +161,7 @@ void Renderer::collectNeighborPixelContrib(int currentRowCount, size_t pixelInRo
 
             if (nv < 0 || nu < 0 || nv > (localPixResObj.heightInPixels - 1) || nu > (localPixResObj.widthInPixels - 1)) continue;
 
-            const Point neighborPixelCenter{ localPixDimObj.topLeftmostPixelCenter + (nu * localPixDimObj.lateralSpanInAbsVal) + (nv * localPixDimObj.verticalSpanInAbsVal) };
+            const Point neighborPixelCenter{ localPixDimObj.topLeftPixCenter + (nu * localPixDimObj.lateralSpanAbsVal) + (nv * localPixDimObj.vertSpanAbsVal) };
 
             const Point pixelSamplePoint{ currentSamplePointOutVar };
             const double currSampleToNeighborPixDistSq{ (pixelSamplePoint - neighborPixelCenter).getMagnitudeSq() };
@@ -240,12 +240,12 @@ Ray Renderer::getStratifiedRayForPixel(int i, int currentRowCount, int subPixelG
 
     auto sampleOffset{ Vec3(((subPixelGridU + UGenRNG<double>()) * stratumWidth), ((subPixelGridV + UGenRNG<double>()) * stratumHeight), 0) };
 
-    currentSamplePoint = localCamProps.camPixelDimObj.topLeftmostPixelCenter + ((i + sampleOffset[0]) * localCamProps.camPixelDimObj.lateralSpanInAbsVal) + ((currentRowCount + sampleOffset[1]) * localCamProps.camPixelDimObj.verticalSpanInAbsVal);
+    currentSamplePoint = localCamProps.camPixelDimObj.topLeftPixCenter + ((i + sampleOffset[0]) * localCamProps.camPixelDimObj.lateralSpanAbsVal) + ((currentRowCount + sampleOffset[1]) * localCamProps.camPixelDimObj.vertSpanAbsVal);
 
     const auto randUnitDiskVec{ genRandomUnitDiskVec() };
-    const auto randRayOriginOnUnitDisk{ localCamProps.camCenter + (randUnitDiskVec[0] * localCamProps.defocusDiskU) + (randUnitDiskVec[1] * localCamProps.defocusDiskV) };
+    const auto randRayOriginOnUnitDisk{ localCamProps.camCenter + (randUnitDiskVec[0] * localCamProps.camDefocusPropsObj.defocusDiskU) + (randUnitDiskVec[1] * localCamProps.camDefocusPropsObj.defocusDiskV) };
 
-    const Vec3 rayOrigin{ localCamProps.defocusAngle <= 0 ? localCamProps.camCenter : randRayOriginOnUnitDisk };
+    const Vec3 rayOrigin{ localCamProps.camDefocusPropsObj.defocusAngle <= 0 ? localCamProps.camCenter : randRayOriginOnUnitDisk };
 
     return Ray(rayOrigin, currentSamplePoint - rayOrigin);
 }

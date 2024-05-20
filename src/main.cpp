@@ -1,20 +1,19 @@
 import core_constructs;
 import indus;
 import vec3;
+import u_timer;
 
 int main()
 {
-	PixelResolution windowResObj{ .widthInPixels{1920}, .heightInPixels{1080} };
-	PixelResolution imgResObj{ .widthInPixels{ 1920 / 4 }, .heightInPixels{ 1080 / 4} };
-	//PixelResolution imgResObj{ .widthInPixels{1920}, .heightInPixels{1080} };
-	AspectRatio aspectRatioObj{ .widthInAbsVal{16}, .heightInAbsVal{9} };
+	//PixelResolution windowResObj(1920, 1080);
+	//PixelResolution imgResObj(1920 / 2, 1080 / 2);
+	////PixelResolution imgResObj{ .widthInPixels{1920}, .heightInPixels{1080} };
+	//AspectRatio aspectRatioObj(16, 9);
 
-	Indus mainInstance(windowResObj, imgResObj, aspectRatioObj);
+	//Indus mainInstance(windowResObj, imgResObj, aspectRatioObj);
 
-	mainInstance.initializeEngine();
+	//mainInstance.initializeEngine();
 
-	mainInstance.runEngine();
-
-	return 0;
+	//mainInstance.runEngine();
 }
 
