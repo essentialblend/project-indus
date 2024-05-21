@@ -4,7 +4,10 @@ import <chrono>;
 import <string>;
 import <print>;
 
-export class UTimer
+import i_engineutility;
+import ri_runnable;
+
+export class UTimer : public IEngineUtility, public RIRunnable
 {
 public:
 	explicit UTimer() noexcept = default;
@@ -14,8 +17,9 @@ public:
 	UTimer(UTimer&&) noexcept = default;
 	UTimer& operator=(UTimer&&) noexcept = default;
 
-	void startTimer() noexcept;
-	void stopTimer() noexcept;
+	void startEntity() override;
+	void stopEntity() override;
+	
 	void resetTimer() noexcept;
 
 	std::chrono::duration<double> getElapsedTime() const noexcept;

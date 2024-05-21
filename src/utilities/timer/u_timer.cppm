@@ -8,13 +8,13 @@ int UTimer::generateTimerID() noexcept
 	return timerID++;
 }
 
-void UTimer::startTimer() noexcept
+void UTimer::startEntity()
 {
 	m_startTime = std::chrono::high_resolution_clock::now();
 	m_isTimerRunning = true;
 }
 
-void UTimer::stopTimer() noexcept
+void UTimer::stopEntity()
 {
 	if (m_isTimerRunning)
 	{

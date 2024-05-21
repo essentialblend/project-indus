@@ -2,6 +2,7 @@ import core_constructs;
 import indus;
 import vec3;
 import u_timer;
+import es_timermanager;
 
 int main()
 {

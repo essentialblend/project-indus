@@ -29,7 +29,7 @@ void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, UTimer& timer
 		{
 			if (event.key.code == sf::Keyboard::Space)
 			{
-				timerObj.startTimer();
+				timerObj.startEntity();
 				if (m_windowFunctors.isMultithreadedFunctor()) [[likely]]
 				{
 					m_isRendering = true;
@@ -50,7 +50,7 @@ void SFMLWindow::displayWindow(StatsOverlay& statsOverlayObj, UTimer& timerObj)
 	startPDHQuery(m_pdhVars);
 	setupWindowSFMLParams();
 
-	m_cpuUsagePDHTimer.startTimer();
+	m_cpuUsagePDHTimer.startEntity();
 	while (m_windowProps.renderWindowObj.isOpen())
 	{
 		processInputEvents(statsOverlayObj, timerObj);
@@ -94,7 +94,7 @@ void SFMLWindow::updateRenderingStatus(UTimer& timerObj, StatsOverlay& statsOver
 {
 	if (m_isRendering && m_windowFunctors.getRenderCompleteStatusFunctor())
 	{
-		timerObj.stopTimer();
+		timerObj.stopEntity();
 		statsOverlayObj.setRenderingCompleteStatus(true);
 		m_isRendering = false;
 	}
@@ -188,7 +188,7 @@ void SFMLWindow::drawGUI(StatsOverlay& statsOverlayObj, const UTimer& timerObj)
 	m_windowProps.renderWindowObj.display();
 }
 
-SFMLWindowProperties& SFMLWindow::getSFMLWindowProperties() noexcept
+SFMLWindowPropertiesOLD& SFMLWindow::getSFMLWindowProperties() noexcept
 {
 	return m_windowProps;
 }
@@ -249,7 +249,7 @@ bool SFMLWindow::retrievePDHQueryValues(PDHVariables& pdhVars)
 	{
 		getFormattedValue(pdhVars);
 		m_cpuUsagePDHTimer.resetTimer();
-		m_cpuUsagePDHTimer.startTimer();
+		m_cpuUsagePDHTimer.startEntity();
 		return true;
 	}
 	return false;

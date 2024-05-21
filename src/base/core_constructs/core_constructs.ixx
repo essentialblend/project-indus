@@ -6,6 +6,7 @@ import color;
 import u_timer;
 import ray;
 import threadpool;
+import es_threadpool;
 
 import <vector>;
 import <future>;
@@ -114,7 +115,7 @@ export struct CameraProperties
 	}
 };
 
-export struct SFMLWindowProperties
+export struct SFMLWindowPropertiesOLD
 {
 	sf::RenderWindow renderWindowObj{};
 	sf::View mainRenderViewObj{};
@@ -162,7 +163,7 @@ export struct GaussianKernelProperties
 	std::vector<double> kernelWeights{};
 };
 
-export struct WindowFunctors
+export struct OldWindowFunctors
 {
 	std::function<void()> renderFrameMultiCoreFunctor{};
 	std::function<bool()> isMultithreadedFunctor{};
@@ -171,7 +172,6 @@ export struct WindowFunctors
 	std::function<CameraProperties()> getRendererCameraPropsFunctor{};
 	std::function<bool()> getRenderCompleteStatusFunctor{};
 	std::function<int()> getTextureUpdateRateFunctor{};
-	std::function<MT_ThreadPool&()> getThreadPoolFunctor{};
 	std::function<GaussianKernelProperties()> getGaussianKernelPropsFunctor{};
 	std::function<std::string()> getRenderColorTypeFunctor{};
 };
@@ -208,3 +208,39 @@ export struct EngineStatistics
 	// Render status.
 	// TBD
 };
+
+export struct SFMLAPIObjects
+{
+	sf::RenderWindow renderWindowObj{};
+	sf::View mainRenderViewObj{};
+	sf::View mainOverlayViewObj{};
+	sf::Texture mainRenderTexObj{};
+	sf::Sprite mainRenderSpriteObj{};
+};
+
+export struct SFMLWindowFunctors
+{
+	std::function<void()> renderFrameMultiCoreFunctor{};
+	std::function<bool()> isMultithreadedFunctor{};
+	std::function<bool()> isTextureReadyForUpdateFunctor{};
+	std::function<std::vector<std::unique_ptr<IColor>>&()> getMainEngineFramebufferFunctor{};
+	//std::function<CameraProperties()> getRendererCameraPropsFunctor{};
+	std::function<bool()> getRenderCompleteStatusFunctor{};
+	std::function<int()> getTextureUpdateRateFunctor{};
+	std::function<ESThreadpool&()> getThreadpoolFunctor{};
+	std::function<GaussianKernelProperties()> getGaussianKernelPropsFunctor{};
+	std::function<std::string()> getRenderColorTypeFunctor{};
+};
+
+export struct SFMLWindowProperties
+{
+	std::string windowTitle{ "indus prelim" };
+	unsigned int windowFPSIntegral{ 30 };
+
+	PDHVariables pdhVars{};
+	SFMLAPIObjects sfmlAPIObj{};
+	PixelResolution windowResolution{};
+	SFMLWindowFunctors windowFunctors{};
+	std::shared_ptr<UTimer> pdhTimer{};
+};
+

@@ -132,7 +132,7 @@
     <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\interfaces\engine_systems\es_gui.ixx">
+    <ClCompile Include="src\interfaces\engine_systems\es_window.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.cppm">
@@ -166,6 +166,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\interfaces\role_interfaces\ri_manageable.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interfaces\engine\i_engineutility.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\timer_manager\es_timermanager.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\window\sfml\esw_sfml.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\window\sfml\esw_sfml.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

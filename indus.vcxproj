@@ -35,7 +35,10 @@
     <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.cppm" />
     <ClCompile Include="src\base\implementations\engine_systems\renderer\es_pathtracer.ixx" />
     <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.cppm" />
+    <ClCompile Include="src\base\implementations\engine_systems\timer_manager\es_timermanager.cppm" />
     <ClCompile Include="src\base\implementations\engine_systems\timer_manager\es_timermanager.ixx" />
+    <ClCompile Include="src\base\implementations\engine_systems\window\sfml\esw_sfml.cppm" />
+    <ClCompile Include="src\base\implementations\engine_systems\window\sfml\esw_sfml.ixx" />
     <ClCompile Include="src\base\ray\ray.cppm" />
     <ClCompile Include="src\base\ray\ray.ixx" />
     <ClCompile Include="src\base\renderer\renderer.cppm" />
@@ -56,7 +59,8 @@
     <ClCompile Include="src\interfaces\engine\i_enginecomponent.ixx" />
     <ClCompile Include="src\interfaces\engine\i_enginesystem.ixx" />
     <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.ixx" />
-    <ClCompile Include="src\interfaces\engine_systems\es_gui.ixx" />
+    <ClCompile Include="src\interfaces\engine\i_engineutility.ixx" />
+    <ClCompile Include="src\interfaces\engine_systems\es_window.ixx" />
     <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.ixx" />
     <ClCompile Include="src\interfaces\role_interfaces\ri_configurable.ixx" />
     <ClCompile Include="src\interfaces\role_interfaces\ri_initializable.ixx" />

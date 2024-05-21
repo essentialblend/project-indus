@@ -25,7 +25,7 @@ public:
     void displayWithSequentialTexUpdates();
     void drawGUI(StatsOverlay& statsOverlayObj, const UTimer& timerObj);
     void processInputEvents(StatsOverlay& statsOverlayObj, UTimer& timerObj);
-    [[nodiscard]] SFMLWindowProperties& getSFMLWindowProperties() noexcept;
+    [[nodiscard]] SFMLWindowPropertiesOLD& getSFMLWindowProperties() noexcept;
     void setResolution(const PixelResolution& windowPixResObj) noexcept;
 
     void setRenderFrameMultiCoreFunctor(const std::function<void()>& multiCoreFunctor) noexcept;
@@ -41,8 +41,8 @@ public:
     void setRenderColorTypeGetFunctor(const std::function<std::string()>& renderColorTypeFunctor) noexcept;
 
 private:
-    SFMLWindowProperties m_windowProps{};
-    WindowFunctors m_windowFunctors{};
+    SFMLWindowPropertiesOLD m_windowProps{};
+    OldWindowFunctors m_windowFunctors{};
     PDHVariables m_pdhVars{};
     PixelResolution m_windowPixelRes{};
     UTimer m_cpuUsagePDHTimer{};
@@ -50,7 +50,6 @@ private:
     std::string m_windowTitle{"indus prelim"};
     bool m_needsDrawUpdate{ false };
     bool m_isRendering{ false };
-    bool m_hasSecondPassStarted{ false };
     int m_texUpdateChunkTracker{ 0 };
 
     std::future<void> m_mainRenderSchedulerFuture{};

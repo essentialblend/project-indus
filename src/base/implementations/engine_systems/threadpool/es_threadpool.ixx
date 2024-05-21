@@ -12,7 +12,7 @@ import <memory>;
 import i_enginesystem;
 import ri_runnable;
 
-export class ESThreadpool : public IEngineSystem, public RIRunnable
+export class ESThreadpool : public IEngineSystem, public RIStoppable
 {
 public:
 	explicit ESThreadpool() noexcept = default;
@@ -22,8 +22,6 @@ public:
 	ESThreadpool& operator=(ESThreadpool&&) noexcept = delete;
 
 	virtual void initializeEntity() override;
-
-	virtual void startEntity() override;
 	virtual void stopEntity() override;
 
 	template<typename F>

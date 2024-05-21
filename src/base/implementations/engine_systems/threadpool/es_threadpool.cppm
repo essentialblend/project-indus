@@ -17,11 +17,6 @@ bool ESThreadpool::areAllThreadsOccupied() const noexcept
 
 void ESThreadpool::initializeEntity()
 {
-
-}
-
-void ESThreadpool::startEntity()
-{
 	const unsigned int numAvailableThreads = std::thread::hardware_concurrency();
 	const unsigned int numThreadsToUse = numAvailableThreads > 1 ? static_cast<int>(numAvailableThreads * 0.5) + (static_cast<int>(numAvailableThreads / 6)) : 1;
 
