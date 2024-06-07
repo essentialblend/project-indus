@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.cpp">
+    <ClCompile Include="src\base\implementations\engine_systems\spectra\denselysampled_spectrum\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\base\vec3\vec3.ixx">
@@ -24,7 +24,7 @@
     <ClCompile Include="src\base\vec3\vec3.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\core_util.ixx">
+    <ClCompile Include="src\base\implementations\helpers\utils\core_util.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\base\color\color.ixx">
@@ -45,7 +45,7 @@
     <ClCompile Include="src\base\renderer\renderer.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\utilities\timer\u_timer.ixx">
+    <ClCompile Include="src\base\implementations\engine_utilities\timer\eu_timer.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\base\window\window.ixx">
@@ -135,10 +135,10 @@
     <ClCompile Include="src\interfaces\engine_systems\es_window.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.cppm">
+    <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\implementations\engine_systems\renderer\es_pathtracer.ixx">
+    <ClCompile Include="src\base\implementations\engine_systems\renderers\es_shirleytracer.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\base\implementations\engines\e_indus.ixx">
@@ -147,16 +147,13 @@
     <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.cppm">
+    <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\base\implementations\engine_systems\timer_manager\es_timermanager.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\utilities\timer\u_timer.cppm">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\interfaces\role_interfaces\ri_configurable.ixx">
+    <ClCompile Include="src\base\implementations\engine_utilities\timer\eu_timer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\interfaces\role_interfaces\ri_runnable.ixx">
@@ -171,13 +168,157 @@
     <ClCompile Include="src\interfaces\engine\i_engineutility.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\implementations\engine_systems\timer_manager\es_timermanager.cppm">
+    <ClCompile Include="src\base\implementations\engine_systems\timer_manager\es_timermanager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\implementations\engine_systems\window\sfml\esw_sfml.ixx">
+    <ClCompile Include="src\base\implementations\engines\e_indus.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\implementations\engine_systems\window\sfml\esw_sfml.cppm">
+    <ClCompile Include="src\interfaces\engine_systems\es_renderer.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interfaces\role_interfaces\ri_singleton.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\windows\sfml\es_sfml.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\windows\sfml\es_sfml.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\overlay_manager\es_overlaymanager.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interfaces\engine_utilities\eu_overlay.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_utilities\overlays\eu_statsoverlay.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\h_overlaystatistic.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_utilities\overlays\eu_statsoverlay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\overlay_manager\es_overlaymanager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_utilities\object_factory\eu_objectfactory.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interfaces\engine_systems\es_pixelsampler.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\rays\h_ray.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interfaces\engine_utilities\eu_color.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_utilities\colors\rgb\eu_colorrgb.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_utilities\colors\rgb\eu_colorrgb.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\samplers\point_sampler\es_pointsampler.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\samplers\point_sampler\es_pointsampler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interfaces\engine_components\ec_camera.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\rays\h_raydifferential.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\transforms\transform\h_transform.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\transforms\transform\h_transform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_components\cameras\projective\ec_projectivecam.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\transforms\camera_transform\h_cameratransform.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\transforms\camera_transform\h_cameratransform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_utilities\interaction\eu_interaction.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\rays\h_rays.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\utils\h_miscutilities.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\vec_math\vector.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\vec_math\point3.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\vec_math\normal3.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_components\spectra\sampled_spectrum\ec_sampledspectrum.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_components\spectra\sampled_spectrum\ec_sampledspectrum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_components\spectra\sampled_wavelengths\ec_sampledwavelengths.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_components\spectra\sampled_wavelengths\ec_sampledwavelengths.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interfaces\engine_systems\es_spectrum.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\colors\h_rgb.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\colors\h_xyz.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\colors\h_spectraconstants.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\spectra\denselysampled_spectrum\es_denselysampledspectrum.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\spectra\denselysampled_spectrum\es_denselysampledspectrum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\colors\h_rgbsigmoidpolynomial.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\spectra\rgbalbedo_spectrum\es_rgbalbedospectrum.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\engine_systems\spectra\denselysampled_spectrum\es_rgbalbedospectrum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\vec_math\square_matrix.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\utils\h_mathutilities.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\utils\h_samplingutils.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\vec_math\tuples\tuple2.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\implementations\helpers\vec_math\tuples\tuple3.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

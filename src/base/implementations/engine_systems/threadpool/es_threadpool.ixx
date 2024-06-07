@@ -11,18 +11,13 @@ import <memory>;
 
 import i_enginesystem;
 import ri_runnable;
+import ri_singleton;
 
-export class ESThreadpool : public IEngineSystem, public RIStoppable
+export class ESThreadpool final : public IEngineSystem, public RIStoppable, public RISingleton<ESThreadpool>
 {
 public:
-	explicit ESThreadpool() noexcept = default;
-	ESThreadpool(const ESThreadpool&) = delete;
-	ESThreadpool& operator=(const ESThreadpool&) = delete;
-	ESThreadpool(ESThreadpool&&) noexcept = delete;	
-	ESThreadpool& operator=(ESThreadpool&&) noexcept = delete;
-
-	virtual void initializeEntity() override;
-	virtual void stopEntity() override;
+	void initializeEntity(const std::vector<std::any>& args) override;
+	void stopEntity() override;
 
 	template<typename F>
 	[[nodiscard]] auto enqueueThreadPoolTask(F&& func) -> std::future<decltype(func())>;
@@ -31,8 +26,6 @@ public:
 	[[nodiscard]] bool isThreadpoolEmpty() const noexcept;
 	[[nodiscard]] bool areAllThreadsOccupied() const noexcept;
 
-	~ESThreadpool() noexcept = default;
-	
 private:
 	std::vector<std::jthread> m_workerThreads{};
 	std::queue<std::function<void()>> m_tasksQueue{};
@@ -43,6 +36,13 @@ private:
 	bool m_stopFlag{ false };
 
 	void executeTasks();
+
+	explicit ESThreadpool() noexcept = default;
+	ESThreadpool(const ESThreadpool&) = delete;
+	ESThreadpool& operator=(const ESThreadpool&) = delete;
+	ESThreadpool(ESThreadpool&&) noexcept = delete;
+	ESThreadpool& operator=(ESThreadpool&&) noexcept = delete;
+	~ESThreadpool() noexcept = default;
 };
 
 

@@ -2,27 +2,30 @@ export module es_timermanager;
 
 import <vector>;
 import <string>;
+import <memory>;
 
 import i_enginesystem;
-import u_timer;
+import eu_timer;
 
 import ri_manageable;
+import ri_singleton;
 
-export class ESTimerManager : public IEngineSystem, public RIManageable
+export class ESTimerManager final : public IEngineSystem, public RIManageable, public RISingleton<ESTimerManager>
 {
 public:
-    static ESTimerManager& getInstance() noexcept;
 
-    void initializeEntity() override;
+    void initializeEntity([[maybe_unused]] const std::vector<std::any>& args = {}) override;
     void manageEntityResources() override;
 
-    void addTimer(const UTimer&);
-    const UTimer& findTimer(std::string_view) const;
-    UTimer& findTimerMutable(std::string_view);
+    void addTimer(std::string_view timerName);
+    const EUTimer& findTimer(std::string_view) const;
+    EUTimer& findTimerMutable(std::string_view);
     void removeTimer(std::string_view);
 
+    std::vector<std::shared_ptr<EUTimer>>& getTimersMutable() noexcept;
+
 private:
-    std::vector<UTimer> m_masterTimerList{};
+    std::vector<std::shared_ptr<EUTimer>> m_masterTimerList{};
 
     // Private as this is a singleton class.
     explicit ESTimerManager() noexcept = default;
@@ -31,6 +34,8 @@ private:
     ESTimerManager(ESTimerManager&&) noexcept = delete;
     ESTimerManager& operator=(ESTimerManager&&) noexcept = delete;
 	~ESTimerManager() = default;
+
+    friend class RISingleton<ESTimerManager>;
 };
 
 

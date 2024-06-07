@@ -6,7 +6,7 @@ import <memory>;
 
 import core_constructs;
 import stats_overlay;
-import u_timer;
+import eu_timer;
 import color;
 import threadpool;
 
@@ -16,15 +16,15 @@ public:
 	explicit SFMLWindow() noexcept = default;
     explicit SFMLWindow(const PixelResolution& pixResObj) noexcept : m_windowPixelRes(pixResObj) {}
 
-    void displayWindow(StatsOverlay& statsOverlayObj, UTimer& timerObj);
-    void startPDHQuery(PDHVariables& pdhVars);
+    void displayWindow(StatsOverlay& statsOverlayObj, EUTimer& timerObj);
+    void startPDHQuery(PDHObjectVariables& pdhVars);
     void setupWindowSFMLParams();
-    void checkForUpdates(StatsOverlay& statsOverlayObj, UTimer& timerObj, PDHVariables& pdhVars, double totalDRAMGigabytes);
-    void updateRenderingStatus(UTimer& timerObj, StatsOverlay& statsOverlayObj);
+    void checkForUpdates(StatsOverlay& statsOverlayObj, EUTimer& timerObj, PDHObjectVariables& pdhVars, double totalDRAMGigabytes);
+    void updateRenderingStatus(EUTimer& timerObj, StatsOverlay& statsOverlayObj);
     void updateTextureForDisplay();
     void displayWithSequentialTexUpdates();
-    void drawGUI(StatsOverlay& statsOverlayObj, const UTimer& timerObj);
-    void processInputEvents(StatsOverlay& statsOverlayObj, UTimer& timerObj);
+    void drawGUI(StatsOverlay& statsOverlayObj, const EUTimer& timerObj);
+    void processInputEvents(StatsOverlay& statsOverlayObj, EUTimer& timerObj);
     [[nodiscard]] SFMLWindowPropertiesOLD& getSFMLWindowProperties() noexcept;
     void setResolution(const PixelResolution& windowPixResObj) noexcept;
 
@@ -43,9 +43,9 @@ public:
 private:
     SFMLWindowPropertiesOLD m_windowProps{};
     OldWindowFunctors m_windowFunctors{};
-    PDHVariables m_pdhVars{};
+    PDHObjectVariables m_pdhVars{};
     PixelResolution m_windowPixelRes{};
-    UTimer m_cpuUsagePDHTimer{};
+    EUTimer m_cpuUsagePDHTimer{};
 
     std::string m_windowTitle{"indus prelim"};
     bool m_needsDrawUpdate{ false };
@@ -54,10 +54,10 @@ private:
 
     std::future<void> m_mainRenderSchedulerFuture{};
     
-    bool retrievePDHQueryValues(PDHVariables& pdhVars);
-    void updatePDHOverlayPeriodic(StatsOverlay& statsOverlayObj, PDHVariables& pdhVars, double totalDRAMGigabytes);
+    bool retrievePDHQueryValues(PDHObjectVariables& pdhVars);
+    void updatePDHOverlayPeriodic(StatsOverlay& statsOverlayObj, PDHObjectVariables& pdhVars, double totalDRAMGigabytes);
     void setupPDHQueryAndCounter(PDHQueryCounterVars& pdhQueryAndCounter, const std::wstring& queryAPIString);
-    void getFormattedValue(PDHVariables& pdhQueryCounterObjVec);
+    void getFormattedValue(PDHObjectVariables& pdhQueryCounterObjVec);
     double retrieveTotalDRAM();
 };
 

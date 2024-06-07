@@ -10,7 +10,7 @@ export class IMaterial;
 export class HitRecord
 {
 public:
-	Point hitPoint{};
+	PointOLD hitPoint{};
 	Vec3 normalVec{};
 	double root{};
 	bool hitFrontFace{};

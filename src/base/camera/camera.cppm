@@ -26,7 +26,7 @@ void Camera::setupCamera()
     localPixDimObj.lateralSpanAbsVal = localViewportPropsObj.horPixelSpanAbsVal / localPixelResPropsObj.widthInPixels;
     localPixDimObj.vertSpanAbsVal = localViewportPropsObj.vertPixelSpanAbsVal / localPixelResPropsObj.heightInPixels;
     
-    const Point viewportTopLeft{ m_cameraProps.camCenter - (m_cameraProps.camDefocusPropsObj.focusDist * m_cameraProps.camW) - (localViewportPropsObj.horPixelSpanAbsVal / 2) - (localViewportPropsObj.vertPixelSpanAbsVal / 2) };
+    const PointOLD viewportTopLeft{ m_cameraProps.camCenter - (m_cameraProps.camDefocusPropsObj.focusDist * m_cameraProps.camW) - (localViewportPropsObj.horPixelSpanAbsVal / 2) - (localViewportPropsObj.vertPixelSpanAbsVal / 2) };
     
     localPixDimObj.topLeftPixCenter = viewportTopLeft + (0.5 * (localPixDimObj.lateralSpanAbsVal + localPixDimObj.vertSpanAbsVal));
 
@@ -41,12 +41,12 @@ void Camera::setViewportHeight(double vpHeightInWorldSpace) noexcept
     m_cameraProps.camViewportPropsObj.heightWorldSpaceUnits = vpHeightInWorldSpace;
 }
 
-void Camera::setCameraCenter(const Point& centerPointInWorldSpace) noexcept
+void Camera::setCameraCenter(const PointOLD& centerPointInWorldSpace) noexcept
 {
     m_cameraProps.camCenter = centerPointInWorldSpace;
 }
 
-void Camera::setPixelDimensions(const PixelDimension& pixDimObj) noexcept
+void Camera::setPixelDimensions(const PixelDimensionOLD& pixDimObj) noexcept
 {
     m_cameraProps.camPixelDimObj = pixDimObj;
 }

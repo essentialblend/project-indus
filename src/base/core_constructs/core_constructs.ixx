@@ -1,20 +1,30 @@
 export module core_constructs;
 
+import <Pdh.h>;
+import <glm/glm.hpp>;
+import <SFML/Graphics.hpp>;
+
+import <vector>;
+import <functional>;
+
 import color;
 import vec3;
 import color;
-import u_timer;
+import eu_timer;
 import ray;
 import threadpool;
+import h_ray;
+import h_transform;
+import point3;
+//import h_cameratransform;
+
+import i_enginesystem;
+
+import es_renderer;
+import es_window;
 import es_threadpool;
-
-import <vector>;
-import <future>;
-import<functional>;
-import<Pdh.h>;
-
-
-import <SFML/Graphics.hpp>;
+import es_timermanager;
+import es_overlaymanager;
 
 export struct PixelResolution
 {
@@ -65,11 +75,11 @@ export struct ImageProperties
 	constexpr ImageProperties(const PixelResolution& pixResObj, const AspectRatio& arObj) noexcept : pixelResolutionObj{ pixResObj }, aspectRatioObj{ arObj } {}
 };
 
-export struct PixelDimension
+export struct PixelDimensionOLD
 {
 	Vec3 lateralSpanAbsVal{};
 	Vec3 vertSpanAbsVal{};
-	Point topLeftPixCenter{};
+	PointOLD topLeftPixCenter{};
 	double pixelUnitSpanAbsVal{};
 };
 
@@ -95,13 +105,13 @@ export struct CameraProperties
 {
 	ImageProperties camImgPropsObj{};
 	ViewportProperties camViewportPropsObj{};
-	PixelDimension camPixelDimObj{};
+	PixelDimensionOLD camPixelDimObj{};
 	DefocusBlurProperties camDefocusPropsObj{};
 
 	double camVerticalFOV{ 20 };
-	Point camLookFrom{ 13, 2, 3 };
-	Point camCenter{ camLookFrom };
-	Point camLookAt{ 0, 0, 0 };
+	PointOLD camLookFrom{ 13, 2, 3 };
+	PointOLD camCenter{ camLookFrom };
+	PointOLD camLookAt{ 0, 0, 0 };
 	Vec3 camVUP{ 0, 1, 0 };
 
 	Vec3 camW{ getUnit(camLookFrom - camLookAt) }; Vec3 camU{ getUnit(computeCross(camVUP, camW)) }; Vec3 camV{ computeCross(camW, camU) };
@@ -183,7 +193,7 @@ export struct PDHQueryCounterVars
 	PDH_FMT_COUNTERVALUE pdhFmtCounterValObj{};
 };
 
-export struct PDHVariables
+export struct PDHObjectVariables
 {
 	PDHQueryCounterVars totalCPUUsage{};
 	PDHQueryCounterVars availDRAM{};
@@ -196,17 +206,13 @@ export struct PDHVariables
 
 export struct EngineStatistics
 {
-	PixelResolution imageResObj{};
-	AspectRatio aspectRatioObj{};
-	PixelResolution windowResObj{};
-	UTimer totalRuntimeTimerObj{};
-
-	// Sampling mode details.
-	// Filtering mode details.
-	// Frame render time details.
-	// System details.
-	// Render status.
-	// TBD
+	std::string engineTitle{ "Indus" };
+	std::unordered_map<std::string, unsigned int> engineVersion{ {"MAJOR", 0}, {"MINOR", 0}, {"PATCH", 1} };
+	std::string engineState{ "alpha" };
+	std::string engineVersionStateString{ "0.0.1-alpha" };
+	PixelResolution windowResObj{1920, 1080};
+	PixelResolution imageResObj{1920, 1080};
+	AspectRatio aspectRatioObj{16, 9};
 };
 
 export struct SFMLAPIObjects
@@ -216,6 +222,8 @@ export struct SFMLAPIObjects
 	sf::View mainOverlayViewObj{};
 	sf::Texture mainRenderTexObj{};
 	sf::Sprite mainRenderSpriteObj{};
+	sf::Texture idleScreenTextureObj{};
+	sf::Sprite idleScreenSpriteObj{};
 };
 
 export struct SFMLWindowFunctors
@@ -224,7 +232,7 @@ export struct SFMLWindowFunctors
 	std::function<bool()> isMultithreadedFunctor{};
 	std::function<bool()> isTextureReadyForUpdateFunctor{};
 	std::function<std::vector<std::unique_ptr<IColor>>&()> getMainEngineFramebufferFunctor{};
-	//std::function<CameraProperties()> getRendererCameraPropsFunctor{};
+	std::function<CameraProperties()> getRendererCameraPropsFunctor{};
 	std::function<bool()> getRenderCompleteStatusFunctor{};
 	std::function<int()> getTextureUpdateRateFunctor{};
 	std::function<ESThreadpool&()> getThreadpoolFunctor{};
@@ -232,15 +240,44 @@ export struct SFMLWindowFunctors
 	std::function<std::string()> getRenderColorTypeFunctor{};
 };
 
+export struct PDHResultVariables
+{
+	double totalCPUUsage{};
+	double totalDRAMGB{};
+	double usedDRAMGB{};
+};
+
 export struct SFMLWindowProperties
 {
 	std::string windowTitle{ "indus prelim" };
 	unsigned int windowFPSIntegral{ 30 };
 
-	PDHVariables pdhVars{};
+	PDHObjectVariables pdhVars{};
+	PDHResultVariables pdhResultVars{};
 	SFMLAPIObjects sfmlAPIObj{};
-	PixelResolution windowResolution{};
+	PixelResolution windowResolution{1920, 1080};
 	SFMLWindowFunctors windowFunctors{};
-	std::shared_ptr<UTimer> pdhTimer{};
 };
 
+export struct EngineSystemTypes
+{
+	// Non-owning pointers referring to singleton instances.
+	ESWindow* windowTypeObj{};
+	ESTimerManager* masterTimerManagerObj{};
+	ESOverlayManager* masterOverlayManagerObj{};
+};
+
+export struct PixelDimension
+{
+	glm::dvec3 lateralSpanAbsVal{};
+	glm::dvec3 vertSpanAbsVal{};
+	Point3c topLeftPixCenter{};
+	double pixelUnitSpanAbsVal{};
+};
+
+export struct CameraParameters
+{
+	HTransform cameraTransform{};
+	std::vector<std::unique_ptr<IColor>> filmFramebuffer{};
+	float shutterOpen{ 0 }; double shutterClose{ 1 };
+};

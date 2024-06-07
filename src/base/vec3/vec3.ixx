@@ -62,5 +62,5 @@ export
 	[[nodiscard]] Vec3 genRandomUnitHemisphereVecNorm(const Vec3& normalVec);
 	[[nodiscard]] Vec3 genRandomUnitDiskVec();
 
-	using Point = Vec3;
+	using PointOLD = Vec3;
 }

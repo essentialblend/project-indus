@@ -20,7 +20,7 @@ public:
 
 	[[nodiscard]] virtual bool getOverlayVisibility() const noexcept override;
 
-	virtual void showOverlay(sf::RenderWindow& renderWindowObj, const PixelResolution& pixResObj, const UTimer& timerObj) override;
+	virtual void showOverlay(sf::RenderWindow& renderWindowObj, const PixelResolution& pixResObj, const EUTimer& timerObj) override;
 
 private:
 	OverlayProperties m_overlayProps{};

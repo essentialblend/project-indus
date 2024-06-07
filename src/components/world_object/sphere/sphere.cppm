@@ -2,7 +2,7 @@ import sphere;
 
 import <cmath>;
 
-WOSphere::WOSphere(const Point& center, double radius, std::shared_ptr<IMaterial> material) noexcept : m_sphereCenter(center), m_sphereRadius(radius), m_sphereMaterial{ material } {}
+WOSphere::WOSphere(const PointOLD& center, double radius, std::shared_ptr<IMaterial> material) noexcept : m_sphereCenter(center), m_sphereRadius(radius), m_sphereMaterial{ material } {}
 
 bool WOSphere::checkHit(const Ray& inputRay, Interval rayInterval, HitRecord& hitRec) const
 {

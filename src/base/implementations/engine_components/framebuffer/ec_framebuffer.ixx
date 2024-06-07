@@ -5,11 +5,10 @@ import <span>;
 import <memory>;
 
 import i_enginecomponent;
-import ri_configurable;
 
-import color;
+import eu_color;
 
-export class ECFramebuffer : public IEngineComponent
+export class ECFramebuffer final : public IEngineComponent
 {
 public:
 	explicit ECFramebuffer() noexcept = default;
@@ -19,15 +18,17 @@ public:
 	ECFramebuffer(ECFramebuffer&&) = default;
 	ECFramebuffer& operator=(ECFramebuffer&&) = default;
 
-	const std::vector<std::unique_ptr<const IColor>>& getFramebuffer() const noexcept;
+	const std::vector<std::unique_ptr<const EUColor>>& getFramebuffer() const noexcept;
 	std::size_t getFramebufferSize() const noexcept;
-	const IColor& getFramebufferColorAtIndex(const std::size_t flattened1DIndex) const;
+	const EUColor& getFramebufferColorAtIndex(const std::size_t flattened1DIndex) const;
 
-	void setFramebuffer(std::vector<std::unique_ptr<IColor>>& framebufferVec) noexcept;
+	void setFramebuffer(std::vector<std::unique_ptr<EUColor>>& framebufferVec) noexcept;
 	void setFramebufferSize(const std::size_t framebufferSize) noexcept;
+
+	void clearFramebuffer() noexcept;
 
 	virtual ~ECFramebuffer() noexcept = default;
 
 private:
-	std::vector<std::unique_ptr<IColor>> m_framebuffer{};
+	std::vector<std::unique_ptr<EUColor>> m_framebuffer{};
 };

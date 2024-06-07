@@ -16,14 +16,14 @@ void Indus::initializeWorld()
 {
 	const auto groundAlbedo{ std::make_shared<ColorRGB>(0.5) };
 	auto groundMat = std::make_shared<MLambertian>(groundAlbedo);
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0, -1000, 0), 1000, groundMat));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(PointOLD(0, -1000, 0), 1000, groundMat));
 
 	for (int a = -11; a < 11; a++) {
 		for (int b = -11; b < 11; b++) {
 			auto matChosen = UGenRNG<double>();
-			Point center(a + 0.9 * UGenRNG<double>(), 0.2, b + 0.9 * UGenRNG<double>());
+			PointOLD center(a + 0.9 * UGenRNG<double>(), 0.2, b + 0.9 * UGenRNG<double>());
 
-			if ((center - Point(4, 0.2, 0)).getMagnitude() > 0.9) {
+			if ((center - PointOLD(4, 0.2, 0)).getMagnitude() > 0.9) {
 				std::shared_ptr<IMaterial> sphereMat;
 
 				if (matChosen < 0.8) {
@@ -49,13 +49,13 @@ void Indus::initializeWorld()
 	}
 
 	auto firstMat = std::make_shared<MDielectric>(1.5);
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(0, 1, 0), 1.0, firstMat));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(PointOLD(0, 1, 0), 1.0, firstMat));
 
 	auto secondMat = std::make_shared<MLambertian>(std::make_shared<ColorRGB>((0.4, 0.2, 0.1)));
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(-4, 1, 0), 1.0, secondMat));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(PointOLD(-4, 1, 0), 1.0, secondMat));
 
 	auto thirdMat = std::make_shared<MMetal>(std::make_shared<ColorRGB>((0.7, 0.6, 0.5)), 0.0);
-	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(Point(4, 1, 0), 1.0, thirdMat));
+	m_mainWorld.addWorldObj(std::make_unique<WOSphere>(PointOLD(4, 1, 0), 1.0, thirdMat));
 }
 
 void Indus::initializeEngine()
@@ -76,7 +76,7 @@ void Indus::setGlobalCallbackFunctors()
 void Indus::runEngine()
 {
 	// Run window.
-	UTimer overlayTimer;
+	EUTimer overlayTimer;
 	initializeWorld();
 	m_mainWindow.displayWindow(m_statsOverlay, overlayTimer);
 }

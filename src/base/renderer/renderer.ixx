@@ -18,7 +18,7 @@ import camera;
 import vec3;
 import window;
 import stats_overlay;
-import u_timer;
+import eu_timer;
 import threadpool;
 import world_object;
 
@@ -63,13 +63,13 @@ private:
     int m_maxRayBounceDepth{ 250 };
     std::string m_renderColorType{ "ColorRGB" };
 
-    [[nodiscard]] Ray getStratifiedRayForPixel(int i, int currentRowCount, int subPixelGridU, int subPixelGridV, Point& currentSamplePoint) const noexcept;
+    [[nodiscard]] Ray getStratifiedRayForPixel(int i, int currentRowCount, int subPixelGridU, int subPixelGridV, PointOLD& currentSamplePoint) const noexcept;
     [[nodiscard]] std::unique_ptr<const IColor> computeRayColor(const Ray& inputRay, const WorldObject& mainWorld, int maxRayBounceDepth);
     std::unique_ptr<const IColor> getBackgroundGradient(const Ray& inputRay);
     void renderPixelRowThreadPoolTaskGaussian(int currentColumnCount, std::vector<std::unique_ptr<IColor>>& primaryPixelBuffer, const WorldObject& mainWorld);
-    void collectNeighborPixelContrib(int currentRowCount, size_t pixelInRow, const PixelResolution& localPixResObj, const PixelDimension& localPixDimObj, const Point& currentSamplePointOutVar, std::unordered_map<long long, std::pair<std::shared_ptr<IColor>, double>>& neighborPixelsContribMap, const std::shared_ptr<IColor>& currPixelSampleColor);
+    void collectNeighborPixelContrib(int currentRowCount, size_t pixelInRow, const PixelResolution& localPixResObj, const PixelDimensionOLD& localPixDimObj, const PointOLD& currentSamplePointOutVar, std::unordered_map<long long, std::pair<std::shared_ptr<IColor>, double>>& neighborPixelsContribMap, const std::shared_ptr<IColor>& currPixelSampleColor);
     static bool areFuturesReadyInRange(int startOffset, std::span<std::future<void>> iterableFutureContainer, int& optExistingTracker);
-    void setupGaussianKernel(PixelDimension& localPixDimObj);
+    void setupGaussianKernel(PixelDimensionOLD& localPixDimObj);
 
 
     std::unique_ptr<IColor> createDerivedColorUniquePtr(const std::string& colorType, const Vec3& value) const;

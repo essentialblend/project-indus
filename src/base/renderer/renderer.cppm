@@ -62,7 +62,7 @@ void Renderer::setupRenderer(const PixelResolution& pixResObj, const AspectRatio
     setupGaussianKernel(localPixDimObj);
 }
 
-void Renderer::setupGaussianKernel(PixelDimension& localPixDimObj)
+void Renderer::setupGaussianKernel(PixelDimensionOLD& localPixDimObj)
 {
     const Vec3 adjacentPixelForDist{ localPixDimObj.topLeftPixCenter + (1 * localPixDimObj.lateralSpanAbsVal) + (1 * localPixDimObj.vertSpanAbsVal) };
     localPixDimObj.pixelUnitSpanAbsVal = (localPixDimObj.topLeftPixCenter - adjacentPixelForDist).getMagnitude();
@@ -106,7 +106,7 @@ void Renderer::renderPixelRowThreadPoolTaskGaussian(int currentRowCount, std::ve
     for (std::size_t pixelInRow{}; pixelInRow < localPixResObj.widthInPixels; ++pixelInRow)
     {
         std::unordered_map<long long, std::pair<std::shared_ptr<IColor>, double>> neighborPixelsContribMap{};
-        Point currentSamplePointOutVar{};
+        PointOLD currentSamplePointOutVar{};
 
         // Generate and sample stratified pixels/rays.
         for (int subPixelGridV{}; subPixelGridV < m_sppSqrtCeil; ++subPixelGridV)
@@ -146,7 +146,7 @@ void Renderer::renderPixelRowThreadPoolTaskGaussian(int currentRowCount, std::ve
     }
 }
 
-void Renderer::collectNeighborPixelContrib(int currentRowCount, size_t pixelInRow, const PixelResolution& localPixResObj, const PixelDimension& localPixDimObj, const Point& currentSamplePointOutVar, std::unordered_map<long long, std::pair<std::shared_ptr<IColor>, double>>& neighborPixelsContribMap, const std::shared_ptr<IColor>& currPixelSampleColor)
+void Renderer::collectNeighborPixelContrib(int currentRowCount, size_t pixelInRow, const PixelResolution& localPixResObj, const PixelDimensionOLD& localPixDimObj, const PointOLD& currentSamplePointOutVar, std::unordered_map<long long, std::pair<std::shared_ptr<IColor>, double>>& neighborPixelsContribMap, const std::shared_ptr<IColor>& currPixelSampleColor)
 {
     const auto& kernelDiam{ m_gaussianKernelProps.kernelSpanInIntegralVal };
     const auto& sigma{ m_gaussianKernelProps.sigmaInAbsVal };
@@ -161,9 +161,9 @@ void Renderer::collectNeighborPixelContrib(int currentRowCount, size_t pixelInRo
 
             if (nv < 0 || nu < 0 || nv > (localPixResObj.heightInPixels - 1) || nu > (localPixResObj.widthInPixels - 1)) continue;
 
-            const Point neighborPixelCenter{ localPixDimObj.topLeftPixCenter + (nu * localPixDimObj.lateralSpanAbsVal) + (nv * localPixDimObj.vertSpanAbsVal) };
+            const PointOLD neighborPixelCenter{ localPixDimObj.topLeftPixCenter + (nu * localPixDimObj.lateralSpanAbsVal) + (nv * localPixDimObj.vertSpanAbsVal) };
 
-            const Point pixelSamplePoint{ currentSamplePointOutVar };
+            const PointOLD pixelSamplePoint{ currentSamplePointOutVar };
             const double currSampleToNeighborPixDistSq{ (pixelSamplePoint - neighborPixelCenter).getMagnitudeSq() };
 
             if (currSampleToNeighborPixDistSq < ((kernelScalar * sigma) * (kernelScalar * sigma)))
@@ -232,7 +232,7 @@ bool Renderer::getRenderCompleteStatus() noexcept
     return isRenderComplete;
 }
 
-Ray Renderer::getStratifiedRayForPixel(int i, int currentRowCount, int subPixelGridU, int subPixelGridV, Point& currentSamplePoint) const noexcept
+Ray Renderer::getStratifiedRayForPixel(int i, int currentRowCount, int subPixelGridU, int subPixelGridV, PointOLD& currentSamplePoint) const noexcept
 {
     const auto localCamProps{ m_mainCamera.getCameraProperties() };
     const double stratumWidth{ 1.0 / m_sppSqrtCeil };

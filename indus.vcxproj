@@ -25,20 +25,66 @@
     <ClCompile Include="src\base\color\rgb\color_rgb.cppm" />
     <ClCompile Include="src\base\color\rgb\color_rgb.ixx" />
     <ClCompile Include="src\base\core_constructs\core_constructs.ixx" />
-    <ClCompile Include="src\base\core_util.ixx" />
+    <ClCompile Include="src\base\implementations\engine_systems\spectra\denselysampled_spectrum\es_denselysampledspectrum.cpp" />
+    <ClCompile Include="src\base\implementations\engine_systems\spectra\denselysampled_spectrum\es_denselysampledspectrum.ixx" />
+    <ClCompile Include="src\base\implementations\engine_systems\spectra\rgbalbedo_spectrum\es_rgbalbedospectrum.ixx" />
+    <ClCompile Include="src\base\implementations\engine_systems\spectra\denselysampled_spectrum\es_rgbalbedospectrum.cpp" />
+    <ClCompile Include="src\base\implementations\helpers\vec_math\square_matrix.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\colors\h_spectraconstants.ixx" />
+    <ClCompile Include="src\base\implementations\engine_components\spectra\sampled_spectrum\ec_sampledspectrum.cpp" />
+    <ClCompile Include="src\base\implementations\engine_components\spectra\sampled_wavelengths\ec_sampledwavelengths.cpp" />
+    <ClCompile Include="src\base\implementations\engine_components\spectra\sampled_wavelengths\ec_sampledwavelengths.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\vec_math\normal3.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\vec_math\point3.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\vec_math\tuples\tuple2.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\vec_math\tuples\tuple3.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\vec_math\vector.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\colors\h_rgb.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\colors\h_xyz.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\utils\core_util.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\colors\h_rgbsigmoidpolynomial.ixx" />
     <ClCompile Include="src\base\engine\main\indus.cppm" />
     <ClCompile Include="src\base\engine\main\indus.ixx" />
     <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.cppm" />
     <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.ixx" />
+    <ClCompile Include="src\base\implementations\engine_components\cameras\projective\ec_projectivecam.ixx" />
+    <ClCompile Include="src\base\implementations\engine_utilities\interaction\eu_interaction.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\utils\h_mathutilities.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\utils\h_miscutilities.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\h_overlaystatistic.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\rays\h_rays.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\transforms\camera_transform\h_cameratransform.cpp" />
+    <ClCompile Include="src\base\implementations\helpers\transforms\camera_transform\h_cameratransform.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\transforms\transform\h_transform.cpp" />
+    <ClCompile Include="src\base\implementations\helpers\transforms\transform\h_transform.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\rays\h_ray.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\rays\h_raydifferential.ixx" />
     <ClCompile Include="src\base\hit_record\hit_record.ixx" />
+    <ClCompile Include="src\base\implementations\engines\e_indus.cpp" />
     <ClCompile Include="src\base\implementations\engines\e_indus.ixx" />
-    <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.cppm" />
-    <ClCompile Include="src\base\implementations\engine_systems\renderer\es_pathtracer.ixx" />
-    <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.cppm" />
-    <ClCompile Include="src\base\implementations\engine_systems\timer_manager\es_timermanager.cppm" />
+    <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.cpp" />
+    <ClCompile Include="src\base\implementations\engine_systems\overlay_manager\es_overlaymanager.cpp" />
+    <ClCompile Include="src\base\implementations\engine_systems\overlay_manager\es_overlaymanager.ixx" />
+    <ClCompile Include="src\base\implementations\engine_systems\renderers\es_shirleytracer.ixx" />
+    <ClCompile Include="src\base\implementations\engine_systems\samplers\point_sampler\es_pointsampler.cpp" />
+    <ClCompile Include="src\base\implementations\engine_systems\samplers\point_sampler\es_pointsampler.ixx" />
+    <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.cpp" />
+    <ClCompile Include="src\base\implementations\engine_systems\timer_manager\es_timermanager.cpp" />
     <ClCompile Include="src\base\implementations\engine_systems\timer_manager\es_timermanager.ixx" />
-    <ClCompile Include="src\base\implementations\engine_systems\window\sfml\esw_sfml.cppm" />
-    <ClCompile Include="src\base\implementations\engine_systems\window\sfml\esw_sfml.ixx" />
+    <ClCompile Include="src\base\implementations\engine_systems\windows\sfml\es_sfml.cpp" />
+    <ClCompile Include="src\base\implementations\engine_systems\windows\sfml\es_sfml.ixx" />
+    <ClCompile Include="src\base\implementations\engine_utilities\colors\rgb\eu_colorrgb.cppm" />
+    <ClCompile Include="src\base\implementations\engine_utilities\colors\rgb\eu_colorrgb.ixx" />
+    <ClCompile Include="src\base\implementations\engine_utilities\object_factory\eu_objectfactory.ixx" />
+    <ClCompile Include="src\base\implementations\engine_utilities\overlays\eu_statsoverlay.cpp" />
+    <ClCompile Include="src\base\implementations\engine_utilities\overlays\eu_statsoverlay.ixx" />
+    <ClCompile Include="src\base\implementations\helpers\utils\h_samplingutils.ixx" />
+    <ClCompile Include="src\interfaces\engine_components\ec_camera.ixx" />
+    <ClCompile Include="src\interfaces\engine_systems\es_pixelsampler.ixx" />
+    <ClCompile Include="src\base\implementations\engine_components\spectra\sampled_spectrum\ec_sampledspectrum.ixx" />
+    <ClCompile Include="src\interfaces\engine_systems\es_spectrum.ixx" />
+    <ClCompile Include="src\interfaces\engine_utilities\eu_color.ixx" />
+    <ClCompile Include="src\interfaces\engine_utilities\eu_overlay.ixx" />
     <ClCompile Include="src\base\ray\ray.cppm" />
     <ClCompile Include="src\base\ray\ray.ixx" />
     <ClCompile Include="src\base\renderer\renderer.cppm" />
@@ -60,20 +106,21 @@
     <ClCompile Include="src\interfaces\engine\i_enginesystem.ixx" />
     <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.ixx" />
     <ClCompile Include="src\interfaces\engine\i_engineutility.ixx" />
+    <ClCompile Include="src\interfaces\engine_systems\es_renderer.ixx" />
     <ClCompile Include="src\interfaces\engine_systems\es_window.ixx" />
     <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.ixx" />
-    <ClCompile Include="src\interfaces\role_interfaces\ri_configurable.ixx" />
     <ClCompile Include="src\interfaces\role_interfaces\ri_initializable.ixx" />
     <ClCompile Include="src\interfaces\role_interfaces\ri_manageable.ixx" />
     <ClCompile Include="src\interfaces\role_interfaces\ri_runnable.ixx" />
-    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\interfaces\role_interfaces\ri_singleton.ixx" />
+    <ClCompile Include="src\base\implementations\engine_systems\spectra\denselysampled_spectrum\main.cpp" />
     <ClCompile Include="src\utilities\interval\interval.cppm" />
     <ClCompile Include="src\utilities\interval\interval.ixx" />
     <ClCompile Include="src\utilities\overlay\overlay.ixx" />
     <ClCompile Include="src\utilities\overlay\stats\stats_overlay.cppm" />
     <ClCompile Include="src\utilities\overlay\stats\stats_overlay.ixx" />
-    <ClCompile Include="src\utilities\timer\u_timer.cppm" />
-    <ClCompile Include="src\utilities\timer\u_timer.ixx" />
+    <ClCompile Include="src\base\implementations\engine_utilities\timer\eu_timer.cpp" />
+    <ClCompile Include="src\base\implementations\engine_utilities\timer\eu_timer.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\dep\stb_image_write.h" />
@@ -131,6 +178,10 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ExternalIncludePath>D:\ProgrammingPractice\Graphics\indus\src\dep\vcpkg\installed\x64-windows\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>D:\ProgrammingPractice\Graphics\indus\src\dep\vcpkg\installed\x64-windows\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -169,7 +220,7 @@
       <EnableModules>true</EnableModules>
       <BuildStlModules>true</BuildStlModules>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <DisableSpecificWarnings>4996;26495;</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;26495;4324</DisableSpecificWarnings>
       <TranslateIncludes>false</TranslateIncludes>
       <AdditionalModuleDependencies>
       </AdditionalModuleDependencies>
@@ -180,7 +231,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)src\dep\SFML\lib;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Pdh.lib;sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gtest.lib;gtest_main.lib;Pdh.lib;sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -197,7 +248,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)src\dep\;</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <DisableSpecificWarnings>4996;26495;</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4996;26495;4324</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

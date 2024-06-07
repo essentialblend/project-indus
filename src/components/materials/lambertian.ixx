@@ -20,7 +20,7 @@ private:
 
 MLambertian::MLambertian(const std::shared_ptr<IColor> albedo) noexcept : m_albedo{ albedo } {}
 
-bool MLambertian::handleRayScatter(const Ray& inputRay, const HitRecord& hitRec, IColor& albedo, Ray& scatteredRay) const
+bool MLambertian::handleRayScatter([[maybe_unused]] const Ray& inputRay, const HitRecord& hitRec, IColor& albedo, Ray& scatteredRay) const
 {
     Vec3 scatterDirection = hitRec.normalVec + genRandomUnitSphereVecNorm();
 
