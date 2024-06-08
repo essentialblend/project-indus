@@ -113,7 +113,7 @@
     <ClCompile Include="src\interfaces\role_interfaces\ri_manageable.ixx" />
     <ClCompile Include="src\interfaces\role_interfaces\ri_runnable.ixx" />
     <ClCompile Include="src\interfaces\role_interfaces\ri_singleton.ixx" />
-    <ClCompile Include="src\base\implementations\engine_systems\spectra\denselysampled_spectrum\main.cpp" />
+    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\utilities\interval\interval.cppm" />
     <ClCompile Include="src\utilities\interval\interval.ixx" />
     <ClCompile Include="src\utilities\overlay\overlay.ixx" />
@@ -179,8 +179,18 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ExternalIncludePath>D:\ProgrammingPractice\Graphics\indus\src\dep\vcpkg\installed\x64-windows\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
     <LibraryPath>D:\ProgrammingPractice\Graphics\indus\src\dep\vcpkg\installed\x64-windows\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\ProgrammingPractice\Graphics\indus\src\dep\vcpkg\installed\x64-windows\include;$(IncludePath)</IncludePath>
+    <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
+    <AllProjectBMIsArePublic>true</AllProjectBMIsArePublic>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>D:\ProgrammingPractice\Graphics\indus\src\dep\vcpkg\installed\x64-windows\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\ProgrammingPractice\Graphics\indus\src\dep\vcpkg\installed\x64-windows\include;$(IncludePath)</IncludePath>
+    <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
+    <AllProjectBMIsArePublic>true</AllProjectBMIsArePublic>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -231,7 +241,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)src\dep\SFML\lib;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>gtest.lib;gtest_main.lib;Pdh.lib;sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>benchmark.lib;benchmark_main.lib;gtest.lib;gtest_main.lib;Pdh.lib;sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -244,11 +254,12 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnableModules>true</EnableModules>
-      <BuildStlModules>false</BuildStlModules>
+      <BuildStlModules>true</BuildStlModules>
       <AdditionalIncludeDirectories>$(SolutionDir)src\dep\;</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>4996;26495;4324</DisableSpecificWarnings>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -256,7 +267,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)src\dep\SFML\lib;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Pdh.lib;sfml-graphics.lib;sfml-window.lib;sfml-system.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>benchmark.lib;benchmark_main.lib;gtest.lib;gtest_main.lib;Pdh.lib;sfml-graphics.lib;sfml-window.lib;sfml-system.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

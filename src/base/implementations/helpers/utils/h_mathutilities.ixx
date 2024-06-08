@@ -8,6 +8,7 @@ import <algorithm>;
 import <stdexcept>;
 import <random>;
 import <print>;
+import <immintrin.h>;
 
 import h_miscutilities;
 
@@ -24,15 +25,15 @@ export
     constexpr Float HEpsilon{ std::numeric_limits<Float>::epsilon() };
 
     // Concepts
-    template<typename T>
+    template <typename T>
     concept Arithmetic = std::is_arithmetic_v<T>;
 
     template <typename T>
-    concept Container = requires(T t) 
-    {
+    concept Container = requires(T t) {
         typename T::value_type;
         { T::m_numDimensions } -> std::convertible_to<std::size_t>;
-        { t[0] } -> Arithmetic;
+        { t[0] } -> std::convertible_to<typename T::value_type>;
+            requires Arithmetic<typename T::value_type>;
         { t.begin() } -> std::input_iterator;
         { t.end() } -> std::input_iterator;
     };
@@ -45,7 +46,7 @@ export
 
     // Debug checks.
     template <typename... Ts>
-    void HCheckNaNs(Ts... values) {
+    void HCheckNaNs([[maybe_unused]] Ts... values) {
         if constexpr (H_IS_DEBUG_BUILD)
         {
             if ((... || std::isnan(values))) 
@@ -209,10 +210,11 @@ export
 	}
 
     template<Container ContainerClass>
-    constexpr decltype(auto) HComputeAbs(const ContainerClass& t)
+    constexpr auto HComputeAbs(const ContainerClass& t)
     {
         ContainerClass result{};
-        for (std::size_t i{}; i < ContainerClass::m_numDimensions; ++i)
+
+        for (std::size_t i = 0; i < ContainerClass::m_numDimensions; ++i)
         {
             result[i] = std::abs(t[i]);
         }
@@ -227,6 +229,7 @@ export
         {
             result[i] = std::ceil(t[i]);
         }
+
         return result;
     }
 
@@ -241,6 +244,7 @@ export
         return result;
     }
 
+
     template<Container ContainerClass, Arithmetic ElementType>
     constexpr decltype(auto) HLerp(const ElementType t, const ContainerClass& v1, const ContainerClass& v2)
 	{
@@ -248,7 +252,7 @@ export
 	}
 
     template<Container ContainerClass>
-    constexpr decltype(auto) HFusedMultiplyAdd(const Float a, const ContainerClass& b, const ContainerClass& c)
+    constexpr ContainerClass HFusedMultiplyAdd(const Float a, const ContainerClass& b, const ContainerClass& c)
     {
         ContainerClass result{};
         for (std::size_t i{}; i < ContainerClass::m_numDimensions; ++i)
@@ -259,7 +263,7 @@ export
     }
 
     template<Container ContainerClass>
-    constexpr decltype(auto) HFusedMultiplyAdd(const ContainerClass& a, const Float b, const ContainerClass& c) 
+    constexpr ContainerClass HFusedMultiplyAdd(const ContainerClass& a, const Float b, const ContainerClass& c)
     {
         return HFusedMultiplyAdd(b, a, c);
     }
@@ -268,19 +272,18 @@ export
     constexpr decltype(auto) HGetMin(const ContainerClass& t1, const ContainerClass& t2)
     {
         ContainerClass result{};
-
         for (std::size_t i{}; i < ContainerClass::m_numDimensions; ++i)
-		{
-			result[i] = std::min(t1[i], t2[i]);
-		}
+        {
+            result[i] = std::min(t1[i], t2[i]);
+        }
         return result;
     }
-    
+
     template<Container ContainerClass>
     constexpr decltype(auto) HGetMax(const ContainerClass& t1, const ContainerClass& t2)
     {
+        
         ContainerClass result{};
-
         for (std::size_t i{}; i < ContainerClass::m_numDimensions; ++i)
         {
             result[i] = std::max(t1[i], t2[i]);
@@ -288,23 +291,20 @@ export
         return result;
     }
 
-    template<Container ContainerClass>
-    constexpr decltype(auto) HPermute(const ContainerClass& t, const std::array<int, ContainerClass::m_numDimensions>& p)
-    {
+    template<Container ContainerClass, std::size_t... Indices>
+    constexpr ContainerClass HPermute(const ContainerClass& t) {
         ContainerClass result{};
 
-        for (std::size_t i{}; i < ContainerClass::m_numDimensions; ++i)
-        {
-            result[i] = t[p[i]];
-        }
+        ((result[Indices] = t[Indices]), ...);
+
         return result;
     }
 
-    template<Container ContainerClass, Arithmetic ElementType>
-    constexpr decltype(auto) HProd(const ContainerClass& t)
+    template<Container ContainerClass>
+    constexpr auto HProd(const ContainerClass& t)
     {
+        using ElementType = typename ContainerClass::value_type;
         ElementType result{ 1 };
-
         for (std::size_t i{}; i < ContainerClass::m_numDimensions; ++i)
         {
             result *= t[i];
@@ -324,50 +324,63 @@ export
         return *std::max_element(t.begin(), t.end());
     }
 
-    template<Container ContainerClass, Arithmetic ElementType>
-    constexpr ElementType HGetMinComponentIndex(const ContainerClass& t)
+    template<Container ContainerClass>
+    constexpr std::size_t HGetMinComponentIndex(const ContainerClass& t)
     {
-        return std::distance(t.begin(), std::min_element(t.begin(), t.end()));
+        return static_cast<std::size_t>(std::distance(t.begin(), std::min_element(t.begin(), t.end())));
     }
 
-    template<Container ContainerClass, Arithmetic ElementType>
-    constexpr ElementType HGetMaxComponentIndex(const ContainerClass& t)
+    template<Container ContainerClass>
+    constexpr std::size_t HGetMaxComponentIndex(const ContainerClass& t)
     {
-        return std::distance(t.begin(), std::max_element(t.begin(), t.end()));
+        return static_cast<std::size_t>(std::distance(t.begin(), std::max_element(t.begin(), t.end())));
     }
 
-    template<Container ContainerClass, Arithmetic ElementType>
-    constexpr ElementType HComputeDot(const ContainerClass& a, const ContainerClass& b) {
+    template<Container ContainerClass>
+    constexpr auto HComputeDot(const ContainerClass& a, const ContainerClass& b)
+    {
+        using ElementType = typename ContainerClass::value_type;
         ElementType result{};
-        for (std::size_t i{}; i < ContainerClass::m_numDimensions; ++i) {
+
+        for (std::size_t i = 0; i < ContainerClass::m_numDimensions; ++i)
+        {
             result += a[i] * b[i];
+        }
+
+        return result;
+    }
+
+    template<Container ContainerClass>
+    constexpr auto HComputeLengthSq(const ContainerClass& t) 
+    {
+        return HComputeDot<ContainerClass>(t, t);
+    }
+
+    template<Container ContainerClass>
+    constexpr Float HComputeLength(const ContainerClass& t) 
+    {
+        return static_cast<Float>(std::sqrt(HComputeLengthSq<ContainerClass>(t)));
+    }
+
+    template<Container ContainerClass>
+    constexpr auto HComputeDistanceSq(const ContainerClass& t1, const ContainerClass& t2)
+    {
+        using ElementType = typename ContainerClass::value_type;
+        ElementType result{};
+
+        for (std::size_t i = 0; i < ContainerClass::m_numDimensions; ++i)
+        {
+            ElementType diff = t1[i] - t2[i];
+            result += diff * diff;
         }
         return result;
     }
 
-    template<Container ContainerClass, Arithmetic ElementType>
-    constexpr ElementType HComputeLengthSq(const ContainerClass& t) {
-        return HComputeDot(t, t);
-    }
 
     template<Container ContainerClass>
-    constexpr decltype(auto) HComputeLength(const ContainerClass& t) {
-        return std::sqrt(HComputeLengthSq(t));
-    }
-
-    template<Container ContainerClass, Arithmetic ElementType>
-    constexpr ElementType HComputeDistanceSq(const ContainerClass& t1, const ContainerClass& t2) {
-        ContainerClass diff{};
-        for (std::size_t i{}; i < ContainerClass::m_numDimensions; ++i) {
-            diff[i] = t1[i] - t2[i];
-        }
-        return HLengthSquared(diff);
-    }
-
-    template<Container ContainerClass>
-    constexpr decltype(auto) HComputeDistance(const ContainerClass& t1, const ContainerClass& t2) 
+    constexpr Float HComputeDistance(const ContainerClass& t1, const ContainerClass& t2)
     {
-        return std::sqrt(HComputeDistanceSq(t1, t2));
+        return static_cast<Float>(std::sqrt(HComputeDistanceSq<ContainerClass>(t1, t2)));
     }
 };
 
