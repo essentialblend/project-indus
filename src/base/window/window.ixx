@@ -3,12 +3,15 @@ export module window;
 import <functional>;
 import <future>;
 import <memory>;
+import <vector>;
 
 import core_constructs;
 import stats_overlay;
 import u_timer;
-import color;
 import threadpool;
+import core_util;
+import vec3;
+
 
 export class SFMLWindow
 {
@@ -28,17 +31,20 @@ public:
     [[nodiscard]] SFMLWindowPropertiesOLD& getSFMLWindowProperties() noexcept;
     void setResolution(const PixelResolution& windowPixResObj) noexcept;
 
-    void setRenderFrameMultiCoreFunctor(const std::function<void()>& multiCoreFunctor) noexcept;
+    void setRenderFrameFunctor(const std::function<void()>& renderFrameFunctor) noexcept;
+    void setLiTestRenderFrameFunctor(const std::function<void()>& LiTestRenderFrameFunctor) noexcept;
     void setMultithreadedCheckFunctor(const std::function<bool()>& isMultithreadedCheckFunctor) noexcept;
 
     void setTextureUpdateCheckFunctor(const std::function<bool()>& texUpdateCheckFunctor) noexcept;
 
-    void setMainEngineFramebufferGetFunctor(const std::function<std::vector<std::unique_ptr<IColor>>&()>& mainEngineFramebufferGetFunctor) noexcept;
+    void setMainEngineFramebufferGetFunctor(const std::function<std::vector<ColorRGB>&()>& mainEngineFramebufferGetFunctor) noexcept;
     void setMainRendererCameraPropsGetFunctor(const std::function<CameraProperties()>& mainRendererCameraPropsGetFunctor);
     void setRenderCompleteStatusGetFunctor(const std::function<bool()>& renderCompleteStatusFunctor) noexcept;
     void setTextureUpdateRateGetFunctor(const std::function<int()>& texUpdateRateFunctor) noexcept;
-    void setGaussianKernelPropsGetFunctor(const std::function<GaussianKernelProperties()>& gaussianKernelPropsFunctor) noexcept; 
-    void setRenderColorTypeGetFunctor(const std::function<std::string()>& renderColorTypeFunctor) noexcept;
+    void setGaussianKernelPropsGetFunctor(const std::function<GaussianKernelProperties()>& gaussianKernelPropsFunctor) noexcept;
+    void setRenderSPP(std::size_t spp) noexcept;
+
+    void setSaveRenderImageStatus(bool isRenderSavedToDisk) noexcept;
 
 private:
     SFMLWindowPropertiesOLD m_windowProps{};
@@ -51,6 +57,8 @@ private:
     bool m_needsDrawUpdate{ false };
     bool m_isRendering{ false };
     int m_texUpdateChunkTracker{ 0 };
+    bool m_shouldSaveRenderToDisk{ true };
+    std::size_t m_renderSPP{};
 
     std::future<void> m_mainRenderSchedulerFuture{};
     
@@ -59,6 +67,8 @@ private:
     void setupPDHQueryAndCounter(PDHQueryCounterVars& pdhQueryAndCounter, const std::wstring& queryAPIString);
     void getFormattedValue(PDHVariables& pdhQueryCounterObjVec);
     double retrieveTotalDRAM();
+
+    void saveFramebufferPNG(const std::vector<std::uint8_t>& framebuffer, int width, int height, int spp) const;
 };
 
 

@@ -2,16 +2,25 @@ export module material;
 
 import <memory>;
 
+import core_constructs;
 import world_object;
 import ray;
 import hit_record;
-import color;
+import vec3;
+import bxdf;
 
-export class IMaterial abstract
+export enum class MaterialType
+{
+	Matte,
+	Glass
+};
+
+export class IMaterial
 {
 public:
-	explicit IMaterial() noexcept = default;
-	virtual bool handleRayScatter(const Ray& inputRay, const HitRecord& hitRec, IColor& albedo, Ray& scatteredRay) const = 0;
-	
-	virtual ~IMaterial() noexcept = default;
+	virtual ~IMaterial() = default;
+
+	virtual void computeScatteringFunctions(HitRecord& hitRec) const = 0;
+
+	virtual MaterialType getMaterialType() const noexcept = 0;
 };

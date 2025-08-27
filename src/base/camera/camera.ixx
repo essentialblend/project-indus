@@ -4,6 +4,7 @@ import <array>;
 
 import core_constructs;
 import vec3;
+import ray;
 
 export class Camera
 {
@@ -16,6 +17,7 @@ public:
     void setViewportHeight(double vpHeightInWorldSpace = 2.0) noexcept;
     void setPixelDimensions(const PixelDimension& pixDimObj) noexcept;
     void setCameraCenter(const Point& centerPointInWorldSpace = Point(0)) noexcept;
+    Ray generateRay(int pixelX, int pixelY, Sample2D uPixel, Sample2D uLens) const noexcept;
 
     [[nodiscard]] CameraProperties getCameraProperties() const noexcept;
 

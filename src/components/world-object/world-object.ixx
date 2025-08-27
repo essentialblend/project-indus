@@ -1,7 +1,6 @@
 export module world_object;
 
 import vec3;
-import color;
 import ray;
 import interval;
 import hit_record;

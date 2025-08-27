@@ -1,8 +1,6 @@
 export module core_constructs;
 
-import color;
 import vec3;
-import color;
 import u_timer;
 import ray;
 import threadpool;
@@ -10,8 +8,8 @@ import es_threadpool;
 
 import <vector>;
 import <future>;
-import<functional>;
-import<Pdh.h>;
+import <functional>;
+import <Pdh.h>;
 
 
 import <SFML/Graphics.hpp>;
@@ -48,8 +46,8 @@ export struct ViewportProperties
 {
 	double widthWorldSpaceUnits{};
 	double heightWorldSpaceUnits{};
-	Vec3 horPixelSpanAbsVal{};
-	Vec3 vertPixelSpanAbsVal{};
+	Vec3 horPixelSpanVec{};
+	Vec3 vertPixelSpanVec{};
 
 	constexpr ViewportProperties() noexcept = default;
 	constexpr ViewportProperties(const double widthInWorldSpace, const double heightInWorldSpace) noexcept : widthWorldSpaceUnits{ widthInWorldSpace }, heightWorldSpaceUnits{ heightInWorldSpace } {}
@@ -67,28 +65,29 @@ export struct ImageProperties
 
 export struct PixelDimension
 {
-	Vec3 lateralSpanAbsVal{};
-	Vec3 vertSpanAbsVal{};
+	Vec3 lateralSpanVec{};
+	Vec3 vertSpanVec{};
 	Point topLeftPixCenter{};
 	double pixelUnitSpanAbsVal{};
 };
 
 export struct DefocusBlurProperties
 {
-	double defocusAngle{ 0.6 };
-	double focusDist{ 10 };
+	double defocusAngle{ 0.55 };
+	double focusDist{ 13 };
 	Vec3 defocusDiskU{};
 	Vec3 defocusDiskV{};
 };
 
 export struct OrthonormalBasis
 {
-	Vec3 camW{};
-	Vec3 camU{};
-	Vec3 camV{};
+public:
+	Vec3 m_unitNormalVec{};
+	Vec3 m_unitTangentVec{};
+	Vec3 m_unitBitangentVec{};
 
 	constexpr explicit OrthonormalBasis() noexcept = default;
-	constexpr explicit OrthonormalBasis(Vec3 w, Vec3 u, Vec3 v) noexcept : camW{ w }, camU{ u }, camV{ v } {}
+	constexpr explicit OrthonormalBasis(Vec3 n, Vec3 t, Vec3 b) noexcept : m_unitNormalVec{ n }, m_unitTangentVec{ t }, m_unitBitangentVec{ b } {}
 };
 
 export struct CameraProperties
@@ -98,32 +97,19 @@ export struct CameraProperties
 	PixelDimension camPixelDimObj{};
 	DefocusBlurProperties camDefocusPropsObj{};
 
-	double camVerticalFOV{ 20 };
-	Point camLookFrom{ 13, 2, 3 };
+	double camVerticalFOV{ 18 };
+	Point camLookFrom{ -15, 2.25, 8 };
 	Point camCenter{ camLookFrom };
 	Point camLookAt{ 0, 0, 0 };
 	Vec3 camVUP{ 0, 1, 0 };
 
 	Vec3 camW{ getUnit(camLookFrom - camLookAt) }; Vec3 camU{ getUnit(computeCross(camVUP, camW)) }; Vec3 camV{ computeCross(camW, camU) };
 
-	OrthonormalBasis camONBObj{ camW, camU, camV };
-
 	void setLookFromAt(const Vec3& lookFrom, const Vec3& lookAt)
 	{
 		camLookFrom = lookFrom;
 		camLookAt = lookAt;
 	}
-};
-
-export struct SFMLWindowPropertiesOLD
-{
-	sf::RenderWindow renderWindowObj{};
-	sf::View mainRenderViewObj{};
-	sf::View mainOverlayViewObj{};
-	sf::Texture mainRenderTexObj{};
-	sf::Sprite mainRenderSpriteObj{};
-	unsigned int prefFPSInIntegral{ 30 };
-	float windowedResScale{ 0.5 };
 };
 
 export struct OverlayStatistic
@@ -165,15 +151,15 @@ export struct GaussianKernelProperties
 
 export struct OldWindowFunctors
 {
-	std::function<void()> renderFrameMultiCoreFunctor{};
+	std::function<void()> renderFrameFunctor{};
+	std::function<void()> liTestRenderFrameFunctor{};
 	std::function<bool()> isMultithreadedFunctor{};
 	std::function<bool()> isTextureReadyForUpdateFunctor{};
-	std::function<std::vector<std::unique_ptr<IColor>>&()> getMainEngineFramebufferFunctor{};
+	std::function<std::vector<ColorRGB>&()> getMainEngineFramebufferFunctor{};
 	std::function<CameraProperties()> getRendererCameraPropsFunctor{};
 	std::function<bool()> getRenderCompleteStatusFunctor{};
 	std::function<int()> getTextureUpdateRateFunctor{};
 	std::function<GaussianKernelProperties()> getGaussianKernelPropsFunctor{};
-	std::function<std::string()> getRenderColorTypeFunctor{};
 };
 
 export struct PDHQueryCounterVars
@@ -223,7 +209,7 @@ export struct SFMLWindowFunctors
 	std::function<void()> renderFrameMultiCoreFunctor{};
 	std::function<bool()> isMultithreadedFunctor{};
 	std::function<bool()> isTextureReadyForUpdateFunctor{};
-	std::function<std::vector<std::unique_ptr<IColor>>&()> getMainEngineFramebufferFunctor{};
+	std::function<std::vector<ColorRGB>&()> getMainEngineFramebufferFunctor{};
 	//std::function<CameraProperties()> getRendererCameraPropsFunctor{};
 	std::function<bool()> getRenderCompleteStatusFunctor{};
 	std::function<int()> getTextureUpdateRateFunctor{};
@@ -244,3 +230,18 @@ export struct SFMLWindowProperties
 	std::shared_ptr<UTimer> pdhTimer{};
 };
 
+export struct SFMLWindowPropertiesOLD
+{
+	sf::RenderWindow renderWindowObj{};
+	sf::View mainRenderViewObj{};
+	sf::View mainOverlayViewObj{};
+	sf::Texture mainRenderTexObj{};
+	sf::Sprite mainRenderSpriteObj{};
+	unsigned int prefFPSInIntegral{ 30 };
+	float windowedResScale{ 0.5 };
+};
+
+export struct Sample2D
+{
+	double u{}, v{};
+};

@@ -1,13 +1,17 @@
 import window;
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../dep/stb_image_write.h"
+
+#include <filesystem>
+
+import core_color_util;
+
 import <windows.h>;
 import <string>;
 import <memory>;
 import <Pdh.h>;
-
-import color_rgb;
-
-import <SFML/Graphics.hpp>;
+import <cassert>;
 
 void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, UTimer& timerObj)
 {
@@ -27,16 +31,20 @@ void SFMLWindow::processInputEvents(StatsOverlay& statsOverlayObj, UTimer& timer
 
 		if (event.type == sf::Event::KeyReleased)
 		{
-			if (event.key.code == sf::Keyboard::Space)
+			if (event.key.code == sf::Keyboard::Space && !m_isRendering)
 			{
-				timerObj.startEntity();
-				if (m_windowFunctors.isMultithreadedFunctor()) [[likely]]
-				{
-					m_isRendering = true;
-					statsOverlayObj.setRenderingStartStatus(m_isRendering);
-					m_mainRenderSchedulerFuture = std::async(std::launch::async, m_windowFunctors.renderFrameMultiCoreFunctor);
-					m_needsDrawUpdate = true;
-				}
+				timerObj.startTimer();
+				m_isRendering = true;
+				statsOverlayObj.setRenderingStartStatus(m_isRendering);
+				
+				m_mainRenderSchedulerFuture = std::async(std::launch::async, m_windowFunctors.renderFrameFunctor);
+
+				m_needsDrawUpdate = true;
+			}
+			if (event.key.code == sf::Keyboard::T)
+			{
+				// Analytic Li Test
+				// m_windowFunctors.liTestRenderFrameFunctor();
 			}
 		}
 	}
@@ -48,13 +56,15 @@ void SFMLWindow::displayWindow(StatsOverlay& statsOverlayObj, UTimer& timerObj)
 	statsOverlayObj.setTotalDRAM(totalDRAM);
 
 	startPDHQuery(m_pdhVars);
+	
 	setupWindowSFMLParams();
 
-	m_cpuUsagePDHTimer.startEntity();
+	m_cpuUsagePDHTimer.startTimer();
+	
 	while (m_windowProps.renderWindowObj.isOpen())
 	{
 		processInputEvents(statsOverlayObj, timerObj);
-   		checkForUpdates(statsOverlayObj, timerObj, m_pdhVars, totalDRAM);
+   	checkForUpdates(statsOverlayObj, timerObj, m_pdhVars, totalDRAM);
 		drawGUI(statsOverlayObj, timerObj);
 	}
 
@@ -94,15 +104,21 @@ void SFMLWindow::updateRenderingStatus(UTimer& timerObj, StatsOverlay& statsOver
 {
 	if (m_isRendering && m_windowFunctors.getRenderCompleteStatusFunctor())
 	{
-		timerObj.stopEntity();
+		const auto localCamPixelImageObj { m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj };
+
+		const auto resWidth{ localCamPixelImageObj.widthInPixels };
+		const auto resHeight{ localCamPixelImageObj.heightInPixels };
+
+		timerObj.stopTimer();
 		statsOverlayObj.setRenderingCompleteStatus(true);
 		m_isRendering = false;
+
+		saveFramebufferPNG(convertToRGBA8(m_windowFunctors.getMainEngineFramebufferFunctor(), resWidth, resHeight), resWidth, resHeight, static_cast<int>(m_renderSPP));
 	}
 }
 
 void SFMLWindow::updateTextureForDisplay()
 {
-	//if (m_needsDrawUpdate && m_windowFunctors.isTextureReadyForUpdateFunctor())
 	if(m_needsDrawUpdate && m_windowFunctors.isTextureReadyForUpdateFunctor())
 	{
 		displayWithSequentialTexUpdates();
@@ -121,30 +137,25 @@ void SFMLWindow::displayWithSequentialTexUpdates()
 	const auto localTexUpdateRate = m_windowFunctors.getTextureUpdateRateFunctor();
 	static int originalTexUpdateRate{ localTexUpdateRate };
 	const int numPixelsInUpdateChunk { localPixelRes.widthInPixels * localTexUpdateRate };
-	const auto& localColorType{ m_windowFunctors.getRenderColorTypeFunctor() };
 
 	const auto itBegin{ localFramebuffer.begin() + static_cast<long long>(chunkTracker * (originalTexUpdateRate * localPixelRes.widthInPixels)) };
 	const auto itEnd{ (localFramebuffer.end() - itBegin > numPixelsInUpdateChunk) ? itBegin + numPixelsInUpdateChunk : localFramebuffer.end() };
 	localSFMLBuffer.reserve(static_cast<long long>(localTexUpdateRate * localPixelRes.widthInPixels * 4));
 
-	for (auto it{ itBegin }; it != itEnd; ++it) {
+	for (auto it{ itBegin }; it != itEnd; ++it) 
+	{
 		
-		auto& colorObj{ *it };
+		ColorRGB color{ *it };
 		const auto index{ std::distance(localFramebuffer.begin(), it) };
-		const double gaussianAccumWeight{ weightsVec[index] };
+	
+		// Gamma and clamp, clamp via toSFMLColor
+		color = applyGamma(color, 2.2);
+		sf::Color sfmlColor{ toSFMLColor(color) };
 
-		colorObj->applyWeights(gaussianAccumWeight);
-		colorObj->applyGammaCorrection(2.4);
-		colorObj->undoNormalization(256);
-
-		if (localColorType == "ColorRGB")
-		{
-			const auto& localColorObj = static_cast<const ColorRGB*>(colorObj.get());
-			localSFMLBuffer.push_back(static_cast<sf::Uint8>(localColorObj->getRedComponent()));
-			localSFMLBuffer.push_back(static_cast<sf::Uint8>(localColorObj->getGreenComponent()));
-			localSFMLBuffer.push_back(static_cast<sf::Uint8>(localColorObj->getBlueComponent()));
-			localSFMLBuffer.push_back(255);
-		}
+		localSFMLBuffer.push_back(sfmlColor.r);
+		localSFMLBuffer.push_back(sfmlColor.g);
+		localSFMLBuffer.push_back(sfmlColor.b);
+		localSFMLBuffer.push_back(sfmlColor.a);
 	}
 
 	m_windowProps.mainRenderTexObj.update(localSFMLBuffer.data(), localPixelRes.widthInPixels, localTexUpdateRate, 0, chunkTracker * originalTexUpdateRate);
@@ -161,18 +172,26 @@ void SFMLWindow::displayWithSequentialTexUpdates()
 
 void SFMLWindow::setupWindowSFMLParams()
 {
+
+	const auto imageWidthPixels{ m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj.widthInPixels };
+	const auto imageHeightPixels{ m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj.heightInPixels };
+
+	// Create main window to render in
 	m_windowProps.renderWindowObj.create(sf::VideoMode(static_cast<int>(m_windowPixelRes.widthInPixels * m_windowProps.windowedResScale), static_cast<int>(m_windowPixelRes.heightInPixels * m_windowProps.windowedResScale)) , m_windowTitle);
 
-	m_windowProps.mainRenderViewObj = sf::View(sf::FloatRect(0, 0, static_cast<float>(m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj.widthInPixels), static_cast<float>(m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj.heightInPixels)));
+
+	// Create the main viewport for the render window and set it as the main viewport
+	m_windowProps.mainRenderViewObj = sf::View(sf::FloatRect(0, 0, static_cast<float>(imageWidthPixels), static_cast<float>(imageHeightPixels)));
 	m_windowProps.renderWindowObj.setView(m_windowProps.mainRenderViewObj);
 	
 	m_windowProps.renderWindowObj.setFramerateLimit(m_windowProps.prefFPSInIntegral);
 
-	m_windowProps.mainRenderTexObj.create(m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj.widthInPixels, m_windowFunctors.getRendererCameraPropsFunctor().camImgPropsObj.pixelResolutionObj.heightInPixels);
+	// Set render texture and assign it to a sprite
+	m_windowProps.mainRenderTexObj.create(imageWidthPixels, imageHeightPixels);
 	m_windowProps.mainRenderSpriteObj.setTexture(m_windowProps.mainRenderTexObj);
 
+	// Viewport for the overlay
 	m_windowProps.mainOverlayViewObj = sf::View(sf::FloatRect(0, 0, static_cast<float>(m_windowPixelRes.widthInPixels), static_cast<float>(m_windowPixelRes.heightInPixels)));
-
 }
 
 void SFMLWindow::drawGUI(StatsOverlay& statsOverlayObj, const UTimer& timerObj)
@@ -198,9 +217,14 @@ void SFMLWindow::setResolution(const PixelResolution& windowPixResObj) noexcept
 	m_windowPixelRes = windowPixResObj;
 }
 
-void SFMLWindow::setRenderFrameMultiCoreFunctor(const std::function<void()>& multiCoreFunctor) noexcept
+void SFMLWindow::setRenderFrameFunctor(const std::function<void()>& renderFrameFunctor) noexcept
 {
-	m_windowFunctors.renderFrameMultiCoreFunctor = multiCoreFunctor;
+	m_windowFunctors.renderFrameFunctor = renderFrameFunctor;
+}
+
+void SFMLWindow::setLiTestRenderFrameFunctor(const std::function<void()>& liTestRenderFrameFunctor) noexcept
+{
+	m_windowFunctors.liTestRenderFrameFunctor = liTestRenderFrameFunctor;
 }
 
 void SFMLWindow::setMultithreadedCheckFunctor(const std::function<bool()>& isMultithreadedCheckFunctor) noexcept
@@ -213,7 +237,7 @@ void SFMLWindow::setTextureUpdateCheckFunctor(const std::function<bool()>& texUp
 	m_windowFunctors.isTextureReadyForUpdateFunctor = texUpdateCheckFunctor;
 }
 
-void SFMLWindow::setMainEngineFramebufferGetFunctor(const std::function<std::vector<std::unique_ptr<IColor>>&()>&  mainEngineFramebufferGetFunctor) noexcept
+void SFMLWindow::setMainEngineFramebufferGetFunctor(const std::function<std::vector<ColorRGB>&()>&  mainEngineFramebufferGetFunctor) noexcept
 {
 	m_windowFunctors.getMainEngineFramebufferFunctor = mainEngineFramebufferGetFunctor;
 }
@@ -238,9 +262,14 @@ void SFMLWindow::setGaussianKernelPropsGetFunctor(const std::function<GaussianKe
 	m_windowFunctors.getGaussianKernelPropsFunctor = gaussianKernelPropsFunctor;
 }
 
-void SFMLWindow::setRenderColorTypeGetFunctor(const std::function<std::string()>& renderColorTypeFunctor) noexcept
+void SFMLWindow::setRenderSPP(std::size_t spp) noexcept
 {
-	m_windowFunctors.getRenderColorTypeFunctor = renderColorTypeFunctor;
+	m_renderSPP = spp;
+}
+
+void SFMLWindow::setSaveRenderImageStatus(bool isRenderSavedToDisk) noexcept
+{
+	m_shouldSaveRenderToDisk = isRenderSavedToDisk;
 }
 
 bool SFMLWindow::retrievePDHQueryValues(PDHVariables& pdhVars)
@@ -249,7 +278,7 @@ bool SFMLWindow::retrievePDHQueryValues(PDHVariables& pdhVars)
 	{
 		getFormattedValue(pdhVars);
 		m_cpuUsagePDHTimer.resetTimer();
-		m_cpuUsagePDHTimer.startEntity();
+		m_cpuUsagePDHTimer.startTimer();
 		return true;
 	}
 	return false;
@@ -303,4 +332,21 @@ double SFMLWindow::retrieveTotalDRAM()
 	GlobalMemoryStatusEx(&memInfo);
 	DWORDLONG totalPhysMem = memInfo.ullTotalPhys;
 	return static_cast<double>(totalPhysMem / static_cast<double>(1024 * 1024 * 1024));	
+}
+
+void SFMLWindow::saveFramebufferPNG(const std::vector<std::uint8_t>& framebuffer, int width, int height, int spp) const
+{
+	auto now{ std::chrono::system_clock::now() };
+	std::string imageFilename{ std::format("render_{:%Y%m%d_%H%M%S}_{}x{}_{}spp.png",
+		now, width, height, spp) };
+
+	std::filesystem::path exeDir{ std::filesystem::current_path() / "renders" };
+	std::filesystem::create_directories(exeDir);
+
+	std::filesystem::path fullPath = exeDir / imageFilename;
+
+	if (!stbi_write_png(fullPath.string().c_str(), width, height, 4,
+		framebuffer.data(), width * 4)) {
+		throw std::runtime_error("Failed to write PNG: " + fullPath.string());
+	}
 }

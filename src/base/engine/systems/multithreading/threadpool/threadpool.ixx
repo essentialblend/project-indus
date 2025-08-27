@@ -16,14 +16,16 @@ public:
 	MT_ThreadPool(const MT_ThreadPool&) = delete;
 	MT_ThreadPool operator=(const MT_ThreadPool&) = delete;
 
-    void initiateThreadPool();
-    template<typename F>
-    auto enqueueThreadPoolTask(F&& func)->std::future<decltype(func())>;
+  void initiateThreadPool(std::size_t numWorkerThreads = 1);
+
+  template<typename F>
+  auto enqueueThreadPoolTask(F&& func)->std::future<decltype(func())>;
+
 	void stopThreadPool();
 
-    int getNumThreadsUsedByThreadPool() const noexcept;
-    bool isThreadPoolEmpty() const noexcept;
-    bool areAllThreadsOccupied() const noexcept;
+  int getNumThreadsUsedByThreadPool() const noexcept;
+  bool isThreadPoolEmpty() const noexcept;
+  bool areAllThreadsOccupied() const noexcept;
 
 private:
 	std::vector<std::jthread> m_workerThreads;
@@ -31,8 +33,8 @@ private:
 
 	std::mutex m_queueMutex{};
 	std::condition_variable m_conditionVar{};
-    std::atomic<int> m_numActiveTasks{};
-    bool m_stopFlag{ false };
+  std::atomic<int> m_numActiveTasks{};
+  bool m_stopFlag{ false };
 
 	void executeTasks();
 };

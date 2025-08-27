@@ -6,69 +6,149 @@ import <exception>;
 import <memory>;
 
 import core_util;
-import color;
-import color_rgb;
+import core_diag;
+import core_sampling_util;
 import threadpool;
 import hit_record;
 import material;
-import lambertian;
+import matte;
 import world_object;
+import vec3;
+import bxdf;
+import randomsampler;
+import stratifiedsampler;
 
-
-import <SFML/Graphics.hpp>;
-
-std::unique_ptr<const IColor> Renderer::computeRayColor(const Ray& inputRay, const WorldObject& mainWorld, int maxRayBounceDepth)
+ColorRGB Renderer::Li(const Ray& inputRayWithUnitDir, const WorldObject& mainWorld, int maxRayBounceDepth, Sampler& sampler)
 {
-    if (maxRayBounceDepth <= 0)
+  ColorRGB L{ 0 };                     
+  ColorRGB beta{ 1 };
+  Ray ray{ inputRayWithUnitDir };
+
+  if constexpr (diagCompileFlag) diagCount(m_totalPaths);
+
+  for (int bounce = 0; bounce < maxRayBounceDepth; ++bounce)
+  {
+    if constexpr (diagCompileFlag) diagCount(m_totalBounces);
+
+    HitRecord hit{};
+    if (!mainWorld.checkHit(ray, Interval(0.0001, UInfinity), hit))
     {
-        return createDerivedColorUniquePtr(m_renderColorType, Vec3(0));
+      L += beta * getBackgroundGradient(ray);
+      break;
     }
 
-    HitRecord tempHitRecord{};
-    if (mainWorld.checkHit(inputRay, Interval(0.001, +UInfinity), tempHitRecord))
+    if (hit.hitMaterial->getMaterialType() == MaterialType::Matte) 
     {
-        Ray scatteredRay{};
-        auto materialAlbedo{ createDerivedColorUniquePtr(m_renderColorType, Vec3(0)) };
-
-        if (tempHitRecord.hitMaterial->handleRayScatter(inputRay, tempHitRecord, *materialAlbedo, scatteredRay))
-        {
-            materialAlbedo->multiplyColorWithSelf(*(computeRayColor(scatteredRay, mainWorld, maxRayBounceDepth - 1)));
-            return materialAlbedo;
-        }
+      //__debugbreak();
     }
 
-    return getBackgroundGradient(inputRay);
+    hit.hitMaterial->computeScatteringFunctions(hit);
+
+    if (!hit.surfaceBSDF)
+    {
+      if constexpr (diagCompileFlag) diagCount(m_samplesRejected);
+      break;
+    }
+
+    auto [unitW_i, PDFVal, BRDFVal, bxdfType] = hit.surfaceBSDF->sample(-ray.getDirection(), sampler.get2D());
+
+    if (!(PDFVal > 0.0) || !std::isfinite(PDFVal) || !isFiniteVec(BRDFVal))
+    {
+      if constexpr (diagCompileFlag) diagCount(m_samplesRejected);
+      break;
+    }
+
+    if (isSpecularBxDF(bxdfType))
+    {
+      beta *= BRDFVal;
+    }
+    else
+    {
+      const double cosTheta{ std::max(0.0, computeDot(unitW_i, hit.shadingBasis.m_unitNormalVec)) };
+      beta *= (BRDFVal * (cosTheta / PDFVal));
+    }
+
+    if (m_useRussianRoulette && bounce >= 5)
+    {
+      double q{ std::min(0.95, std::max({beta[0], beta[1], beta[2]})) };
+
+      if (sampler.get1D() > q)
+      {
+        if constexpr (diagCompileFlag) diagCount(m_pathsTerminated);
+        break;
+      }
+
+      beta *= (1.0 / q);
+      if constexpr (diagCompileFlag) diagCount(m_pathsSurvived);
+    }
+
+    ray = Ray{ hit.hitPoint, unitW_i };
+  }
+
+  return L;
 }
 
-std::unique_ptr<const IColor> Renderer::getBackgroundGradient(const Ray& inputRay)
+ColorRGB Renderer::getBackgroundGradient(const Ray& inputRay)
 {
-    const Vec3 gradientColorVec{ 0.5, 0.7, 1.0 };
-    const Vec3 inputRayDir{ getUnit(inputRay.getDirection()) };
-    const double lerpFactor{ 0.5 * (inputRayDir[1] + 1.0)};
-    const Vec3 returnedColor{ ((1.0 - lerpFactor) * Vec3(1.0) + lerpFactor * gradientColorVec) };
+  const ColorRGB gradientColorVec{ 0.5, 0.7, 1.0 };
+  
+  const Vec3 inputRayDir{ getUnit(inputRay.getDirection()) };
+  const double lerpFactor{ 0.75 * (inputRayDir[1] + 1.0)};
+  const ColorRGB returnedColor{ ((1.0 - lerpFactor) * Vec3(1.0) + lerpFactor * gradientColorVec) };
 
-    return createDerivedColorUniquePtr(m_renderColorType, returnedColor);
+  return returnedColor;
 }
 
 void Renderer::setupRenderer(const PixelResolution& pixResObj, const AspectRatio& aspectRatioObj)
 {
+    // Setup camera resolution and aspect ratio
     m_mainCamera = Camera{ pixResObj, aspectRatioObj };
     m_mainCamera.setupCamera();
     
+    // Setup pixel dimensions
     auto localPixDimObj{ m_mainCamera.getCameraProperties().camPixelDimObj };
+
+    // Reserve a vector of std::futures representing each row of pixels which constitute a rendering task for the threadpool
     m_mainRenderingPassFutureVec.reserve(m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels);
+    
+    // Setup the latch
     m_texUpdateLatch = std::make_unique<std::latch>(m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels);
 
-    setupGaussianKernel(localPixDimObj);
+    if constexpr (diagCompileFlag)
+    {
+      m_pixelsFlagged.store(0, std::memory_order_relaxed);
+      m_diagPrinted = false;
+      Renderer::m_samplesRejected = false;
+    }
+
+    // Setup the sampler
+    if (m_isMultithreaded)
+    {
+      int nx{ static_cast<int>(std::floor(std::sqrt(m_SPP))) };
+      int ny{ (m_SPP + nx - 1) / nx };
+      m_rendererSampler = std::make_unique<StratifiedSampler>(nx, ny, true, m_samplerSeed);
+    }
+    else
+    {
+      m_rendererSampler = std::make_unique<StratifiedSampler>(1, 1, true, m_samplerSeed);
+    }
+
+    //setupGaussianKernel(localPixDimObj);
 }
 
 void Renderer::setupGaussianKernel(PixelDimension& localPixDimObj)
 {
-    const Vec3 adjacentPixelForDist{ localPixDimObj.topLeftPixCenter + (1 * localPixDimObj.lateralSpanAbsVal) + (1 * localPixDimObj.vertSpanAbsVal) };
+    const Vec3 adjacentPixelForDist{ localPixDimObj.topLeftPixCenter + (1 * localPixDimObj.lateralSpanVec) + (1 * localPixDimObj.vertSpanVec) };
+
     localPixDimObj.pixelUnitSpanAbsVal = (localPixDimObj.topLeftPixCenter - adjacentPixelForDist).getMagnitude();
+    
     m_mainCamera.setPixelDimensions(localPixDimObj);
-    m_gaussianKernelProps.sigmaInAbsVal = 1.5 * localPixDimObj.pixelUnitSpanAbsVal;
-    m_gaussianKernelProps.kernelSpanInIntegralVal = static_cast<int>((m_gaussianKernelProps.kernelCoverageScalar * m_gaussianKernelProps.sigmaInAbsVal) / localPixDimObj.pixelUnitSpanAbsVal);
+    
+    m_gaussianKernelProps.sigmaInAbsVal = 0.75 * localPixDimObj.pixelUnitSpanAbsVal;
+    
+    m_gaussianKernelProps.kernelSpanInIntegralVal = static_cast<int>((m_gaussianKernelProps.kernelCoverageScalar * 
+    m_gaussianKernelProps.sigmaInAbsVal) / localPixDimObj.pixelUnitSpanAbsVal);
+    
     m_gaussianKernelProps.kernelWeights.resize(m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.getTotalPixels());
 }
 
@@ -77,16 +157,64 @@ GaussianKernelProperties Renderer::getGaussianKernelProps() const noexcept
     return m_gaussianKernelProps;
 }
 
-void Renderer::renderFrameMultiCoreGaussian(std::vector<std::unique_ptr<IColor>>& mainFramebuffer, const WorldObject& mainWorld)
+void Renderer::renderFrame(std::vector<ColorRGB>& mainFramebuffer, const WorldObject& mainWorld, bool isMultithreaded)
 {
+  // Begin main render timer log.
+  m_mainRenderTimer.resetTimer();
+  m_mainRenderTimer.startTimer();
+
+  if (isMultithreaded)
+  {
+    m_renderThreadPool.initiateThreadPool(std::thread::hardware_concurrency());
+  }
+  else
+  {
     m_renderThreadPool.initiateThreadPool();
+  }
 
 	for (int eachPixelRow{}; eachPixelRow < m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.heightInPixels; ++eachPixelRow)
-    {
-        m_mainRenderingPassFutureVec.push_back(m_renderThreadPool.enqueueThreadPoolTask([this, eachPixelRow, &mainFramebuffer, &mainWorld]() {
-            this->renderPixelRowThreadPoolTaskGaussian(eachPixelRow, mainFramebuffer, mainWorld);
-        }));
+  {
+    m_mainRenderingPassFutureVec.push_back(m_renderThreadPool.enqueueThreadPoolTask([this, eachPixelRow, &mainFramebuffer, &mainWorld]()
+      {
+        this->renderPixelRowThreadPoolTask(eachPixelRow, mainFramebuffer, mainWorld);
+      }));
 	}
+}
+
+void Renderer::renderLiTestFrame(std::vector<ColorRGB>& mainFramebuffer, const WorldObject& mainWorld, bool isMultithreaded)
+{
+  const int spp = 10;       
+  const int maxDepth = 5;
+
+  const auto& camProps = m_mainCamera.getCameraProperties();
+  int cx = camProps.camImgPropsObj.pixelResolutionObj.widthInPixels / 2;
+  int cy = camProps.camImgPropsObj.pixelResolutionObj.heightInPixels / 2;
+
+  Ray ray = m_mainCamera.generateRay(cx, cy, { 0.5,0.5 }, { 0.5,0.5 });
+  std::println("Ray origin = ({}, {}, {}), dir = ({}, {}, {})",
+    ray.getOrigin()[0], ray.getOrigin()[1], ray.getOrigin()[2],
+    ray.getDirection()[0], ray.getDirection()[1], ray.getDirection()[2]);
+
+  HitRecord hit{};
+  bool ok = mainWorld.checkHit(ray, Interval(0.0001, UInfinity), hit);
+  std::println("checkHit = {}", ok);
+  if (ok) {
+    std::println("Hit point = ({}, {}, {}), normal = ({}, {}, {})",
+      hit.hitPoint[0], hit.hitPoint[1], hit.hitPoint[2],
+      hit.shadingBasis.m_unitNormalVec[0],
+      hit.shadingBasis.m_unitNormalVec[1],
+      hit.shadingBasis.m_unitNormalVec[2]);
+  }
+
+  // run Li() a few samples
+  ColorRGB accum{ 0 };
+  auto sampler = m_rendererSampler->clone(m_samplerSeed);
+  for (int i = 0; i < spp; ++i) {
+    accum += Li(ray, mainWorld, maxDepth, *sampler);
+    sampler->startNextSample();
+  }
+  accum *= (1.0 / spp);
+  std::println("Li result = ({}, {}, {})", accum[0], accum[1], accum[2]);
 }
 
 void Renderer::setRendererSFMLFunctors(const RendererSFMLFunctors& rendererFuncObj) noexcept
@@ -94,105 +222,109 @@ void Renderer::setRendererSFMLFunctors(const RendererSFMLFunctors& rendererFuncO
     m_rendererFunctors = rendererFuncObj;
 }
 
-void Renderer::renderPixelRowThreadPoolTaskGaussian(int currentRowCount, std::vector<std::unique_ptr<IColor>>& mainFramebuffer, const WorldObject& mainWorld)
+void Renderer::renderPixelRowThreadPoolTask(int currentRowCount, std::vector<ColorRGB>& mainFramebuffer, const WorldObject& mainWorld)
 {
-    const auto localCamProps{ m_mainCamera.getCameraProperties() };
-    const auto localPixResObj{ m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj };
-    const auto localPixDimObj{ m_mainCamera.getCameraProperties().camPixelDimObj };
+  const auto widthResPixels{ m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj.widthInPixels };
+  
+  const auto SPP{ m_rendererSampler->getSPP() };
+  auto localSampler{ m_rendererSampler->clone(m_samplerSeed + currentRowCount) };
 
-    m_texUpdateLatch->count_down();
-
-    // For every pixel.
-    for (std::size_t pixelInRow{}; pixelInRow < localPixResObj.widthInPixels; ++pixelInRow)
+  // For every pixel
+  for (std::size_t pixelInRow{}; pixelInRow < widthResPixels; ++pixelInRow)
+  {
+    if constexpr (diagCompileFlag)
     {
-        std::unordered_map<long long, std::pair<std::shared_ptr<IColor>, double>> neighborPixelsContribMap{};
-        Point currentSamplePointOutVar{};
-
-        // Generate and sample stratified pixels/rays.
-        for (int subPixelGridV{}; subPixelGridV < m_sppSqrtCeil; ++subPixelGridV)
-        {
-            for (int subPixelGridU{}; subPixelGridU < m_sppSqrtCeil; ++subPixelGridU)
-            {
-                auto currPixelSampleColor{ createDerivedColorSharedPtr(m_renderColorType, Vec3(0)) };
-                const Ray currentPixelRay{ getStratifiedRayForPixel(static_cast<int>(pixelInRow), currentRowCount, subPixelGridU, subPixelGridV, currentSamplePointOutVar) };
-                currPixelSampleColor->addColorToSelf(*computeRayColor(currentPixelRay, mainWorld, m_maxRayBounceDepth - 1));
-                
-                // Collect and store sample contributions for neighboring pixels weighted by the gaussian kernel, for this sample.
-                collectNeighborPixelContrib(currentRowCount, pixelInRow, localPixResObj, localPixDimObj, currentSamplePointOutVar, neighborPixelsContribMap, currPixelSampleColor);
-            }
-        }
-
-        // Write contributions to neighboring pixels.
-        {
-            std::scoped_lock<std::mutex> lock(m_framebufferMutex);
-
-            for (auto& [pixelIndex, pair] : neighborPixelsContribMap) 
-            {    
-                auto& [sampleColor, gaussianWeight] = pair;
-                if (mainFramebuffer[pixelIndex]) 
-                {
-                    mainFramebuffer[pixelIndex]->addColorToSelf(*sampleColor);
-                    m_gaussianKernelProps.kernelWeights[pixelIndex] += gaussianWeight;
-                }
-                else 
-                {
-                    auto finalColor{ createDerivedColorUniquePtr(m_renderColorType, Vec3(0)) };
-                    finalColor->setColor(*sampleColor);
-                    mainFramebuffer[pixelIndex] = std::move(finalColor);
-                    m_gaussianKernelProps.kernelWeights[pixelIndex] = gaussianWeight;
-                }
-            }
-        }
+      Renderer::m_samplesRejected = false;
     }
+    
+    ColorRGB currPixelAccumColor{ 0 };
+    
+    localSampler->startPixelSample(static_cast<int>(pixelInRow), currentRowCount, 0);
+
+    for (int currSample{}; currSample < SPP; ++currSample)
+    {
+      auto uPixel{ localSampler->get2D() };
+      auto uLens{ localSampler->get2D() };
+      
+      Ray rayForSample{ m_mainCamera.generateRay(static_cast<int>(pixelInRow), currentRowCount, uPixel, uLens) };
+      currPixelAccumColor += Li(rayForSample, mainWorld, m_maxRayBounceDepth, *localSampler);
+
+      localSampler->startNextSample();
+    }
+
+    if constexpr (diagCompileFlag)
+    {
+      if (Renderer::m_samplesRejected) diagCount(m_pixelsFlagged);
+    }
+
+    // Normalize the accumulated color
+    currPixelAccumColor *= (1.0 / SPP);
+    
+    // Store in the 1D serialized framebuffer
+    std::size_t bufferIndex{ static_cast<std::size_t>((static_cast<long long>(currentRowCount) * widthResPixels) + pixelInRow) };
+    mainFramebuffer[bufferIndex] = currPixelAccumColor;
+  }
+
+  m_texUpdateLatch->count_down();
 }
 
-void Renderer::collectNeighborPixelContrib(int currentRowCount, size_t pixelInRow, const PixelResolution& localPixResObj, const PixelDimension& localPixDimObj, const Point& currentSamplePointOutVar, std::unordered_map<long long, std::pair<std::shared_ptr<IColor>, double>>& neighborPixelsContribMap, const std::shared_ptr<IColor>& currPixelSampleColor)
-{
-    const auto& kernelDiam{ m_gaussianKernelProps.kernelSpanInIntegralVal };
-    const auto& sigma{ m_gaussianKernelProps.sigmaInAbsVal };
-    const auto& kernelScalar{ m_gaussianKernelProps.kernelCoverageScalar };
-
-    for (int dv{ -kernelDiam }; dv <= kernelDiam; ++dv)
-    {
-        for (int du{ -kernelDiam }; du <= kernelDiam; ++du)
-        {
-            const int nv{ (currentRowCount + dv) };
-            const int nu{ static_cast<int>(pixelInRow + du) };
-
-            if (nv < 0 || nu < 0 || nv > (localPixResObj.heightInPixels - 1) || nu > (localPixResObj.widthInPixels - 1)) continue;
-
-            const Point neighborPixelCenter{ localPixDimObj.topLeftPixCenter + (nu * localPixDimObj.lateralSpanAbsVal) + (nv * localPixDimObj.vertSpanAbsVal) };
-
-            const Point pixelSamplePoint{ currentSamplePointOutVar };
-            const double currSampleToNeighborPixDistSq{ (pixelSamplePoint - neighborPixelCenter).getMagnitudeSq() };
-
-            if (currSampleToNeighborPixDistSq < ((kernelScalar * sigma) * (kernelScalar * sigma)))
-            {
-                const auto pixelIndex{ static_cast<long long>(nv * localPixResObj.widthInPixels) + nu };
-                const double sampleGaussianWeight{ std::exp(-currSampleToNeighborPixDistSq / (2 * sigma * sigma)) };
-
-                auto sampleColorCopy{ createDerivedColorSharedPtr(m_renderColorType, Vec3(0)) };
-                sampleColorCopy->setColor(*currPixelSampleColor);
-                sampleColorCopy->multiplyScalarWithSelf(sampleGaussianWeight);
-
-                if (neighborPixelsContribMap.count(pixelIndex) > 0)
-                {   
-                    neighborPixelsContribMap[pixelIndex].first->addColorToSelf(*sampleColorCopy);
-                    neighborPixelsContribMap[pixelIndex].second += sampleGaussianWeight;
-                }
-                else 
-                {
-                    neighborPixelsContribMap[pixelIndex].first = sampleColorCopy;
-                    neighborPixelsContribMap[pixelIndex].second = sampleGaussianWeight;
-                }
-            }
-        }
-    }
-}
+//void Renderer::collectNeighborPixelContrib(int currentRowCount, size_t pixelInRow, const PixelResolution& localPixResObj, const PixelDimension& localPixDimObj, const Point& currentSamplePointOutVar, std::unordered_map<long long, std::pair<std::shared_ptr<IColor>, double>>& neighborPixelsContribMap, const std::shared_ptr<IColor>& currPixelSampleColor)
+//{
+//    const auto& kernelDiam{ m_gaussianKernelProps.kernelSpanInIntegralVal };
+//    const auto& sigma{ m_gaussianKernelProps.sigmaInAbsVal };
+//    const auto& kernelScalar{ m_gaussianKernelProps.kernelCoverageScalar };
+//
+//    for (int dv{ -kernelDiam }; dv <= kernelDiam; ++dv)
+//    {
+//        for (int du{ -kernelDiam }; du <= kernelDiam; ++du)
+//        {
+//            const int nv{ (currentRowCount + dv) };
+//            const int nu{ static_cast<int>(pixelInRow + du) };
+//
+//            if (nv < 0 || nu < 0 || nv > (localPixResObj.heightInPixels - 1) || nu > (localPixResObj.widthInPixels - 1)) continue;
+//
+//            const Point neighborPixelCenter{ localPixDimObj.topLeftPixCenter + (nu * localPixDimObj.lateralSpanVec) + (nv * localPixDimObj.vertSpanVec) };
+//
+//            const Point pixelSamplePoint{ currentSamplePointOutVar };
+//            const double currSampleToNeighborPixDistSq{ (pixelSamplePoint - neighborPixelCenter).getMagnitudeSq() };
+//
+//            if (currSampleToNeighborPixDistSq < ((kernelScalar * sigma) * (kernelScalar * sigma)))
+//            {
+//                const auto pixelIndex{ static_cast<long long>(nv * localPixResObj.widthInPixels) + nu };
+//                const double sampleGaussianWeight{ std::exp(-currSampleToNeighborPixDistSq / (2 * sigma * sigma)) };
+//
+//                auto sampleColorCopy{ createDerivedColorSharedPtr(m_renderColorType, Vec3(0)) };
+//                sampleColorCopy->setColor(*currPixelSampleColor);
+//                sampleColorCopy->multiplyScalarWithSelf(sampleGaussianWeight);
+//
+//                if (neighborPixelsContribMap.count(pixelIndex) > 0)
+//                {   
+//                    neighborPixelsContribMap[pixelIndex].first->addColorToSelf(*sampleColorCopy);
+//                    neighborPixelsContribMap[pixelIndex].second += sampleGaussianWeight;
+//                }
+//                else 
+//                {
+//                    neighborPixelsContribMap[pixelIndex].first = sampleColorCopy;
+//                    neighborPixelsContribMap[pixelIndex].second = sampleGaussianWeight;
+//                }
+//            }
+//        }
+//    }
+//}
 
 void Renderer::setThreadingMode(bool isMultithreaded) noexcept
 {
     m_isMultithreaded = isMultithreaded;
+}
+
+void Renderer::setSPP(int spp) noexcept
+{
+  m_SPP = spp;
+}
+
+void Renderer::setRayBounceDepth(int rayBounceDepth) noexcept
+{
+  m_maxRayBounceDepth = rayBounceDepth;
 }
 
 bool Renderer::getThreadingMode() const noexcept
@@ -211,7 +343,6 @@ bool Renderer::checkForDrawUpdate()
 
     if(canDrawCurrChunk)
     {
-        auto test{ m_gaussianKernelProps.kernelWeights };
         updateChunkForRangeStartOut += m_texUpdateRateOut;
         if (updateChunkForRangeStartOut >= localCopy.size()) updateChunkForRangeStartOut = 0;
     }
@@ -222,32 +353,50 @@ bool Renderer::checkForDrawUpdate()
 bool Renderer::getRenderCompleteStatus() noexcept
 {
     if (!m_texUpdateLatch->try_wait()) return false;
+
     bool isRenderComplete = std::all_of(m_mainRenderingPassFutureVec.begin(), m_mainRenderingPassFutureVec.end(), [](const std::future<void>& fut) {
         return fut.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
         });
 
-    // Temp, to move.
-    m_renderThreadPool.stopThreadPool();
+    if (isRenderComplete)
+    {
+      
+      m_mainRenderTimer.stopTimer();
+      
+      const auto& localPixResObj{ m_mainCamera.getCameraProperties().camImgPropsObj.pixelResolutionObj };
+      double elapsedSeconds{ m_mainRenderTimer.getElapsedTime().count() };
+      
+      std::size_t totalSampleCount{ static_cast<std::size_t>(localPixResObj.widthInPixels * localPixResObj.heightInPixels * m_SPP) };
+
+      double sppRate{ totalSampleCount / elapsedSeconds };
+      
+      if constexpr (diagCompileFlag)
+      {
+        if (!m_diagPrinted && diagRunFlag.load())
+        {
+          const auto flagged = m_pixelsFlagged.load(std::memory_order_relaxed);
+          double avgDepth{ static_cast<double>(m_totalBounces) / m_totalPaths };
+          double benefit = 1.0 - (avgDepth / m_maxRayBounceDepth);
+
+          std::println("[DIAG] PIXELS FLAGGED: {}\n", flagged);
+
+          std::println("[DIAG] RR PATHS TERMINATED: {}", m_pathsTerminated.load(std::memory_order_relaxed));
+          std::println("[DIAG] RR PATHS SURVIVED: {}", m_pathsSurvived.load(std::memory_order_relaxed));
+          std::println("[DIAG] AVG DEPTH WITH RR: {:.2f}", avgDepth);
+          std::println("[DIAG] SAVINGS VS MAXDEPTH {}: {:.1f}%\n",
+            m_maxRayBounceDepth, benefit * 100.0);
+          
+          std::println("[PERF] Frame time: {:.2f}s, Throughput: {:.2f} samples/sec", elapsedSeconds, sppRate);
+          
+          m_diagPrinted = true;
+        }
+      }
+
+      // To move
+      m_renderThreadPool.stopThreadPool();
+    }
 
     return isRenderComplete;
-}
-
-Ray Renderer::getStratifiedRayForPixel(int i, int currentRowCount, int subPixelGridU, int subPixelGridV, Point& currentSamplePoint) const noexcept
-{
-    const auto localCamProps{ m_mainCamera.getCameraProperties() };
-    const double stratumWidth{ 1.0 / m_sppSqrtCeil };
-    const double stratumHeight{ 1.0 / m_sppSqrtCeil };
-
-    auto sampleOffset{ Vec3(((subPixelGridU + UGenRNG<double>()) * stratumWidth), ((subPixelGridV + UGenRNG<double>()) * stratumHeight), 0) };
-
-    currentSamplePoint = localCamProps.camPixelDimObj.topLeftPixCenter + ((i + sampleOffset[0]) * localCamProps.camPixelDimObj.lateralSpanAbsVal) + ((currentRowCount + sampleOffset[1]) * localCamProps.camPixelDimObj.vertSpanAbsVal);
-
-    const auto randUnitDiskVec{ genRandomUnitDiskVec() };
-    const auto randRayOriginOnUnitDisk{ localCamProps.camCenter + (randUnitDiskVec[0] * localCamProps.camDefocusPropsObj.defocusDiskU) + (randUnitDiskVec[1] * localCamProps.camDefocusPropsObj.defocusDiskV) };
-
-    const Vec3 rayOrigin{ localCamProps.camDefocusPropsObj.defocusAngle <= 0 ? localCamProps.camCenter : randRayOriginOnUnitDisk };
-
-    return Ray(rayOrigin, currentSamplePoint - rayOrigin);
 }
 
 int Renderer::getTexUpdateRate() const noexcept
@@ -274,31 +423,4 @@ CameraProperties Renderer::getRendererCameraProps() const noexcept
     return m_mainCamera.getCameraProperties();
 }
 
-std::string Renderer::getRenderColorType() const noexcept
-{
-    return m_renderColorType;
-}
 
-std::unique_ptr<IColor> Renderer::createDerivedColorUniquePtr(const std::string& colorType, const Vec3& value) const
-{
-    if (colorType == "ColorRGB")
-    {
-        return std::make_unique<ColorRGB>(value);
-    }
-    else
-    {
-        throw std::runtime_error("Invalid color type specified.");
-    }
-}
-
-std::shared_ptr<IColor> Renderer::createDerivedColorSharedPtr(const std::string& colorType, const Vec3& value) const
-{
-    if (colorType == "ColorRGB")
-    {
-        return std::make_shared<ColorRGB>(value);
-    }
-    else
-    {
-        throw std::runtime_error("Invalid color type specified.");
-    }
-}

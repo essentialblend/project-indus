@@ -4,7 +4,6 @@ import core_util;
 
 import <array>;
 import <cmath>;
-import <iostream>;
 
 export class Vec3
 {
@@ -29,7 +28,7 @@ public:
 	Vec3 operator-(const Vec3& other) const noexcept;
 	Vec3 operator*(const Vec3& other) const noexcept;
 	Vec3 operator*(const double scalar) const noexcept;
-	Vec3 operator/(const double scalar) const;
+	Vec3 operator/(const double scalar) const noexcept;
 
 	const double& operator[](const std::size_t index) const noexcept;
 	double& operator[](const std::size_t index) noexcept;
@@ -39,7 +38,7 @@ public:
 
 	double getMagnitude() const;
 	double getMagnitudeSq() const noexcept;
-	bool isNearZero() const;
+	bool isNearZero() const noexcept;
 
 	~Vec3() noexcept = default;
 
@@ -56,11 +55,10 @@ export
 	[[nodiscard]] Vec3 computeCross(const Vec3& f, const Vec3& s) noexcept;
 	[[nodiscard]] Vec3 getUnit(const Vec3& inputVec) noexcept;
 
-	[[nodiscard]] Vec3 genRandomVec(double min = 0, double max = 1);
-	[[nodiscard]] Vec3 genRandomUnitSphereVec();
-	[[nodiscard]] Vec3 genRandomUnitSphereVecNorm();
-	[[nodiscard]] Vec3 genRandomUnitHemisphereVecNorm(const Vec3& normalVec);
-	[[nodiscard]] Vec3 genRandomUnitDiskVec();
+	[[nodiscard]] auto reflect(const Vec3& unitIncidentDir, const Vec3& unitNormalForCompare) noexcept -> Vec3;
 
-	using Point = Vec3;
+	void buildOrthonormalBasis(const Vec3& normalVec, Vec3& outTangentVec, Vec3& outBitangentVec, Vec3& outNormalVec);
 }
+
+export using Point = Vec3;
+export using ColorRGB = Vec3;

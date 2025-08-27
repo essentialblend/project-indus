@@ -24,10 +24,7 @@
     <ClCompile Include="src\base\vec3\vec3.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\core_util.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\base\color\color.ixx">
+    <ClCompile Include="src\base\core\core-util.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\base\ray\ray.ixx">
@@ -36,7 +33,7 @@
     <ClCompile Include="src\base\ray\ray.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\core_constructs\core_constructs.ixx">
+    <ClCompile Include="src\base\core\core-constructs.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\base\camera\camera.ixx">
@@ -81,16 +78,16 @@
     <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\world_object\world_object.ixx">
+    <ClCompile Include="src\components\world-object\world-object.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\world_object\sphere\sphere.ixx">
+    <ClCompile Include="src\components\world-object\sphere\sphere.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\world_object\sphere\sphere.cppm">
+    <ClCompile Include="src\components\world-object\sphere\sphere.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\world_object\world_object.cppm">
+    <ClCompile Include="src\components\world-object\world-object.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\utilities\interval\interval.ixx">
@@ -102,22 +99,10 @@
     <ClCompile Include="src\components\materials\material.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\materials\lambertian.ixx">
+    <ClCompile Include="src\components\materials\matte.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\hit_record\hit_record.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\components\materials\metal.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\components\materials\dielectric.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\base\color\rgb\color_rgb.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\base\color\rgb\color_rgb.cppm">
+    <ClCompile Include="src\base\hit-record\hit-record.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\interfaces\engine\i_engine.ixx">
@@ -138,21 +123,6 @@
     <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\implementations\engine_systems\renderer\es_pathtracer.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\base\implementations\engines\e_indus.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.cppm">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\base\implementations\engine_systems\timer_manager\es_timermanager.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\utilities\timer\u_timer.cppm">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -171,13 +141,61 @@
     <ClCompile Include="src\interfaces\engine\i_engineutility.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\implementations\engine_systems\timer_manager\es_timermanager.cppm">
+    <ClCompile Include="src\base\core\core-color-util.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\implementations\engine_systems\window\sfml\esw_sfml.ixx">
+    <ClCompile Include="src\components\bxdf\bxdf.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\base\implementations\engine_systems\window\sfml\esw_sfml.cppm">
+    <ClCompile Include="src\components\bxdf\lambertian\lambertian-bxdf.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\core\core-sampling-util.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\bxdf\lambertian\lambertian-bxdf.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\bsdf\bsdf.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\bsdf\bsdf.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\core\core-diag.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\bxdf\fresnel\fresnel.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\bxdf\fresnel\fresnel-dielectric.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\sampler\sampler.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\sampler\random-sampler\random-sampler.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\sampler\random-sampler\random-sampler.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\sampler\stratified-sampler\stratified-sampler.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\sampler\stratified-sampler\stratified-sampler.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\bxdf\dielectric\dielectric-bxdf.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\bxdf\dielectric\dielectric-bxdf.cppm">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\materials\glass.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\core\tests\core_tests.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

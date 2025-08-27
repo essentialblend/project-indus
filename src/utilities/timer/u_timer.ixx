@@ -5,9 +5,8 @@ import <string>;
 import <print>;
 
 import i_engineutility;
-import ri_runnable;
 
-export class UTimer : public IEngineUtility, public RIRunnable
+export class UTimer : public IEngineUtility
 {
 public:
 	explicit UTimer() noexcept = default;
@@ -17,8 +16,8 @@ public:
 	UTimer(UTimer&&) noexcept = default;
 	UTimer& operator=(UTimer&&) noexcept = default;
 
-	void startEntity() override;
-	void stopEntity() override;
+	void startTimer();
+	void stopTimer();
 	
 	void resetTimer() noexcept;
 

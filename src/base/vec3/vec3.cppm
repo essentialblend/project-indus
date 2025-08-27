@@ -1,10 +1,10 @@
 import vec3;
 
+import core_util;
+
 import <array>;
 import <cmath>;
 import <iostream>;
-
-import core_util;
 
 // Member functions.
 Vec3::Vec3(double x) noexcept : m_vector{ x, x, x } {}
@@ -66,13 +66,10 @@ Vec3 Vec3::operator*(double scalar) const noexcept
 	return Vec3(m_vector[0] * scalar, m_vector[1] * scalar, m_vector[2] * scalar);
 }
 
-Vec3 Vec3::operator/(double scalar) const
+Vec3 Vec3::operator/(double scalar) const noexcept
 {
-	if ((1 / scalar) == 0)
-	{
-		throw std::runtime_error("Division by zero. Exiting.");
-	}
-	return Vec3(m_vector[0] / scalar, m_vector[1] / scalar, m_vector[2] / scalar);
+	const double inv{ 1.0 / scalar };
+	return Vec3{ m_vector[0] * inv, m_vector[1] * inv, m_vector[2] * inv };
 }
 
 const double& Vec3::operator[](const std::size_t index) const noexcept
@@ -100,9 +97,9 @@ double Vec3::getMagnitudeSq() const noexcept
 	return m_vector[0] * m_vector[0] + m_vector[1] * m_vector[1] + m_vector[2] * m_vector[2];
 }
 
-bool Vec3::isNearZero() const
+bool Vec3::isNearZero() const noexcept
 {
-	constexpr auto epsilon = std::numeric_limits<double>::epsilon();
+	constexpr auto epsilon = 1e-12;
 	return (std::fabs(m_vector[0]) < epsilon) && (std::fabs(m_vector[1]) < epsilon) && (std::fabs(m_vector[2]) < epsilon);
 }
 
@@ -127,49 +124,40 @@ Vec3 computeCross(const Vec3& f, const Vec3& s) noexcept
 
 Vec3 getUnit(const Vec3& inputVec) noexcept
 {
-	if (inputVec.isNearZero())
-	{
-		std::cerr << "Fatal: Normalizing a zero vector resulting in division by zero. Exiting." << std::endl;
-		std::exit(1);
+	const double m2 = inputVec.getMagnitudeSq();
+	
+	if (!(m2 > 0.0) || !std::isfinite(m2)) 
+	{  
+		return Vec3{ 0,0,1 };                     
 	}
-	return inputVec / inputVec.getMagnitude();
+	
+	const double inv = 1.0 / std::sqrt(m2);
+	return inputVec * inv;
 }
 
-Vec3 genRandomVec(double min, double max)
+auto reflect(const Vec3& unitIncidentDir, const Vec3& unitNormalForCompare) noexcept -> Vec3
 {
-	return Vec3(UGenRNG(min, max), UGenRNG(min, max), UGenRNG(min, max));
+	return unitIncidentDir - (2.0 * computeDot(unitIncidentDir, unitNormalForCompare) * unitNormalForCompare);
 }
 
-Vec3 genRandomUnitSphereVec()
+void buildOrthonormalBasis(const Vec3& normalVec, Vec3& outTangentVec, Vec3& outBitangentVec, Vec3& outNormalVec)
 {
-	while (true)
+	const Vec3 localUnitNormal{ getUnit(normalVec) };
+	
+	Vec3 localUnitTangent{};
+	
+	if (std::fabs(localUnitNormal[2]) < 0.999)
 	{
-		const auto randomVec = genRandomVec(-1, 1);
-		if (randomVec.getMagnitudeSq() < 1)
-			return Vec3(randomVec);
+		localUnitTangent = getUnit(Vec3{ -localUnitNormal[1], localUnitNormal[0], 0.0 });
 	}
-}
-
-Vec3 genRandomUnitSphereVecNorm()
-{
-	return getUnit(genRandomUnitSphereVec());
-}
-
-Vec3 genRandomUnitHemisphereVecNorm(const Vec3& normalVec)
-{
-	const Vec3 unitSphereRandVec{ genRandomUnitSphereVecNorm() };
-	if (computeDot(unitSphereRandVec, normalVec) > 0.0)
-		return Vec3(unitSphereRandVec);
-	else
-		return -Vec3(unitSphereRandVec);
-}
-
-Vec3 genRandomUnitDiskVec()
-{
-	while (true)
+	else 
 	{
-		const auto randomVec = Vec3(UGenRNG<double>(-1, 1), UGenRNG<double>(-1, 1), 0);
-		if (randomVec.getMagnitudeSq() < 1)
-			return Vec3(randomVec);
+		localUnitTangent = getUnit(Vec3{ 0.0, -localUnitNormal[2], localUnitNormal[1] });
 	}
+	Vec3 localUnitBitangent{ getUnit(computeCross(localUnitNormal, localUnitTangent)) };
+	localUnitTangent = computeCross(localUnitBitangent, localUnitNormal);
+
+	outTangentVec = localUnitTangent;
+	outBitangentVec = localUnitBitangent;
+	outNormalVec = localUnitNormal;
 }

@@ -27,7 +27,7 @@ bool WorldObjectList::checkHit(const Ray& inputRay, Interval rayInterval, HitRec
 		{
 			hitAnything = true;
 			closestSoFar = tempHitRec.root;
-			hitRec = tempHitRec;
+			hitRec = std::move(tempHitRec);
 		}
 	}
 	return hitAnything;

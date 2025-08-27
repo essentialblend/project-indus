@@ -21,44 +21,50 @@
   <ItemGroup>
     <ClCompile Include="src\base\camera\camera.cppm" />
     <ClCompile Include="src\base\camera\camera.ixx" />
-    <ClCompile Include="src\base\color\color.ixx" />
-    <ClCompile Include="src\base\color\rgb\color_rgb.cppm" />
-    <ClCompile Include="src\base\color\rgb\color_rgb.ixx" />
-    <ClCompile Include="src\base\core_constructs\core_constructs.ixx" />
-    <ClCompile Include="src\base\core_util.ixx" />
+    <ClCompile Include="src\base\core\core-color-util.ixx" />
+    <ClCompile Include="src\base\core\core-constructs.ixx" />
+    <ClCompile Include="src\base\core\core-diag.ixx" />
+    <ClCompile Include="src\base\core\core-sampling-util.ixx" />
+    <ClCompile Include="src\base\core\core-util.ixx" />
+    <ClCompile Include="src\base\core\tests\core_tests.ixx" />
     <ClCompile Include="src\base\engine\main\indus.cppm" />
     <ClCompile Include="src\base\engine\main\indus.ixx" />
     <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.cppm" />
     <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.ixx" />
-    <ClCompile Include="src\base\hit_record\hit_record.ixx" />
-    <ClCompile Include="src\base\implementations\engines\e_indus.ixx" />
-    <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.cppm" />
-    <ClCompile Include="src\base\implementations\engine_systems\renderer\es_pathtracer.ixx" />
+    <ClCompile Include="src\base\hit-record\hit-record.ixx" />
     <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.cppm" />
-    <ClCompile Include="src\base\implementations\engine_systems\timer_manager\es_timermanager.cppm" />
-    <ClCompile Include="src\base\implementations\engine_systems\timer_manager\es_timermanager.ixx" />
-    <ClCompile Include="src\base\implementations\engine_systems\window\sfml\esw_sfml.cppm" />
-    <ClCompile Include="src\base\implementations\engine_systems\window\sfml\esw_sfml.ixx" />
     <ClCompile Include="src\base\ray\ray.cppm" />
     <ClCompile Include="src\base\ray\ray.ixx" />
     <ClCompile Include="src\base\renderer\renderer.cppm" />
     <ClCompile Include="src\base\renderer\renderer.ixx" />
+    <ClCompile Include="src\base\sampler\random-sampler\random-sampler.ixx" />
+    <ClCompile Include="src\base\sampler\random-sampler\random-sampler.cppm" />
+    <ClCompile Include="src\base\sampler\sampler.ixx" />
+    <ClCompile Include="src\base\sampler\stratified-sampler\stratified-sampler.cppm" />
+    <ClCompile Include="src\base\sampler\stratified-sampler\stratified-sampler.ixx" />
     <ClCompile Include="src\base\vec3\vec3.cppm" />
     <ClCompile Include="src\base\vec3\vec3.ixx" />
     <ClCompile Include="src\base\window\window.cppm" />
     <ClCompile Include="src\base\window\window.ixx" />
-    <ClCompile Include="src\components\materials\dielectric.ixx" />
-    <ClCompile Include="src\components\materials\lambertian.ixx" />
+    <ClCompile Include="src\components\bsdf\bsdf.cppm" />
+    <ClCompile Include="src\components\bsdf\bsdf.ixx" />
+    <ClCompile Include="src\components\bxdf\bxdf.ixx" />
+    <ClCompile Include="src\components\bxdf\dielectric\dielectric-bxdf.cppm" />
+    <ClCompile Include="src\components\bxdf\dielectric\dielectric-bxdf.ixx" />
+    <ClCompile Include="src\components\bxdf\fresnel\fresnel-dielectric.ixx" />
+    <ClCompile Include="src\components\bxdf\fresnel\fresnel.ixx" />
+    <ClCompile Include="src\components\bxdf\lambertian\lambertian-bxdf.cppm" />
+    <ClCompile Include="src\components\bxdf\lambertian\lambertian-bxdf.ixx" />
+    <ClCompile Include="src\components\materials\glass.ixx" />
+    <ClCompile Include="src\components\materials\matte.ixx" />
     <ClCompile Include="src\components\materials\material.ixx" />
-    <ClCompile Include="src\components\materials\metal.ixx" />
-    <ClCompile Include="src\components\world_object\sphere\sphere.cppm" />
-    <ClCompile Include="src\components\world_object\sphere\sphere.ixx" />
-    <ClCompile Include="src\components\world_object\world_object.cppm" />
-    <ClCompile Include="src\components\world_object\world_object.ixx" />
+    <ClCompile Include="src\components\world-object\sphere\sphere.cppm" />
+    <ClCompile Include="src\components\world-object\sphere\sphere.ixx" />
+    <ClCompile Include="src\components\world-object\world-object.cppm" />
+    <ClCompile Include="src\components\world-object\world-object.ixx" />
     <ClCompile Include="src\interfaces\engine\i_engine.ixx" />
     <ClCompile Include="src\interfaces\engine\i_enginecomponent.ixx" />
     <ClCompile Include="src\interfaces\engine\i_enginesystem.ixx" />
-    <ClCompile Include="src\base\implementations\engine_components\framebuffer\ec_framebuffer.ixx" />
     <ClCompile Include="src\interfaces\engine\i_engineutility.ixx" />
     <ClCompile Include="src\interfaces\engine_systems\es_window.ixx" />
     <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.ixx" />
@@ -163,7 +169,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);INDUS_DIAG=1;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnableModules>true</EnableModules>
@@ -175,6 +181,7 @@
       </AdditionalModuleDependencies>
       <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
       <AdditionalIncludeDirectories>$(SolutionDir)src\dep\</AdditionalIncludeDirectories>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -189,7 +196,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);INDUS_DIAG=1;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnableModules>true</EnableModules>
