@@ -363,4 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # Dependency directories
-src/dep/
+dep/

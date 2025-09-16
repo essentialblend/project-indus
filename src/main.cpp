@@ -1,21 +1,35 @@
-import core_constructs;
+﻿
+import core_imports;
 import indus;
-import vec3;
-import u_timer;
-import core_tests;
-//import es_timermanager;
+import vector;
+import std;
+import point;
+import independentsampler;
+import lcg;
+import onb;
+import types;
 
 int main()
 {
-	PixelResolution windowResObj(1920, 1080);
-	PixelResolution imgResObj(2560, 1440);
-	AspectRatio aspectRatioObj(16, 9);
+	IndusConfig engineCfg{};
+  const auto& filmCfg{ engineCfg.filmCfg };
 
-	// PixelResolution& windowPixResObj, PixelResolution& imagePixResObj, AspectRatio& aspectRatioObj, int SPP, int rayBounceDepth = 0, bool isDiagOutputEnabled = false, bool isRenderSavedToDisk = true, bool isMultithreaded = true
-	Indus mainInstance(windowResObj, imgResObj, aspectRatioObj, 150, 0, true, true, true);
+	engineCfg.filmCfg.filename = "test";
+	engineCfg.filmCfg.resolution = { 1920, 1080 };
 
-	mainInstance.initializeEngine();
+	engineCfg.camCfg.cameraShutter = { 0.0, 1.0 };
 
-	mainInstance.runEngine();
+	engineCfg.camCfg.cameraToWorld = Transform4f::lookAt(Point3f{ 0, 0.5, -5 }, Point3f{}, Vec3f{ 0.f, 1.f, 0.f });
+
+	engineCfg.camCfg.focalDistance = 10.0;
+	engineCfg.camCfg.fovDegrees = 45.0;
+	engineCfg.camCfg.lensRadius = 0.0;
+	engineCfg.camCfg.screenWindow = Bounds2f{ {-filmCfg.aspect(), -1}, {filmCfg.aspect(), 1}};
+
+	engineCfg.samplerCfg.samplesPerPixel = 1;
+	engineCfg.integratorCfg.maxDepth = 10;
+
+	Indus engine{ engineCfg };
+	engine.run();
 }
 

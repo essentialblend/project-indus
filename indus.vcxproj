@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug-Engine|Win32">
+      <Configuration>Debug-Engine</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug-Engine|x64">
+      <Configuration>Debug-Engine</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug-Tests|Win32">
+      <Configuration>Debug-Tests</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug-Tests|x64">
+      <Configuration>Debug-Tests</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
@@ -19,80 +35,139 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\base\camera\camera.cppm" />
-    <ClCompile Include="src\base\camera\camera.ixx" />
-    <ClCompile Include="src\base\core\core-color-util.ixx" />
-    <ClCompile Include="src\base\core\core-constructs.ixx" />
-    <ClCompile Include="src\base\core\core-diag.ixx" />
-    <ClCompile Include="src\base\core\core-sampling-util.ixx" />
-    <ClCompile Include="src\base\core\core-util.ixx" />
-    <ClCompile Include="src\base\core\tests\core_tests.ixx" />
-    <ClCompile Include="src\base\engine\main\indus.cppm" />
-    <ClCompile Include="src\base\engine\main\indus.ixx" />
-    <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.cppm" />
-    <ClCompile Include="src\base\engine\systems\multithreading\threadpool\threadpool.ixx" />
-    <ClCompile Include="src\base\hit-record\hit-record.ixx" />
-    <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.cppm" />
-    <ClCompile Include="src\base\ray\ray.cppm" />
-    <ClCompile Include="src\base\ray\ray.ixx" />
-    <ClCompile Include="src\base\renderer\renderer.cppm" />
-    <ClCompile Include="src\base\renderer\renderer.ixx" />
-    <ClCompile Include="src\base\sampler\random-sampler\random-sampler.ixx" />
-    <ClCompile Include="src\base\sampler\random-sampler\random-sampler.cppm" />
-    <ClCompile Include="src\base\sampler\sampler.ixx" />
-    <ClCompile Include="src\base\sampler\stratified-sampler\stratified-sampler.cppm" />
-    <ClCompile Include="src\base\sampler\stratified-sampler\stratified-sampler.ixx" />
-    <ClCompile Include="src\base\vec3\vec3.cppm" />
-    <ClCompile Include="src\base\vec3\vec3.ixx" />
-    <ClCompile Include="src\base\window\window.cppm" />
-    <ClCompile Include="src\base\window\window.ixx" />
-    <ClCompile Include="src\components\bsdf\bsdf.cppm" />
-    <ClCompile Include="src\components\bsdf\bsdf.ixx" />
-    <ClCompile Include="src\components\bxdf\bxdf.ixx" />
-    <ClCompile Include="src\components\bxdf\dielectric\dielectric-bxdf.cppm" />
-    <ClCompile Include="src\components\bxdf\dielectric\dielectric-bxdf.ixx" />
-    <ClCompile Include="src\components\bxdf\fresnel\fresnel-dielectric.ixx" />
-    <ClCompile Include="src\components\bxdf\fresnel\fresnel.ixx" />
-    <ClCompile Include="src\components\bxdf\lambertian\lambertian-bxdf.cppm" />
-    <ClCompile Include="src\components\bxdf\lambertian\lambertian-bxdf.ixx" />
-    <ClCompile Include="src\components\materials\glass.ixx" />
-    <ClCompile Include="src\components\materials\matte.ixx" />
-    <ClCompile Include="src\components\materials\material.ixx" />
-    <ClCompile Include="src\components\world-object\sphere\sphere.cppm" />
-    <ClCompile Include="src\components\world-object\sphere\sphere.ixx" />
-    <ClCompile Include="src\components\world-object\world-object.cppm" />
-    <ClCompile Include="src\components\world-object\world-object.ixx" />
-    <ClCompile Include="src\interfaces\engine\i_engine.ixx" />
-    <ClCompile Include="src\interfaces\engine\i_enginecomponent.ixx" />
-    <ClCompile Include="src\interfaces\engine\i_enginesystem.ixx" />
-    <ClCompile Include="src\interfaces\engine\i_engineutility.ixx" />
-    <ClCompile Include="src\interfaces\engine_systems\es_window.ixx" />
-    <ClCompile Include="src\base\implementations\engine_systems\threadpool\es_threadpool.ixx" />
-    <ClCompile Include="src\interfaces\role_interfaces\ri_configurable.ixx" />
-    <ClCompile Include="src\interfaces\role_interfaces\ri_initializable.ixx" />
-    <ClCompile Include="src\interfaces\role_interfaces\ri_manageable.ixx" />
-    <ClCompile Include="src\interfaces\role_interfaces\ri_runnable.ixx" />
-    <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\utilities\interval\interval.cppm" />
-    <ClCompile Include="src\utilities\interval\interval.ixx" />
-    <ClCompile Include="src\utilities\overlay\overlay.ixx" />
-    <ClCompile Include="src\utilities\overlay\stats\stats_overlay.cppm" />
-    <ClCompile Include="src\utilities\overlay\stats\stats_overlay.ixx" />
-    <ClCompile Include="src\utilities\timer\u_timer.cppm" />
-    <ClCompile Include="src\utilities\timer\u_timer.ixx" />
+    <ClCompile Include="src\bsdf\bsdf.ixx" />
+    <ClCompile Include="src\bxdf\bxdf.ixx" />
+    <ClCompile Include="src\bxdf\dielectric-bxdf.ixx" />
+    <ClCompile Include="src\bxdf\fresnel\fresnel-dielectric.ixx" />
+    <ClCompile Include="src\bxdf\fresnel\fresnel.ixx" />
+    <ClCompile Include="src\bxdf\lambertian-bxdf.ixx" />
+    <ClCompile Include="src\camera\camera-base.ixx" />
+    <ClCompile Include="src\camera\perspective-camera.ixx" />
+    <ClCompile Include="src\camera\projective-camera.ixx" />
+    <ClCompile Include="src\color\colorrgb.ixx" />
+    <ClCompile Include="src\color\colorrgbd.ixx" />
+    <ClCompile Include="src\core\constructs.ixx" />
+    <ClCompile Include="src\core\core-diag.ixx" />
+    <ClCompile Include="src\core\core-imports.ixx" />
+    <ClCompile Include="src\core\core-sampling-util.ixx" />
+    <ClCompile Include="src\core\core-util.ixx" />
+    <ClCompile Include="src\core\factory.ixx" />
+    <ClCompile Include="src\core\types-concepts\concepts.ixx">
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core-concepts.ifc</ModuleOutputFile>
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|x64'">$(IntDir)core-concepts.ifc</ModuleOutputFile>
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">$(IntDir)core-concepts.ifc</ModuleOutputFile>
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core-concepts.ifc</ModuleOutputFile>
+    </ClCompile>
+    <ClCompile Include="src\core\types-concepts\types.ixx">
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)types.ifc</ModuleOutputFile>
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|x64'">$(IntDir)types.ifc</ModuleOutputFile>
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">$(IntDir)types.ifc</ModuleOutputFile>
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)types.ifc</ModuleOutputFile>
+    </ClCompile>
+    <ClCompile Include="src\engine-indus\indus-new.ixx" />
+    <ClCompile Include="src\film\film.ixx" />
+    <ClCompile Include="src\hit-record\hit-record.ixx" />
+    <ClCompile Include="src\integrator\imagetile-integrator.ixx" />
+    <ClCompile Include="src\integrator\integrator.ixx" />
+    <ClCompile Include="src\integrator\pathintegrator.ixx" />
+    <ClCompile Include="src\integrator\ray-integrator.ixx" />
+    <ClCompile Include="src\interval\interval.ixx" />
+    <ClCompile Include="src\materials\glass.ixx" />
+    <ClCompile Include="src\materials\material.ixx" />
+    <ClCompile Include="src\materials\matte.ixx" />
+    <ClCompile Include="src\math\normal.ixx" />
+    <ClCompile Include="src\onb\onb.ixx" />
+    <ClCompile Include="src\pixel\pixel.ixx" />
+    <ClCompile Include="src\ray\ray.ixx" />
+    <ClCompile Include="src\math\bounds2.ixx" />
+    <ClCompile Include="src\math\matrix.ixx" />
+    <ClCompile Include="src\math\point.ixx" />
+    <ClCompile Include="src\math\transform.ixx" />
+    <ClCompile Include="src\math\vector.ixx">
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)vector.ifc</ModuleOutputFile>
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|x64'">$(IntDir)vector.ifc</ModuleOutputFile>
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">$(IntDir)vector.ifc</ModuleOutputFile>
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)vector.ifc</ModuleOutputFile>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\rng\lcg.ixx" />
+    <ClCompile Include="src\rng\rng.ixx" />
+    <ClCompile Include="src\sampler\independent-sampler.ixx" />
+    <ClCompile Include="src\sampler\sampler.ixx" />
+    <ClCompile Include="src\tests\main.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClInclude Include="src\tests\colorrgb-tests.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="src\tests\hitrec-tests.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="src\tests\mat4-tests.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="src\tests\normal-tests.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="src\tests\onb-tests.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="src\tests\point3-tests.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="src\tests\ray-tests.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="src\tests\samplingutils-tests.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="src\tests\transform-tests.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="src\tests\vec3-tests.hpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClCompile Include="src\world-object\sphere.ixx" />
+    <ClCompile Include="src\world-object\world-object.ixx" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\dep\stb_image_write.h" />
+    <ClInclude Include="dep\stb_image_write.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{7175f1ce-f29b-4c2c-a25f-4c08b9c9b7f0}</ProjectGuid>
     <RootNamespace>indus</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
@@ -106,6 +181,20 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseInteloneTBB>false</UseInteloneTBB>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseInteloneTBB>false</UseInteloneTBB>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
@@ -127,10 +216,22 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -138,6 +239,30 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
@@ -172,21 +297,74 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);INDUS_DIAG=1;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <EnableModules>true</EnableModules>
-      <BuildStlModules>true</BuildStlModules>
+      <EnableModules>false</EnableModules>
+      <BuildStlModules>false</BuildStlModules>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <DisableSpecificWarnings>4996;26495;</DisableSpecificWarnings>
       <TranslateIncludes>false</TranslateIncludes>
       <AdditionalModuleDependencies>
       </AdditionalModuleDependencies>
       <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
-      <AdditionalIncludeDirectories>$(SolutionDir)src\dep\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)dep\</AdditionalIncludeDirectories>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)src\dep\SFML\lib;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)dep\SFML\lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Pdh.lib;sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);INDUS_DIAG=1;</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnableModules>false</EnableModules>
+      <BuildStlModules>false</BuildStlModules>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <DisableSpecificWarnings>4996;26495;</DisableSpecificWarnings>
+      <TranslateIncludes>false</TranslateIncludes>
+      <AdditionalModuleDependencies>
+      </AdditionalModuleDependencies>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+      <AdditionalIncludeDirectories>$(SolutionDir)dep\</AdditionalIncludeDirectories>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)dep\SFML\lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Pdh.lib;sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);INDUS_DIAG=1;</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnableModules>false</EnableModules>
+      <BuildStlModules>false</BuildStlModules>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <DisableSpecificWarnings>4996;26495;</DisableSpecificWarnings>
+      <TranslateIncludes>false</TranslateIncludes>
+      <AdditionalModuleDependencies>
+      </AdditionalModuleDependencies>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
+      <AdditionalIncludeDirectories>$(SolutionDir)dep\</AdditionalIncludeDirectories>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)dep\SFML\lib;</AdditionalLibraryDirectories>
       <AdditionalDependencies>Pdh.lib;sfml-graphics-d.lib;sfml-window-d.lib;sfml-system-d.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -199,19 +377,21 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);INDUS_DIAG=1;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <EnableModules>true</EnableModules>
+      <EnableModules>false</EnableModules>
       <BuildStlModules>false</BuildStlModules>
-      <AdditionalIncludeDirectories>$(SolutionDir)src\dep\;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)dep\;</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>4996;26495;</DisableSpecificWarnings>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)src\dep\SFML\lib;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)dep\SFML\lib;</AdditionalLibraryDirectories>
       <AdditionalDependencies>Pdh.lib;sfml-graphics.lib;sfml-window.lib;sfml-system.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
