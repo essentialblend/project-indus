@@ -5,6 +5,7 @@ import std;
 import types;
 import vector;
 import ray;
+import transform;
 
 // Structs
 export struct CameraSample
@@ -50,7 +51,7 @@ export struct SamplerConfig
 export struct IntegratorConfig
 {
   Idx maxDepth{};
-  bool useRR{ true };
+  bool useRR{ false };
 };
 
 export struct IndusConfig

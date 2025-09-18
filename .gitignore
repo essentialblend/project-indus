@@ -364,3 +364,5 @@ FodyWeavers.xsd
 
 # Dependency directories
 dep/
+src/renderer
+src/window

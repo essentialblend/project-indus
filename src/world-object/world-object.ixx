@@ -3,8 +3,8 @@ export module world_object;
 import std;
 
 import ray;
-import interval;
 import hit_record;
+import types;
 
 export class WorldObject abstract
 {
@@ -12,7 +12,7 @@ public:
 	explicit WorldObject() noexcept = default;
 	virtual ~WorldObject() noexcept = default;
 	
-	virtual bool checkHit(const Ray&, Interval, HitRecord&) const = 0;
+	virtual bool checkHit(const Ray&, Float, HitRecord&) const = 0;
 };
 
 export class WorldObjectList : public WorldObject
@@ -24,7 +24,7 @@ public:
 	void clearList() noexcept;
 	void addWorldObj(std::unique_ptr<WorldObject>) noexcept;
 
-	bool checkHit(const Ray&, Interval, HitRecord&) const override;
+	bool checkHit(const Ray&, Float, HitRecord&) const override;
 
 private:
 	std::vector<std::unique_ptr<WorldObject>> m_worldObjectList{};
@@ -45,15 +45,15 @@ void WorldObjectList::addWorldObj(std::unique_ptr<WorldObject> worldObj) noexcep
 	m_worldObjectList.push_back(std::move(worldObj));
 }
 
-bool WorldObjectList::checkHit(const Ray& inputRay, Interval rayInterval, HitRecord& hitRec) const
+bool WorldObjectList::checkHit(const Ray& inputRay, Float tMax, HitRecord& hitRec) const
 {
 	HitRecord tempHitRec;
 	bool hitAnything = false;
-	Float closestSoFar = rayInterval.getMax();
+	Float closestSoFar = tMax;
 
 	for (const auto& worldObj : m_worldObjectList)
 	{
-		if (worldObj->checkHit(inputRay, Interval(rayInterval.getMin(), closestSoFar), tempHitRec))
+		if (worldObj->checkHit(inputRay, closestSoFar, tempHitRec))
 		{
 			hitAnything = true;
 			closestSoFar = tempHitRec.root;

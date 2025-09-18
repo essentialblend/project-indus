@@ -75,9 +75,6 @@
     <ClCompile Include="src\core\core-sampling-util.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\interval\interval.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\onb\onb.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -153,7 +150,7 @@
     <ClCompile Include="src\rng\rng.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rng\lcg.ixx">
+    <ClCompile Include="src\rng\pcg32.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

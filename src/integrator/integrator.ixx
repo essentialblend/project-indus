@@ -3,7 +3,6 @@ export module integrator;
 import std;
 import hit_record;
 import world_object;
-import interval;
 
 export class Integrator 
 {

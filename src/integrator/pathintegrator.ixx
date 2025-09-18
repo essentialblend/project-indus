@@ -47,9 +47,12 @@ ColorRGB PathIntegrator::Li(const Ray& inputRay, const WorldObject& world, Sampl
 
   for (Idx bounce{}; bounce < m_maxDepth; ++bounce)
   {
-    HitRecord hit{};
+    const Float RRSample{ sampler.get1D() };
+    const Point2f BSDFSample{ sampler.get2D() };
 
-    if (!world.checkHit(ray, Interval(Float(0.0001), std::numeric_limits<Float>::infinity()), hit))
+    HitRecord hit{};
+    
+    if (!world.checkHit(ray, std::numeric_limits<Float>::infinity(), hit))
     {
       L += beta * getBackgroundGradient(ray);
       break;
@@ -59,7 +62,7 @@ ColorRGB PathIntegrator::Li(const Ray& inputRay, const WorldObject& world, Sampl
 
     if (!hit.surfaceBSDF) break;
 
-    auto [unitW_i, pdfVal, brdfVal, bxdfType] = hit.surfaceBSDF->sample(-ray.getDirection(), sampler.get2D());
+    auto [unitW_i, pdfVal, brdfVal, bxdfType] = hit.surfaceBSDF->sample(-ray.getDirection(), BSDFSample);
 
     if (!(pdfVal > 0.0) || !std::isfinite(pdfVal) || !isFiniteVec(Vec3f{ brdfVal[0], brdfVal[1], brdfVal[2] }))
       break;
@@ -77,11 +80,11 @@ ColorRGB PathIntegrator::Li(const Ray& inputRay, const WorldObject& world, Sampl
     if (m_useRR && bounce >= 5)
     {
       Float q{ Float(std::min(Float(0.95), std::max({ beta[0], beta[1], beta[2] }))) };
-      if (sampler.get1D() > q) break;
-      beta *= (Float(1.0) / q);
+      if (RRSample > q) break;
+      beta *= (Float(1.0) / q);   
     }
 
-    ray = Ray{ hit.hitPoint, unitW_i };
+    ray = hit.spawnRay(unitW_i);
   }
 
   return L;

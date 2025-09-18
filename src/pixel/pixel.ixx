@@ -22,14 +22,14 @@ import types;
 export class Pixel 
 {
 public:
-  constexpr Pixel() noexcept;
+  Pixel() noexcept;
 
   void addRadiance(const ColorRGBd&, double) noexcept;
-  constexpr void addSplat(const ColorRGBd&) noexcept;
+  void addSplat(const ColorRGBd&) noexcept;
 
   [[nodiscard]] ColorRGBd normalizedColor(Float splatScale = 1.0) const noexcept;
 
-  constexpr void clear() noexcept;
+  void clear() noexcept;
 
 private:
   ColorRGBd m_rgbSum{};
@@ -37,7 +37,7 @@ private:
   std::array<std::atomic<Float>, 3> m_rgbSplat{};
 };
 
-constexpr Pixel::Pixel() noexcept : m_rgbSum{ 0.0, 0.0, 0.0 }, m_weightSum{ 0.0 }, m_rgbSplat{ 0.0, 0.0, 0.0 } {}
+Pixel::Pixel() noexcept : m_rgbSum{ 0.0, 0.0, 0.0 }, m_weightSum{ 0.0 }, m_rgbSplat{ 0.0, 0.0, 0.0 } {}
 
 void Pixel::addRadiance(const ColorRGBd& L, double weight) noexcept
 {
@@ -52,7 +52,7 @@ void Pixel::addRadiance(const ColorRGBd& L, double weight) noexcept
   m_weightSum += weight;
 }
 
-constexpr void Pixel::addSplat(const ColorRGBd& L) noexcept
+void Pixel::addSplat(const ColorRGBd& L) noexcept
 {
   for (Idx c{}; c < 3; ++c)
   {
@@ -82,7 +82,7 @@ ColorRGBd Pixel::normalizedColor(Float splatScale) const noexcept
   return c;
 }
 
-constexpr void Pixel::clear() noexcept
+void Pixel::clear() noexcept
 {
   m_rgbSum = {};
   m_weightSum = 0.0;

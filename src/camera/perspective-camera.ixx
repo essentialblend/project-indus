@@ -54,20 +54,20 @@ CameraRay PerspectiveCamera::generateRay(const CameraSample& cs) const
   const Point3f pRaster{ cs.pFilm[0], cs.pFilm[1], 0.0 };
   const Point3f pCamera{ m_cameraFromRaster(pRaster) };
 
-  Vec3f unitDir{ normalize(Vec3f{ pCamera[0], pCamera[1], pCamera[2] }) };
+  Point3f originCam{};
+  Vec3f unitDirCam{ normalize(Vec3f{ pCamera[0], pCamera[1], pCamera[2]}) };
 
   // Defocus blur (lensRadius = 0 and defocus blur is disabled)
   if (m_lensRadius > 0.0)
   {
     const auto& lensSample{ concentricSampleDisk(cs.pLens) };
     const Point2f pLens{ lensSample[0] * m_lensRadius, lensSample[1] * m_lensRadius };
-    lensRayOrigin = Point3f{ pLens[0], pLens[1], 0.0 };
+    originCam = Point3f{ pLens[0], pLens[1], 0.0 };
 
-    const Float ft{ m_focalDistance / unitDir[2] };
-    const Point3f pFocus{ lensRayOrigin + (unitDir * ft) };
-    unitDir = normalize(Vec3f{ pFocus[0] - lensRayOrigin[0], pFocus[1] - lensRayOrigin[1], pFocus[2] - lensRayOrigin[2] });
+    const Float ft{ m_focalDistance / unitDirCam[2] };
+    const Point3f pFocus{ originCam + (unitDirCam * ft) };
+    unitDirCam = normalize(Vec3f{ pFocus[0] - originCam[0], pFocus[1] - originCam[1], pFocus[2] - originCam[2] });
   }
 
-  const Ray ray{ m_cameraToWorld(lensRayOrigin), m_cameraToWorld(unitDir) };
-  return CameraRay{ ray, 1.0 };
+  return CameraRay{ m_cameraToWorld(Ray{ originCam, unitDirCam }), 1.0 };
 }

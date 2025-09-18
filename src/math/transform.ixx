@@ -5,6 +5,9 @@ import concepts;
 import matrix;
 import vector;
 import point;
+import ray;
+import types;
+import core_util;
 
 export template<Arithmetic T>
 class Transform final
@@ -24,6 +27,7 @@ public:
 
   constexpr Vector<T, 3> operator()(const Vector<T, 3>&) const;
   constexpr Point<T, 3> operator()(const Point<T, 3>&) const;
+  constexpr Ray operator()(const Ray& r) const;
 
   constexpr Transform operator*(const Transform&) const noexcept;
 
@@ -44,6 +48,8 @@ private:
   Matrix4<T> m_forward{};
   Matrix4<T> m_inverse{};
 };
+
+export using Transform4f = Transform<Float>;
 
 // Implementation
 template<Arithmetic T>
@@ -76,6 +82,14 @@ constexpr Point<T, 3> Transform<T>::operator()(const Point<T, 3>& p) const
 }
 
 template<Arithmetic T>
+constexpr Ray Transform<T>::operator()(const Ray& r) const
+{
+  const Point<T, 3> o2 = (*this)(r.getOrigin());
+  const Vector<T, 3> d2 = (*this)(r.getDirection());
+  return Ray{ o2, d2 };
+}
+
+template<Arithmetic T>
 constexpr Transform<T> Transform<T>::operator*(const Transform<T>& other) const noexcept
 {
   return Transform<T>{ m_forward* other.m_forward, other.m_inverse* m_inverse };
@@ -96,27 +110,19 @@ constexpr const Matrix4<T>& Transform<T>::getInv() const noexcept
 template<Arithmetic T>
 Transform<T> Transform<T>::lookAt(const Point<T, 3>& eye, const Point<T, 3>& target, const Vector<T, 3>& upHint)
 {
-  // Create an ONB around the camera
-  Vector<T, 3> forward = normalize(target - eye);
+  Vector<T, 3> f = normalize(target - eye);
   Vector<T, 3> up = normalize(upHint);
+  if (std::abs(computeDot(f, up)) > T{ 0.999 }) up = { T{0},T{1},T{0} };
+  Vector<T, 3> r = normalize(computeCross(up, f));
+  Vector<T, 3> u = computeCross(f, r);
 
-  if (std::abs(computeDot(forward, up)) > T{ 0.999 }) up = Vector<T, 3>{ 0,1,0 };
-
-  Vector<T, 3> right = normalize(computeCross(up, forward));
-  up = computeCross(forward, right);
-
-  Vector<T, 3> eyeVec = eye - Point<T, 3>{0, 0, 0};
-
-  Matrix4<T> worldToCam(
-    Vector<T, 4>{ right[0], up[0], forward[0], 0 },
-    Vector<T, 4>{ right[1], up[1], forward[1], 0 },
-    Vector<T, 4>{ right[2], up[2], forward[2], 0 },
-    Vector<T, 4>{ -computeDot(right, eyeVec), -computeDot(up, eyeVec), -computeDot(forward, eyeVec), 1 }
+  Matrix4<T> camToWorld(
+    Vector<T, 4>{ r[0], r[1], r[2], T{ 0 } },
+    Vector<T, 4>{ u[0], u[1], u[2], T{ 0 } },
+    Vector<T, 4>{ f[0], f[1], f[2], T{ 0 } },
+    Vector<T, 4>{ eye[0], eye[1], eye[2], T{ 1 } }
   );
-
-
-  Matrix4<T> camToWorld = worldToCam.inverse();
-  return Transform<T>(camToWorld, worldToCam);
+  return Transform<T>(camToWorld);
 }
 
 template<Arithmetic T>

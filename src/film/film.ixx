@@ -79,22 +79,6 @@ ColorRGB Film::getPixelColor(const Point2i& p, Float splatScale) const noexcept
 
 void Film::writeImage(const std::string& filename) const
 {
-  //const auto resWidthPixels{ static_cast<int>(m_sceneResolutionPixels.widthPixels) };
-  //const auto resHeightPixels{ static_cast<int>(m_sceneResolutionPixels.heightPixels) };
-
-  //// Convert float buffer -> 8-bit RGBA
-  //std::vector<std::uint8_t> fb{ convertToRGBA8(m_pixels, m_sceneResolutionPixels, enc) };
-
-  //// Ensure output directory exists
-  //std::filesystem::path outPath{ filename };
-  //std::filesystem::create_directories(outPath.parent_path());
-
-  //// Write PNG
-  //if (!stbi_write_png(outPath.string().c_str(), resWidthPixels, resHeightPixels, 4, fb.data(), resWidthPixels * 4))
-  //{
-  //  throw std::runtime_error("Failed to write PNG: " + outPath.string());
-  //}
-
   const int resWidth = m_filmResolution[0];
   const int resHeight = m_filmResolution[1];
 

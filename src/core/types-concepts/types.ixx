@@ -4,7 +4,6 @@ import std;
 import vector;
 import point;
 import matrix;
-import transform;
 import bounds2;
 import normal;
 
@@ -27,7 +26,6 @@ export using Point3d = Point<Float64, 3>;
 export using Point4f = Point<Float, 4>;
 
 export using Mat4f = Matrix4<Float>;
-export using Transform4f = Transform<Float>;
 
 export using Bounds2f = Bounds2<Float>;
 

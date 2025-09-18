@@ -11,6 +11,7 @@ public:
   virtual void setSequence(std::uint64_t sequence, std::uint64_t offset) noexcept = 0;
   virtual void advance(std::int64_t delta) noexcept = 0;
   virtual std::unique_ptr<RNG> clone() const = 0;
+  virtual void setSeedAndStream(std::uint64_t seed, std::uint64_t stream) noexcept = 0;
 
   template<Arithmetic T> 
   T uniform();
@@ -29,6 +30,7 @@ protected:
 
   virtual std::uint32_t nextU32() noexcept = 0;
   virtual std::uint64_t nextU64() noexcept = 0;
+
 
   static float oneMinusEpsF();
   static double oneMinusEpsD();

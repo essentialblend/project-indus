@@ -8,7 +8,9 @@ import bsdf;
 import point;
 import onb;
 import types;
+import ray;
 import core_sampling_util;
+import core_util;
 
 import <cassert>;
 
@@ -19,7 +21,9 @@ export class HitRecord
 public:
 	Point3f hitPoint{};
 	OrthonormalBasis shadingBasis{};
+	Vec3f pError{};
 	std::unique_ptr<BSDF> surfaceBSDF{};
+	Normal3f geometricNormal{};
 
 	Float root{};
 	bool hitFrontFace{};
@@ -33,5 +37,10 @@ public:
 		if (!hitFrontFace) n = Normal3f{ -n };
 
 		shadingBasis = OrthonormalBasis::fromPBRT(n);
+	}
+
+	Ray spawnRay(const Vec3f& w) const 
+	{
+		return Ray{ offsetRayOrigin(hitPoint, pError, geometricNormal, w), w };
 	}
 };

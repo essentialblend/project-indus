@@ -2,6 +2,7 @@ export module factory;
 
 import std;
 import constructs;
+import types;
 import camerabase;
 import film;
 import perspectivecamera;
@@ -9,7 +10,7 @@ import sampler;
 import independentsampler;
 import integrator;
 import pathintegrator;
-import lcg;
+import pcg32;
 
 export std::unique_ptr<CameraBase> makeCamera(const CameraConfig& cfg, Film& film)
 {
@@ -24,8 +25,8 @@ export std::unique_ptr<Film> makeFilm(const FilmConfig& cfg)
 
 export std::unique_ptr<Sampler> makeSampler(const SamplerConfig& cfg, Int seed = 0)
 {
-  auto lcg{ std::make_unique<LCG>(0ull, 0ull) };
-  return std::make_unique<IndependentSampler>(cfg.samplesPerPixel, seed, std::move(lcg));
+  auto rng{ std::make_unique<PCG32>() };
+  return std::make_unique<IndependentSampler>(cfg.samplesPerPixel, static_cast<std::uint64_t>(seed), std::move(rng));
 }
 
 export std::unique_ptr<Integrator> makeIntegrator(const IntegratorConfig& cfg, CameraBase& camera, Sampler& sampler)

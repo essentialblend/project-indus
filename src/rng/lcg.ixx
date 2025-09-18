@@ -41,9 +41,14 @@ LCG::LCG(std::uint64_t sequence, std::uint64_t offset) noexcept
 
 void LCG::setSequence(std::uint64_t sequence, std::uint64_t offset) noexcept 
 {
-  m_increment = ((sequence << 1) | 1ull); 
-  m_state = 0ull;                                   
-  if (offset) advance(static_cast<int64_t>(offset)); 
+  //m_increment = ((sequence << 1) | 1ull); 
+  //m_state = 0ull;                                   
+  //if (offset) advance(static_cast<int64_t>(offset)); 
+
+  m_increment = (sequence << 1) | 1ull;
+  m_state = mixBits(sequence ^ 0x9E3779B97F4A7C15ull);
+  if (offset) advance((int64_t)offset);
+  for (int i = 0; i < 8; ++i) nextU32();
 }
 
 void LCG::advance(std::int64_t iDelta) noexcept 
