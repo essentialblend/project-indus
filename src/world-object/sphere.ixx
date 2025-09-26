@@ -18,7 +18,7 @@ public:
 	explicit WOSphere() noexcept = default;
 	explicit WOSphere(const Point3f& center, Float radius, std::shared_ptr<IMaterial> material) noexcept;
 
-	bool checkHit(const Ray& inputRay, Float tMax, HitRecord& hitRec) const override;
+	bool checkHit(const Ray& incidentRay, Float tMax, HitRecord& hitRec) const override;
 
 private:
 	Point3f m_sphereCenter{};
@@ -28,18 +28,19 @@ private:
 
 WOSphere::WOSphere(const Point3f& center, Float radius, std::shared_ptr<IMaterial> material) noexcept : m_sphereCenter{ center }, m_sphereRadius{ static_cast<Float>(std::fmax(0, radius)) }, m_sphereMaterial{ material } {}
 
-bool WOSphere::checkHit(const Ray& inputRay, Float tMax, HitRecord& hitRec) const 
+bool WOSphere::checkHit(const Ray& incidentRay, Float tMax, HitRecord& hitRec) const
 {
-  const Vec3f oc{ inputRay.getOrigin() - m_sphereCenter };
-  const Float a{ euclideanLengthSq(inputRay.getDirection()) };
-  const Float b{ Float(2) * computeDot(inputRay.getDirection(), oc) };
+  // Setup the quadratic, oc = o - c, and square of a vector norm is dot(v,v) and we obtain the coefficients
+  const Vec3f oc{ incidentRay.getOrigin() - m_sphereCenter };
+  const Float a{ euclideanLengthSq(incidentRay.getDirection()) };
+  const Float b{ Float(2) * computeDot(incidentRay.getDirection(), oc) };
   const Float c{ euclideanLengthSq(oc) - (m_sphereRadius * m_sphereRadius) };
   
   const auto roots{ evaluateQuadratic(a, b, c) };
   
   if (!roots) return false;
   
-  auto [t0, t1] = *roots;
+  const auto& [t0, t1] = *roots;
   
   Float root{ t0 };
   
@@ -51,20 +52,22 @@ bool WOSphere::checkHit(const Ray& inputRay, Float tMax, HitRecord& hitRec) cons
       return false; 
   }
 
-  const Point3f pRaw{ inputRay.getPointAt(root) };
+  const Point3f pRaw{ incidentRay.getPointAt(root) };
   const Vec3f fromCenter{ pRaw - m_sphereCenter };
-  const Float invLen{ Float(1) / std::sqrt(euclideanLengthSq(fromCenter)) };
-  const Point3f pHat{ m_sphereCenter + fromCenter * (m_sphereRadius * invLen) };
-  const Normal3f geomNormal{ Normal3f{ fromCenter * invLen } };
-  
+  const Float invLen{ Float(1) / euclideanLength(fromCenter) };
   const Vec3f pLocal{ fromCenter * (m_sphereRadius * invLen) };
+  
+  // Use the geometry of the sphere/primitive to get the geometric normal   
+  const Point3f pHat{ m_sphereCenter + pLocal };
+  
+  // Calculate the error to account for compounding floating point loss of precision 
   const Vec3f pError{ gamma(5) * Vec3f{ std::abs(pLocal[0]), std::abs(pLocal[1]), std::abs(pLocal[2]) } };
 
   hitRec.root = root;
   hitRec.hitPoint = pHat;
   hitRec.pError = pError;
-  hitRec.setFaceNormal(inputRay, geomNormal);
-  hitRec.geometricNormal = geomNormal;
+  hitRec.geometricNormal = Normal3f{ fromCenter * invLen };
+  hitRec.setFaceNormal(incidentRay, hitRec.geometricNormal);
   hitRec.hitMaterial = m_sphereMaterial;
   
   return true;

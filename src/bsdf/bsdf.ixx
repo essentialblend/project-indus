@@ -1,123 +1,92 @@
-export module bsdf;
+export module bsdf_new;
 
 import std;
-import vector;
+
 import bxdf;
+import types;
+import colorrgb;
 import onb;
 import constructs;
-import point;
-import colorrgb;
-import types;
-import normal;
-import core_sampling_util;
+import core_diag;
 
-import <cassert>;
-
-export class BSDF final 
+export class BSDF final
 {
 public:
   constexpr BSDF() noexcept = default;
   constexpr explicit BSDF(const OrthonormalBasis& basis) noexcept;
-  
-  [[nodiscard]] ColorRGB evaluate(const Vec3f&, const Vec3f&) const noexcept;
-  [[nodiscard]] std::tuple<Vec3f, Float, ColorRGB, BxDFType> sample(const Vec3f&, const Point2f&) const;
-  [[nodiscard]] Float PDF(const Vec3f& unitW_o, const Vec3f& unitW_i) const noexcept;
-  
-  constexpr void addBxDF(std::unique_ptr<BxDF> bxdf) noexcept;
-  constexpr void clearBxDFs() noexcept;
 
-  constexpr const OrthonormalBasis& getBasis() noexcept;
+  [[nodiscard]] ColorRGB evaluate(const Vec3f& unitW_oWorld, const Vec3f& unitW_iWorld) const noexcept;
+  [[nodiscard]] std::optional<BSDFSample> sample(const Vec3f& unitW_oWorld, const Point2f& uniformSample) const noexcept;
 
-  ~BSDF() noexcept = default;
+  [[nodiscard]] Float PDF(const Vec3f& unitW_oWorld, const Vec3f& unitW_iWorld) const noexcept;
 
-protected:
-  BSDF(const BSDF&) = delete;
-  BSDF& operator=(const BSDF&) = delete;
-  BSDF(BSDF&&) noexcept = default;
-  BSDF& operator=(BSDF&&) noexcept = default;
+  constexpr void setBxDF(std::unique_ptr<BxDF> bxdf) noexcept;
+  [[nodiscard]] constexpr const OrthonormalBasis& getBasis() const noexcept;
 
 private:
   OrthonormalBasis m_basis{};
-  std::vector<std::unique_ptr<BxDF>> m_bxdfs{};
+  std::unique_ptr<BxDF> m_bxdf{};
 };
 
-constexpr BSDF::BSDF(const OrthonormalBasis& basis) noexcept : m_basis{ basis } {}
+constexpr BSDF::BSDF(const OrthonormalBasis& basis) noexcept : m_basis{ basis }, m_bxdf{ nullptr } {}
 
-ColorRGB BSDF::evaluate(const Vec3f& w_o, const Vec3f& w_i) const noexcept
+[[nodiscard]] ColorRGB BSDF::evaluate(const Vec3f& unitW_oWorld, const Vec3f& unitW_iWorld) const noexcept
 {
-  // BSDFs work in local-space. So we convert world to local -> evaluate BSDF -> convert back to world and pass on to the integrator
-  const Vec3f localW_o{ m_basis.worldToLocal(w_o) };
-  const Vec3f localW_i{ m_basis.worldToLocal(w_i) };
+  if (!m_bxdf) return ColorRGB{};
 
-  return m_bxdfs.front()->evaluate(localW_o, localW_i);
+  if (!isFinite(unitW_oWorld) || !isFinite(unitW_iWorld)) return ColorRGB{};
+
+  const Vec3f w_oLocal{ m_basis.worldToLocal(unitW_oWorld) };
+  const Vec3f unitW_iLocal{ m_basis.worldToLocal(unitW_iWorld) };
+
+  if (!isFinite(w_oLocal) || !isFinite(unitW_iLocal)) return ColorRGB{};
+
+  return m_bxdf->evaluate(w_oLocal, unitW_iLocal);
 }
 
-std::tuple<Vec3f, Float, ColorRGB, BxDFType> BSDF::sample(const Vec3f& unitW_o, const Point2f& uniformSample) const
+[[nodiscard]] Float BSDF::PDF(const Vec3f& unitW_oWorld, const Vec3f& unitW_iWorld) const noexcept
 {
-  if (m_bxdfs.empty())
-  {
-    return { Vec3f{Float(0.0)}, Float(0.0), ColorRGB{Float(0.0)}, BxDFType::Diffuse };
-  }
+  if (!m_bxdf) return 0.0f;
 
-  const Int numBxDFs{ static_cast<Int>(m_bxdfs.size()) };
-  const Int comp{ std::min(static_cast<Int>(uniformSample[0] * numBxDFs), numBxDFs - 1) };
-  const auto& chosenBxDF{ m_bxdfs[comp] };
+  if (!isFinite(unitW_oWorld) || !isFinite(unitW_iWorld)) return Float{};
 
-  Point2f remappedSample{ (uniformSample[0] * numBxDFs) - comp, uniformSample[1] };
+  const Vec3f w_oLocal{ m_basis.worldToLocal(unitW_oWorld) };
+  const Vec3f unitW_iLocal{ m_basis.worldToLocal(unitW_iWorld) };
 
-  const Vec3f localW_o{ m_basis.worldToLocal(unitW_o) };
-  auto [localW_i, PDFVal, BRDFVal, BxDFTypeVal] = chosenBxDF->sample(localW_o, remappedSample);
+  if (!isFinite(w_oLocal) || !isFinite(unitW_iLocal)) return Float{};
 
-  if (PDFVal <= 0.0) 
-  {
-    return { Vec3f{0}, Float(0.0), ColorRGB{0}, BxDFTypeVal };
-  }
-
-  Float pdf{ PDFVal };
-  ColorRGB f{ BRDFVal };
-
-  if (!isSpecularBxDF(BxDFTypeVal) && numBxDFs > 1) 
-  {
-    for (Idx i{}; i < numBxDFs; ++i)
-    {
-      if (i == comp) continue;
-
-      pdf += m_bxdfs[i]->PDF(localW_o, localW_i);
-
-      const bool reflect = computeDot(unitW_o, m_basis.getNormal()) * computeDot(m_basis.localToWorld(localW_i), m_basis.getNormal()) > 0.0;
-
-      const BxDFType bxdfType = m_bxdfs[i]->type();
-      const bool bxdfMatches = (reflect && (bxdfType & BxDFType::Reflection) == BxDFType::Reflection) || (!reflect && (bxdfType & BxDFType::Transmission) == BxDFType::Transmission);
-
-      if (bxdfMatches) f += m_bxdfs[i]->evaluate(localW_o, localW_i);
-    }
-
-    pdf /= numBxDFs;
-  }
-
-  return { m_basis.localToWorld(localW_i), pdf, f, BxDFTypeVal };
+  return m_bxdf->PDF(w_oLocal, unitW_iLocal);
 }
 
-Float BSDF::PDF(const Vec3f& unitW_o, const Vec3f& unitW_i) const noexcept
+[[nodiscard]] std::optional<BSDFSample> BSDF::sample(const Vec3f& unitW_oWorld, const Point2f& uniformSample) const noexcept
 {
-  const Vec3f unitLocalW_o{ m_basis.worldToLocal(unitW_o) };
-  const Vec3f unitLocalW_i{ m_basis.worldToLocal(unitW_i) };
+  if (!m_bxdf || !isFinite(unitW_oWorld)) return std::nullopt;
 
-  return m_bxdfs.front()->PDF(unitLocalW_o, unitLocalW_i);
+  const Vec3f w_oLocal{ m_basis.worldToLocal(unitW_oWorld) };
+  if (!isFinite(w_oLocal)) return std::nullopt;
 
+  const std::optional<BSDFSample> optSample{ m_bxdf->sample(w_oLocal, uniformSample) };
+  if (!optSample || !optSample->unitW_iLocal) return std::nullopt;
+
+  const Vec3f unitW_iLocal{ *optSample->unitW_iLocal };
+  
+  if (optSample->PDF <= 0 || !isFinite(unitW_iLocal) || !isFinite(optSample->PDF) || !isFinite(optSample->BRDF)) return std::nullopt;
+
+  const Float PDF{ optSample->PDF };
+  const ColorRGB BRDF{ optSample->BRDF };
+
+  const Vec3f unitW_iWorld{ m_basis.localToWorld(unitW_iLocal) };
+  if (!isFinite(unitW_iWorld)) return std::nullopt;
+
+  return BSDFSample{ std::nullopt, unitW_iWorld, BRDF, PDF, optSample->flags };
 }
 
-constexpr void BSDF::addBxDF(std::unique_ptr<BxDF> bxdf) noexcept
-{
-  m_bxdfs.push_back(std::move(bxdf));
-}
-
-constexpr void BSDF::clearBxDFs() noexcept
-{
-  m_bxdfs.clear();
-}
-
-constexpr const OrthonormalBasis& BSDF::getBasis() noexcept
+constexpr const OrthonormalBasis& BSDF::getBasis() const noexcept
 {
   return m_basis;
+}
+
+constexpr void BSDF::setBxDF(std::unique_ptr<BxDF> bxdf) noexcept
+{
+  m_bxdf = std::move(bxdf);
 }

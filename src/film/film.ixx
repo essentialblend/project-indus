@@ -23,7 +23,7 @@ public:
   void addSplat(const Point2f& pFilm, const ColorRGB& L) noexcept;
 
   [[nodiscard]] ColorRGB getPixelColor(const Point2i& p, Float splatScale = 1.0) const noexcept;
-  void writeImage(const std::string& filename) const;
+  void writeImage(const IndusConfig& indusConfig, const std::string& filename = {}) const;
 
   [[nodiscard]] Point2i getFilmResolution() const noexcept;
 
@@ -77,41 +77,48 @@ ColorRGB Film::getPixelColor(const Point2i& p, Float splatScale) const noexcept
   return ColorRGB(Vec3f{ static_cast<Float>(c[0]), static_cast<Float>(c[1]), static_cast<Float>(c[2]) });
 }
 
-void Film::writeImage(const std::string& filename) const
+void Film::writeImage(const IndusConfig& indusConfig, const std::string& filename) const
 {
-  const int resWidth = m_filmResolution[0];
-  const int resHeight = m_filmResolution[1];
+  const Int resWidth{ m_filmResolution[0] };
+  const Int resHeight{ m_filmResolution[1] };
 
-  std::vector<std::uint8_t> fb;
-  fb.reserve(static_cast<std::size_t>(resWidth * resHeight * 3));
-
-  for (int y = 0; y < resHeight; ++y)
+  const auto srgbEncode = [](Float v) -> Float 
   {
-    for (int x = 0; x < resWidth; ++x) 
-    { 
-      ColorRGBd cd = m_pixels[y * resWidth + x].normalizedColor();
-      
-      ColorRGB c(cd);
-      
-      c[0] = std::clamp(c[0], Float(0), Float(1));
-      c[1] = std::clamp(c[1], Float(0), Float(1));
-      c[2] = std::clamp(c[2], Float(0), Float(1));
+    if (!std::isfinite(v)) return Float(0);
+    
+    v = std::clamp(v, Float(0), Float(1));
+    
+    return v <= Float(0.0031308) ? v * Float(12.92) : Float(1.055) * std::pow(v, Float(1.0 / 2.4)) - Float(0.055);
+  };
 
-      const auto gammaEncode = [](Float v) -> Float 
-      {
-        if (!std::isfinite(v)) return Float(0);
-        v = std::clamp(v, Float(0), Float(1));
-        return std::pow(v, Float(1.0 / 2.2));
-      };
+  std::vector<std::uint8_t> frameBytes{};
+  frameBytes.reserve(static_cast<std::size_t>(resWidth * resHeight * 3));
 
-      fb.push_back(static_cast<std::uint8_t>(255 * gammaEncode(c[0])));
-      fb.push_back(static_cast<std::uint8_t>(255 * gammaEncode(c[1])));
-      fb.push_back(static_cast<std::uint8_t>(255 * gammaEncode(c[2])));
+  for (Int y{}; y < resHeight; ++y)
+  {
+    for (Int x{}; x < resWidth; ++x)
+    {
+      ColorRGBd linear = m_pixels[y * resWidth + x].normalizedColor();
+      ColorRGB c(linear);
+
+      c[0] = srgbEncode(c[0]); c[1] = srgbEncode(c[1]); c[2] = srgbEncode(c[2]);
+
+      frameBytes.push_back(static_cast<std::uint8_t>(255 * c[0]));
+      frameBytes.push_back(static_cast<std::uint8_t>(255 * c[1]));
+      frameBytes.push_back(static_cast<std::uint8_t>(255 * c[2]));
     }
   }
 
-  stbi_write_png(filename.c_str(), resWidth, resHeight, 3, fb.data(), resWidth * 3);
+  std::filesystem::create_directories("renders");
+
+  const auto now{ std::chrono::system_clock::now().time_since_epoch() };
+  const auto seconds{ std::chrono::duration_cast<std::chrono::seconds>(now).count() };
+  const std::string base{ filename.empty() ? "indus" : filename };
+  const std::string outPath{ "renders/" + base + "_" + std::to_string(resWidth) + "x" + std::to_string(resHeight) + "_spp" + std::to_string(indusConfig.samplerCfg.samplesPerPixel) + "_" + std::to_string(seconds) + ".png" };
+
+  stbi_write_png(outPath.c_str(), resWidth, resHeight, 3, frameBytes.data(), resWidth * 3);
 }
+
 
 void Film::clear() noexcept
 {

@@ -10,16 +10,13 @@ export constexpr std::optional<std::pair<Float, Float>> evaluateQuadratic(Float 
   if (discr < 0.0) return std::nullopt;
 
   Float sqrtDiscr{ std::sqrt(discr) };
+  
+  Float q{ (b < 0) ? Float(-0.5) * (b - sqrtDiscr) : Float(-0.5) * (b + sqrtDiscr) };
+  
+  // Product of roots with Vieta's gets us the ratios (i.e. t0 = q/a, t1 = (c/a)/t0 => t1 = c/q) 
+  Float t0{ q / a }; Float t1{ c / q };
 
-  Float q{ (b < 0) ? Float(- 0.5) * (b - sqrtDiscr) : Float(- 0.5)* (b + sqrtDiscr)};
-
-  Float t0{ q / a };
-  Float t1{ c / q };
-
-  if (t0 > t1)
-  {
-    std::swap(t0, t1);
-  }
+  if (t0 > t1) std::swap(t0, t1);
 
   return std::make_pair(t0, t1);
 }
@@ -75,6 +72,6 @@ export [[nodiscard]] Point3f offsetRayOrigin(const Point3f& p, const Vec3f& pErr
 
 export [[nodiscard]] constexpr Float gamma(std::int32_t n) noexcept 
 {
-  const Float eps = std::numeric_limits<Float>::epsilon();
+  const Float eps{ std::numeric_limits<Float>::epsilon() };
   return (n * eps) / (Float(1) - (n * eps));
 }

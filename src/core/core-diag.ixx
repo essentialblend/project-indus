@@ -10,6 +10,7 @@ export module core_diag;
 import <cstdint>;
 import std;
 import types;
+import concepts;
 
 export constexpr std::atomic<bool> diagRunFlag{ false };
 
@@ -29,7 +30,14 @@ export void diagCount(bool& b) noexcept
   }
 }
 
-export bool isFiniteVec(const Vec3f &vecToCheck) noexcept
+export template<Arithmetic T>
+constexpr bool isFinite(T toCheck) noexcept
 {
-  return std::isfinite(vecToCheck[0]) && std::isfinite(vecToCheck[1]) && std::isfinite(vecToCheck[2]);
+  return std::isfinite(toCheck);
+}
+
+export template<VectorLike V>
+constexpr bool isFinite(const V& v) noexcept
+{
+  return (isFinite(v[0]) && isFinite(v[1]) && isFinite(v[2]));
 }

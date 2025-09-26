@@ -81,6 +81,7 @@ constexpr Point<T, 3> Transform<T>::operator()(const Point<T, 3>& p) const
   return { res[0], res[1], res[2] };
 }
 
+// Pending Point3fi etc.
 template<Arithmetic T>
 constexpr Ray Transform<T>::operator()(const Ray& r) const
 {

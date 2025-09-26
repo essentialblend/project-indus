@@ -11,7 +11,7 @@ export class IndependentSampler final : public Sampler
 public:
   IndependentSampler() = default;
 
-  explicit IndependentSampler(Int spp, std::uint64_t baseSeed, std::unique_ptr<RNG> rngPrototype) noexcept;
+  explicit IndependentSampler(Int spp, Int64 baseSeed, std::unique_ptr<RNG> rngPrototype) noexcept;
 
   [[nodiscard]] Int getSPP() const noexcept override;
 
@@ -25,13 +25,13 @@ public:
 
 private:
   std::unique_ptr<RNG> m_rng{};
-  Point2i m_currentPixel{};
   Int m_spp{ 5 };
-  Int m_sampleIndex{};
-  std::uint64_t m_baseSeed{};
+  Point2i m_currentPixel{};
+  Int64 m_baseSeed{};
+  Int64 m_sampleIndex{};
 };
 
-IndependentSampler::IndependentSampler(Int spp, std::uint64_t baseSeed, std::unique_ptr<RNG> rngPrototype) noexcept : m_spp{ spp }, m_baseSeed{ baseSeed }, m_rng{ std::move(rngPrototype) } {}
+IndependentSampler::IndependentSampler(Int spp, Int64 baseSeed, std::unique_ptr<RNG> rngPrototype) noexcept : m_spp{ spp }, m_baseSeed{ baseSeed }, m_rng{ std::move(rngPrototype) } {}
 
 Int IndependentSampler::getSPP() const noexcept
 {
@@ -47,9 +47,9 @@ void IndependentSampler::startPixelSample(Point2i pPixel, Int sampleIndex, Int s
   
   m_rng->setSeedAndStream(seq, seq);
   
-  const auto off{ (static_cast<std::uint64_t>(static_cast<std::uint32_t>(sampleIndex)) << 16) + static_cast<std::uint64_t>(static_cast<std::uint32_t>(startingDimension)) };
+  const auto off{ (static_cast<UInt64>(static_cast<UInt32>(sampleIndex)) << 16) + static_cast<UInt64>(static_cast<UInt32>(startingDimension)) };
   
-  m_rng->advance(static_cast<std::int64_t>(off));
+  m_rng->advance(static_cast<Int64>(off));
 }
 
 std::unique_ptr<Sampler> IndependentSampler::clone() const

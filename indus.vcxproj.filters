@@ -99,9 +99,6 @@
     <ClCompile Include="src\bxdf\bxdf.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\bsdf\bsdf.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\core\core-imports.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -129,9 +126,6 @@
     <ClCompile Include="src\bxdf\lambertian-bxdf.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\bxdf\dielectric-bxdf.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\bxdf\fresnel\fresnel.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -141,9 +135,6 @@
     <ClCompile Include="src\materials\matte.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\materials\glass.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\tests\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -151,6 +142,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rng\pcg32.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rng\lcg.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bsdf\bsdf.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\materials\dielectric.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bxdf\dielectric-bxdf.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sampler\stratified-sampler.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

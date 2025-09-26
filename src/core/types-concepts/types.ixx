@@ -9,7 +9,12 @@ import normal;
 
 export using Float = float;
 export using Float64 = double;
+
 export using Int = int;
+export using Int64 = std::int64_t;
+export using UInt64 = std::uint64_t;
+export using UInt32 = std::uint32_t;
+
 export using Idx = std::size_t;
 
 export using Vec2f = Vector<Float, 2>;

@@ -8,9 +8,11 @@ import film;
 import perspectivecamera;
 import sampler;
 import independentsampler;
+import stratifiedsampler;
 import integrator;
 import pathintegrator;
 import pcg32;
+import lcg;
 
 export std::unique_ptr<CameraBase> makeCamera(const CameraConfig& cfg, Film& film)
 {
@@ -19,14 +21,21 @@ export std::unique_ptr<CameraBase> makeCamera(const CameraConfig& cfg, Film& fil
 
 export std::unique_ptr<Film> makeFilm(const FilmConfig& cfg)
 {
-  // TODO filename for writeImage
   return std::make_unique<Film>(cfg.resolution);
 }
 
 export std::unique_ptr<Sampler> makeSampler(const SamplerConfig& cfg, Int seed = 0)
 {
   auto rng{ std::make_unique<PCG32>() };
-  return std::make_unique<IndependentSampler>(cfg.samplesPerPixel, static_cast<std::uint64_t>(seed), std::move(rng));
+  
+  if (cfg.isStratified)
+  {
+    return std::make_unique<StratifiedSampler>(cfg.strata, cfg.isJitter, static_cast<Int64>(seed), std::move(rng));
+  }
+
+  const Int spp{ std::max<Int>(1, cfg.samplesPerPixel) };
+
+  return std::make_unique<IndependentSampler>(spp, static_cast<UInt64>(seed), std::move(rng));
 }
 
 export std::unique_ptr<Integrator> makeIntegrator(const IntegratorConfig& cfg, CameraBase& camera, Sampler& sampler)

@@ -9,7 +9,7 @@ import camerabase;
 import sampler;
 import integrator;
 import constructs;
-import glass;
+import dielectric;
 import matte;
 import world_object;
 import pcg32;
@@ -55,7 +55,7 @@ void Indus::run()
 
   std::vector<std::pair<Point3f, Float>> placed;
 
-  auto heroGlass = std::make_shared<MGlass>(ColorRGB{ 1 }, ColorRGB{ 1 }, Float(1.0), Float(1.5));
+  auto heroGlass = std::make_shared<MDielectric>(ColorRGB{ 1 }, ColorRGB{ 1 }, Float(1.0), Float(1.5));
   auto heroL = std::make_shared<MMatte>(ColorRGB(Float(0.90), Float(0.35), Float(0.55)));
   auto heroR = std::make_shared<MMatte>(ColorRGB(Float(0.25), Float(0.70), Float(0.95)));
 
@@ -101,10 +101,10 @@ void Indus::run()
     }
     else {
       Float eta = Float(1.25) + Float(0.5) * rf();
-      world->addWorldObj(std::make_unique<WOSphere>(c, rr, std::make_shared<MGlass>(ColorRGB{ 1 }, ColorRGB{ 1 }, Float(1.0), eta)));
+      world->addWorldObj(std::make_unique<WOSphere>(c, rr, std::make_shared<MDielectric>(ColorRGB{ 1 }, ColorRGB{ 1 }, Float(1.0), eta)));
     }
   }
   m_integrator->render(*world);
 
-  m_film->writeImage("out/debug11.png");
+  m_film->writeImage(m_cfg);
 }

@@ -36,22 +36,25 @@ protected:
   static double oneMinusEpsD();
 };
 
+// Return an integer by cardinality
+template<IntegralArithmetic T>
+T RNG::uniform(T cardinality)
+{
+  // Take the two's complement of the cardinality to get an unbiased distribution
+  T threshold{ static_cast<T>(~cardinality + 1u) % cardinality };
+  
+  // Use rejection sampling to only take values above this threshold modulo the cardinality, hence returning a conformant integer 
+  for (;;) 
+  { 
+    T r{ uniform<T>() }; 
+    if (r >= threshold) return r % cardinality;
+  }
+}
+
 template<>
 std::uint32_t RNG::uniform<std::uint32_t>()
 {
   return nextU32();
-}
-
-template<IntegralArithmetic T>
-T RNG::uniform(T bound)
-{
-  T threshold = (static_cast<T>(~bound + 1u)) % bound;
-  for (;;) 
-  { 
-    T r{ uniform<T>() }; 
-    if (r >= threshold) 
-      return r % bound;
-  }
 }
 
 template<>

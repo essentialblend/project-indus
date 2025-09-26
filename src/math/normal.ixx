@@ -153,6 +153,12 @@ constexpr Normal<T>& Normal<T>::operator/=(const T& s) noexcept
   return *this;
 }
 
+export template<Arithmetic T, std::size_t N> requires Arity<N>
+constexpr Vector<T, N> operator+(const Vector<T, N>& v, const Normal<T>& n) noexcept
+{
+  return v + Vector<T, N>{ n[0], n[1], n[2] };
+}
+
 
 // Free
 export template<Arithmetic T>
@@ -191,4 +197,9 @@ Normal<T> normalize(const Normal<T>& n)
   return Normal<T>{ T{ 0 }, T{ 0 }, T{ 0 } };
 }
 
+export template<Arithmetic T>
+[[nodiscard]] constexpr Vector<T, 3> computeCross(const Normal<T>& a, const Vector<T, 3>& b) noexcept
+{
+  return { (a[1] * b[2]) - (a[2] * b[1]), (a[2] * b[0]) - (a[0] * b[2]), (a[0] * b[1]) - (a[1] * b[0]) };
+}
 

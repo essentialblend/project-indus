@@ -45,7 +45,7 @@ void WorldObjectList::addWorldObj(std::unique_ptr<WorldObject> worldObj) noexcep
 	m_worldObjectList.push_back(std::move(worldObj));
 }
 
-bool WorldObjectList::checkHit(const Ray& inputRay, Float tMax, HitRecord& hitRec) const
+bool WorldObjectList::checkHit(const Ray& incidentRay, Float tMax, HitRecord& hitRec) const
 {
 	HitRecord tempHitRec;
 	bool hitAnything = false;
@@ -53,7 +53,7 @@ bool WorldObjectList::checkHit(const Ray& inputRay, Float tMax, HitRecord& hitRe
 
 	for (const auto& worldObj : m_worldObjectList)
 	{
-		if (worldObj->checkHit(inputRay, closestSoFar, tempHitRec))
+		if (worldObj->checkHit(incidentRay, closestSoFar, tempHitRec))
 		{
 			hitAnything = true;
 			closestSoFar = tempHitRec.root;

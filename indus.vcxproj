@@ -71,7 +71,7 @@
     <ClCompile Include="src\integrator\integrator.ixx" />
     <ClCompile Include="src\integrator\pathintegrator.ixx" />
     <ClCompile Include="src\integrator\ray-integrator.ixx" />
-    <ClCompile Include="src\materials\glass.ixx" />
+    <ClCompile Include="src\materials\dielectric.ixx" />
     <ClCompile Include="src\materials\material.ixx" />
     <ClCompile Include="src\materials\matte.ixx" />
     <ClCompile Include="src\math\normal.ixx" />
@@ -91,10 +91,12 @@
     <ClCompile Include="src\main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\rng\lcg.ixx" />
     <ClCompile Include="src\rng\pcg32.ixx" />
     <ClCompile Include="src\rng\rng.ixx" />
     <ClCompile Include="src\sampler\independent-sampler.ixx" />
     <ClCompile Include="src\sampler\sampler.ixx" />
+    <ClCompile Include="src\sampler\stratified-sampler.ixx" />
     <ClCompile Include="src\tests\main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>

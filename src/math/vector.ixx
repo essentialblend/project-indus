@@ -29,7 +29,7 @@ public:
   constexpr bool operator==(const Vector&) const noexcept;
 
   // Vector / Point / Normal
-  constexpr const T& operator[](std::size_t i) const& noexcept;
+  constexpr const T& operator[](std::size_t i) const & noexcept;
   constexpr T& operator[](std::size_t i) & noexcept;
 
   constexpr Vector operator-() const noexcept;
@@ -168,7 +168,6 @@ constexpr Vector<T, N> operator*(const T& s, const Vector<T, N>& v) noexcept
   return v * s;
 }
 
-
 // Free generic math-utils
 
 export template<Arithmetic T, std::size_t N> requires Arity<N>
@@ -202,14 +201,14 @@ export template<Arithmetic T, std::size_t N> requires Arity<N>
 }
 
 export template<Arithmetic T, std::size_t N> requires Arity<N>
-[[nodiscard]] constexpr T euclideanLength(const Vector<T, N>& v)
+[[nodiscard]] constexpr T euclideanLength(const Vector<T, N>& v) noexcept
 {
   return std::sqrt(euclideanLengthSq(v));
 }
 
 // Changed to fix post math-arch restructure, needs attention
 export template<Arithmetic T, std::size_t N> requires Arity<N>
-[[nodiscard]] constexpr Vector<T, N> normalize(const Vector<T, N>& v)
+[[nodiscard]] constexpr Vector<T, N> normalize(const Vector<T, N>& v) noexcept
 {
   T lenSq = euclideanLengthSq(v);
   if (lenSq > T{ 0 }) {

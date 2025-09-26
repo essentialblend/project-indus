@@ -62,29 +62,28 @@ ColorRGB PathIntegrator::Li(const Ray& inputRay, const WorldObject& world, Sampl
 
     if (!hit.surfaceBSDF) break;
 
-    auto [unitW_i, pdfVal, brdfVal, bxdfType] = hit.surfaceBSDF->sample(-ray.getDirection(), BSDFSample);
+    const auto sampleBSDF{ hit.surfaceBSDF->sample(-ray.getDirection(), BSDFSample) };
+    if (!sampleBSDF || !sampleBSDF->unitW_iWorld) break;
 
-    if (!(pdfVal > 0.0) || !std::isfinite(pdfVal) || !isFiniteVec(Vec3f{ brdfVal[0], brdfVal[1], brdfVal[2] }))
-      break;
+    const Vec3f unitW_iWorld{ *sampleBSDF->unitW_iWorld };
+    const Float PDFVal{ sampleBSDF->PDF };
+    const ColorRGB BRDFVal{ sampleBSDF->BRDF };
+    //const BxDFType flags{ sampleBSDF->flags };
 
-    if (isSpecularBxDF(bxdfType))
-    {
-      beta *= brdfVal;
-    }
-    else
-    {
-      const Float cosTheta{ std::max(Float(0.0), computeDot(unitW_i, hit.shadingBasis.getNormal())) };
-      beta *= (brdfVal * (cosTheta / pdfVal));
-    }
+    const Float cosineTheta{ std::abs(computeDot(unitW_iWorld, hit.shadingBasis.getNormal())) };
+    
+    if (!(PDFVal > 0.0)) break;
+
+    beta *= BRDFVal * (cosineTheta / PDFVal);
 
     if (m_useRR && bounce >= 5)
     {
-      Float q{ Float(std::min(Float(0.95), std::max({ beta[0], beta[1], beta[2] }))) };
+      const Float q{ Float(std::min(Float(0.95), std::max({ beta[0], beta[1], beta[2] }))) };
       if (RRSample > q) break;
       beta *= (Float(1.0) / q);   
     }
 
-    ray = hit.spawnRay(unitW_i);
+    ray = hit.spawnRay(unitW_iWorld);
   }
 
   return L;
@@ -92,7 +91,7 @@ ColorRGB PathIntegrator::Li(const Ray& inputRay, const WorldObject& world, Sampl
 
 ColorRGB PathIntegrator::getBackgroundGradient(const Ray& inputRay)
 {
-  const ColorRGB gradientColorVec{ Float(0.5), Float(0.7), Float(1.0) };
+  const ColorRGB gradientColorVec{ Float(0.55), Float(0.7), Float(1.0) };
 
   const Vec3f inputRayDir{ normalize(inputRay.getDirection()) };
   const Float lerpFactor{ Float(0.75 * (inputRayDir[1] + 1.0)) };

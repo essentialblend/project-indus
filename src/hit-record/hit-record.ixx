@@ -4,7 +4,7 @@ import <memory>;
 
 import ray;
 import vector;
-import bsdf;
+import bsdf_new;
 import point;
 import onb;
 import types;

@@ -30,13 +30,13 @@ void ImageTileIntegrator::render(const WorldObject& world)
 {
   const auto& res{ m_camera.film().getFilmResolution() };
 
-  for (Idx y{}; y < res[1]; ++y)
+  for (Idx row{}; row < res[1]; ++row)
   {
-    for (Idx x{}; x < res[0]; ++x)
+    for (Idx col{}; col < res[0]; ++col)
     {
       for (Idx s{}; s < m_samplerPrototype.getSPP(); ++s)
       {
-        const Point2i pPixel{ x, y };
+        const Point2i pPixel{ col, row };
         m_samplerPrototype.startPixelSample(pPixel, static_cast<Int>(s), 0);        
         evaluatePixelSample(pPixel, static_cast<Int>(s), world, m_samplerPrototype);
       }

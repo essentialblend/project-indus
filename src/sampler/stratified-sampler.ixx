@@ -5,129 +5,116 @@ import sampler;
 import constructs;
 import core_sampling_util;
 import rng;
-import rngLCG;
+import types;
 
-import <cassert>;
-import <cstdint>;
-
-export class StratifiedSampler final : public Sampler 
+export class StratifiedSampler final : public Sampler
 {
 public:
-  explicit StratifiedSampler(Idx, bool, Int, std::unique_ptr<RNG>);
+  explicit StratifiedSampler(Strata2D strata, bool jitter, Int64 seed, std::unique_ptr<RNG> rngPrototype) noexcept;
 
-  void startPixelSample([[maybe_unused]] Point2i, Idx, [[maybe_unused]] Int dimension = 0) override;
- 
+  [[nodiscard]] Int getSPP() const noexcept override;
+
+  void startPixelSample(Point2i pPixel, Int sampleIndex, Int startingDimension = 0) override;
+  [[nodiscard]] std::unique_ptr<Sampler> clone() const override;
+
   Float get1D() override;
   Point2f get2D() override;
-  Idx getSPP() const noexcept override;
 
-  void req1DArray(Int) override;
-  void req2DArray(Int) override;
-  std::span<const Float> getReq1DArray(Int) const override;
-  std::span<const Point2f> getReq2DArray(Int) const override;
-
-  std::unique_ptr<Sampler> clone(Idx) const override;
-  Idx roundCount(Idx) const override;
-  bool setSampleNumber(Idx) override;
+  Point2f getPixel2D() override;
 
 private:
-  Idx m_samplesPerPixel{};
-  Point2i m_currentPixel{};
-  Strata2D m_strata2D{};
-  Idx m_currentSample{};
-  Int m_dimension{};
-  Int m_seed{};
-  bool m_jittered{ true };
   std::unique_ptr<RNG> m_rng{};
-  std::vector<Float> m_array1D{};
-  std::vector<Point2f> m_array2D{};
-
+  Int m_dimension{};
+  Int m_spp{ 5 };
+  Point2i m_currentPixel{};
+  Strata2D m_strata{};
+  Int64 m_sampleIndex{};
+  Float m_invNX{};
+  Float m_invNY{};
+  bool m_jitter{ true };
+  Int64 m_seed{};
 };
 
-StratifiedSampler::StratifiedSampler(Idx spp, bool jittered, Int seed = 0, std::unique_ptr<RNG> rng = nullptr) : m_samplesPerPixel{ spp }, m_jittered{ jittered }, m_seed{ seed }, m_rng{ rng ? std::move(rng) : std::make_unique<LCG>(seed, 0) }, m_strata2D{ factorSPP(m_samplesPerPixel) } {}
-
-Idx StratifiedSampler::getSPP() const noexcept
+StratifiedSampler::StratifiedSampler(Strata2D strata, bool jitter, Int64 seed, std::unique_ptr<RNG> rngPrototype) noexcept : m_rng{ std::move(rngPrototype) }, m_currentPixel{}
+  , m_strata{ strata }, m_sampleIndex{ 0 }, m_invNX{ strata.NX ? (1.f / Float(strata.NX)) : 0.f }, m_invNY{ strata.NY ? (1.f / Float(strata.NY)) : 0.f }, m_jitter{ jitter }, m_seed{ seed }, m_dimension{ 0 } 
 {
-  return m_samplesPerPixel;
+  if (m_strata.NX <= 0 || m_strata.NY <= 0) 
+  {
+    m_strata.NX = 1;
+    m_strata.NY = 1;
+  }
+
+  m_invNX = static_cast<Float>(1.0) / static_cast<Float>(m_strata.NX);
+  m_invNY = static_cast<Float>(1.0) / static_cast<Float>(m_strata.NY);
+
+  const Int64 prod{ static_cast<Int64>(m_strata.NX) * static_cast<Int64>(m_strata.NY) };
+  const Int64 cap{ static_cast<Int64>(std::numeric_limits<Int>::max()) };
+
+  m_spp = static_cast<Int>(prod > cap ? cap : prod);
 }
 
-void StratifiedSampler::startPixelSample([[maybe_unused]] Point2i pPixel, Idx sampleIndex, [[maybe_unused]] Int dimension)
+Int StratifiedSampler::getSPP() const noexcept
 {
-  assert(sampleIndex < m_samplesPerPixel);
+  return m_spp;
+}
+
+void StratifiedSampler::startPixelSample(Point2i pPixel, Int sampleIndex, Int startingDimension)
+{
   m_currentPixel = pPixel;
-  m_currentSample = sampleIndex;
-  m_dimension = dimension;
+  m_sampleIndex = sampleIndex;
+  m_dimension = startingDimension;
 
-  const std::uint64_t stream{ hashPixelDimension(pPixel, m_seed, 0) };
-  m_rng->setStream(stream);
-  m_rng->reseed(0);
+  const auto seq{ mixBits(hash(pPixel, m_seed)) };
+  
+  m_rng->setSeedAndStream(seq, seq);
 
-  m_rng->jumpAhead(std::uint64_t(sampleIndex) * 65536ull + std::uint64_t(dimension));
+  const auto off{ (static_cast<UInt64>(static_cast<UInt32>(sampleIndex)) << 16) + static_cast<UInt64>(static_cast<UInt32>(m_dimension)) };
+
+  m_rng->advance(static_cast<Int64>(off));
 }
 
 Float StratifiedSampler::get1D()
-{  
-  assert(m_samplesPerPixel > 0);
-  const std::uint64_t key{ hashPixelDimension(m_currentPixel, m_seed, m_dimension) };
-  const std::uint32_t stratum{ permuteStratum(static_cast<std::uint32_t>(m_currentSample), static_cast<std::uint32_t>(m_samplesPerPixel), key) };
-
-  const Float jitter = m_jittered ? m_rng->nextF32() : static_cast<Float>(0.5);
+{
+  const UInt64 h{ hash(m_currentPixel, m_dimension, m_seed) };
+  const Int stratum{ permuteElement(static_cast<Int>(m_sampleIndex), m_spp, h) };
   
   ++m_dimension;
 
-  return (static_cast<Float>(stratum) + jitter) / static_cast<Float>(m_samplesPerPixel);
+  const Float delta{ m_jitter ? m_rng->uniform<Float>() : 0.5f };
+  return (static_cast<Float>(stratum) + delta) / static_cast<Float>(m_spp);
 }
 
 Point2f StratifiedSampler::get2D()
 {
-  const std::uint64_t hash{ hashPixelDimension(m_currentPixel, static_cast<std::uint32_t>(m_seed), static_cast<std::uint32_t>(m_dimension)) };
-  const std::uint32_t stratum{ permuteStratum(static_cast<std::uint32_t>(m_currentSample), static_cast<std::uint32_t>(m_samplesPerPixel), hash) };
+  const UInt64 h{ hash(m_currentPixel, m_dimension, m_seed) };
+  const Int stratum{ permuteElement(static_cast<Int>(m_sampleIndex), m_spp, h) };
 
-  const Int sx{ static_cast<Int>(stratum % static_cast<std::uint32_t>(m_strata2D.NX)) };
-  const Int sy{ static_cast<Int>(stratum / static_cast<std::uint32_t>(m_strata2D.NX)) };
+  const Int x{stratum % m_strata.NX };
+  const Int y{ stratum / m_strata.NX };
 
-  const Float dx{ m_jittered ? m_rng->nextF32() : static_cast<Float>(0.5) };
-  const Float dy{ m_jittered ? m_rng->nextF32() : static_cast<Float>(0.5) };
+  const Float dx{ m_jitter ? m_rng->uniform<Float>() : 0.5f };
+  const Float dy{ m_jitter ? m_rng->uniform<Float>() : 0.5f };
 
   m_dimension += 2;
 
-  return {(sx + dx) / static_cast<Float>(m_strata2D.NX), (sy + dy) / static_cast<Float>(m_strata2D.NY) };
+  return Point2f{ (Float(x) + dx) * m_invNX, (Float(y) + dy) * m_invNY };
 }
 
-void StratifiedSampler::req1DArray(Int count)
+Point2f StratifiedSampler::getPixel2D()
 {
-  m_array1D.resize(count);
-  for (int i = 0; i < count; ++i) m_array1D[i] = get1D();
+  return get2D();
 }
 
-void StratifiedSampler::req2DArray(Int count)
+std::unique_ptr<Sampler> StratifiedSampler::clone() const
 {
-  m_array2D.resize(count);
-  for (int i = 0; i < count; ++i) m_array2D[i] = get2D();
-}
+  auto s{ std::make_unique<StratifiedSampler>(m_strata, m_jitter, m_seed, m_rng->clone()) };
+  s->m_spp = m_spp;
+  s->m_invNX = m_invNX;
+  s->m_invNY = m_invNY;
 
-std::span<const Float> StratifiedSampler::getReq1DArray(Int) const
-{
-  return m_array1D;
-}
+  s->m_currentPixel = {};
+  s->m_sampleIndex = 0;
+  s->m_dimension = 0;
 
-std::span<const Point2f> StratifiedSampler::getReq2DArray(Int) const
-{
-  return m_array2D;
-}
-
-std::unique_ptr<Sampler> StratifiedSampler::clone(Idx seed) const
-{
-  return std::make_unique<StratifiedSampler>(m_samplesPerPixel, m_jittered, static_cast<Int>(seed));
-}
-
-Idx StratifiedSampler::roundCount(Idx n) const
-{
-  return ((n + m_samplesPerPixel - 1) / m_samplesPerPixel) * m_samplesPerPixel;
-}
-
-bool StratifiedSampler::setSampleNumber(Idx sampleIndex)
-{
-  // Pending
-  return true;
+  return s;
 }

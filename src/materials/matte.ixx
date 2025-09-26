@@ -6,7 +6,7 @@ import material;
 import vector;
 import core_sampling_util;
 import core_util;
-import bsdf;
+import bsdf_new;
 import lambertianBxDF;
 import colorrgb;
 
@@ -28,9 +28,7 @@ MMatte::MMatte(const ColorRGB& reflectance) noexcept : m_reflectance{ reflectanc
 void MMatte::computeScatteringFunctions(HitRecord& hitRec) const
 {
 	hitRec.surfaceBSDF = std::make_unique<BSDF>(hitRec.shadingBasis);
-	hitRec.surfaceBSDF->clearBxDFs();
-
-	hitRec.surfaceBSDF->addBxDF(std::make_unique<LambertianBxDF>(m_reflectance));
+	hitRec.surfaceBSDF->setBxDF(std::make_unique<LambertianBxDF>(m_reflectance));
 }
 
 MaterialType MMatte::getMaterialType() const noexcept

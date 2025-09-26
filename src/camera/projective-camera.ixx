@@ -21,8 +21,6 @@ protected:
 
   // Derived classes must implement ray generation.
   CameraRay generateRay(const CameraSample&) const override = 0;
-
-  std::array<Point3f, 5> debugProbeRasterToCamera() const;
   
   // Projection transforms
   Transform4f m_screenFromCamera;
@@ -56,17 +54,6 @@ ProjectiveCamera::ProjectiveCamera(const Transform4f& camToWorld, const CameraSh
 
   m_rasterFromScreen = rasterFromNDC * NDCFromScreen;
   m_screenFromRaster = Transform4f{ m_rasterFromScreen.getInv(), m_rasterFromScreen.get() };
-  m_cameraFromRaster = Transform4f{ m_screenFromCamera.getInv(), m_screenFromCamera.get() } * m_screenFromRaster;
-}
 
-std::array<Point3f, 5> ProjectiveCamera::debugProbeRasterToCamera() const
-{
-  const auto res = film().getFilmResolution();
-  const Int W = static_cast<Int>(res[0]);
-  const Int H = static_cast<Int>(res[1]);
-  auto map = [&](Int x, Int y) {
-    const Point2f pR{ Float(x) + Float(0.5), Float(y) + Float(0.5) };
-    return m_cameraFromRaster(Point3f{ pR[0], pR[1], Float(0) });
-    };
-  return { map(0,0), map(W - 1,0), map(0,H - 1), map(W - 1,H - 1), map(W / 2,H / 2) };
+  m_cameraFromRaster = Transform4f{ m_screenFromCamera.getInv(), m_screenFromCamera.get() } * m_screenFromRaster;
 }

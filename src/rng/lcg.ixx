@@ -8,123 +8,112 @@ import constructs;
 import types;
 import core_sampling_util;
 
-export class LCG : public RNG
+export class LCG final : public RNG 
 {
 public:
   LCG() = default;
+  explicit LCG(std::uint64_t seed, std::uint64_t stream) noexcept;
 
-  explicit LCG(std::uint64_t sequence, std::uint64_t offset = 0) noexcept;
-
+  void setSeedAndStream(std::uint64_t seed, std::uint64_t stream) noexcept override;
   void setSequence(std::uint64_t sequence, std::uint64_t offset) noexcept override;
-  void advance(std::int64_t delta) noexcept override;
+  void advance(std::int64_t deltaSteps) noexcept override;
+
+  // Debug
+  void setMultiplier(std::uint64_t multiplier) noexcept;
+  void setIncrement(std::uint64_t increment) noexcept;
+  void setStartingState(std::uint64_t startState) noexcept;
 
   std::unique_ptr<RNG> clone() const override;
-  
+
 protected:
   std::uint32_t nextU32() noexcept override;
   std::uint64_t nextU64() noexcept override;
 
 private:
-  std::uint64_t m_state{};
-  static constexpr std::uint64_t m_A{ MMIXLCG::multiplier };
-  std::uint64_t m_increment{ 1 };
-  
-  static constexpr std::uint64_t odd(std::uint64_t x);
-  static constexpr std::uint64_t invPow2(std::uint64_t a);
-  
+  // LCG comprises the recurrence: nextState = (m_kMultiplier * m_currentState) + m_increment
+  //static constexpr std::uint64_t m_kMultiplier{ MMIXLCG::multiplier };
+  std::uint64_t m_kMultiplier{ MMIXLCG::multiplier };
+  std::uint64_t m_currentState{ 0ull };
+  std::uint64_t m_increment{};
 };
 
-LCG::LCG(std::uint64_t sequence, std::uint64_t offset) noexcept
+LCG::LCG(std::uint64_t seed, std::uint64_t stream) noexcept 
+{ 
+  setSeedAndStream(seed, stream); 
+}
+
+void LCG::setSeedAndStream(std::uint64_t seed, std::uint64_t stream) noexcept 
 {
-  setSequence(sequence, offset);
+  // Set the seed provided by the user as the current place in the pRNG tape
+  m_currentState = seed;
+  // The stream helps pick a bijective increment and facilitates traversal over affine endomorphisms of Z/2^{64}Z, forcing it to be odd ensures full-period coverage. Any even increment will collapse to an even-only subgroup
+  m_increment = (stream << 1u) | 1u;
 }
 
 void LCG::setSequence(std::uint64_t sequence, std::uint64_t offset) noexcept 
 {
-  //m_increment = ((sequence << 1) | 1ull); 
-  //m_state = 0ull;                                   
-  //if (offset) advance(static_cast<int64_t>(offset)); 
-
-  m_increment = (sequence << 1) | 1ull;
-  m_state = mixBits(sequence ^ 0x9E3779B97F4A7C15ull);
-  if (offset) advance((int64_t)offset);
-  for (int i = 0; i < 8; ++i) nextU32();
+  setSeedAndStream(sequence, sequence);
+  advance(static_cast<std::int64_t>(offset));
 }
 
-void LCG::advance(std::int64_t iDelta) noexcept 
+void LCG::advance(std::int64_t deltaSteps) noexcept
 {
-  std::uint64_t delta{};
-  std::uint64_t currMult{};
-  std::uint64_t currInc{};
-
-  if (iDelta >= 0) 
+  std::uint64_t currentMultiplier{ m_kMultiplier };
+  std::uint64_t currentIncrement{ m_increment };
+  std::uint64_t accumulatedMultiplier{ 1ull };
+  std::uint64_t accumulatedIncrement{ 0ull };
+  std::uint64_t steps{ static_cast<std::uint64_t>(deltaSteps) };
+  
+  while (steps) 
   {
-    delta = static_cast<std::uint64_t>(iDelta);
-    currMult = m_A;
-    currInc = m_increment;
-  }
-  else 
-  {
-    delta = static_cast<std::uint64_t>(-iDelta);
-    std::uint64_t ainv{ invPow2(m_A) };
-    currMult = ainv;
-    currInc = static_cast<std::uint64_t>(0 - ainv * m_increment);
-  }
-
-  std::uint64_t accMult{ 1 };
-  std::uint64_t accInc{};
-
-  while (delta) 
-  {
-    if (delta & 1) 
-    { 
-      accMult *= currMult; 
-      accInc = (accInc * currMult) + currInc; 
+    if (steps & 1ull) 
+    {
+      accumulatedMultiplier *= currentMultiplier;
+      accumulatedIncrement = accumulatedIncrement * currentMultiplier + currentIncrement;
     }
-    currInc = (currMult + 1) * currInc;
-    currMult *= currMult;
-    delta >>= 1;
+    
+    currentIncrement = (currentMultiplier + 1ull) * currentIncrement;
+    currentMultiplier *= currentMultiplier;
+    steps >>= 1u;
   }
 
-  m_state = accMult * m_state + accInc;
+  m_currentState = (accumulatedMultiplier * m_currentState) + accumulatedIncrement;
+
 }
 
-std::unique_ptr<RNG> LCG::clone() const
+void LCG::setMultiplier(std::uint64_t multiplier) noexcept
 {
-  auto p = std::make_unique<LCG>();
-  p->m_state = m_state;         
-  p->m_increment = m_increment;
-  return p;
+  m_kMultiplier = multiplier;
+}
+
+void LCG::setIncrement(std::uint64_t increment) noexcept
+{
+  m_increment = increment;
+}
+
+void LCG::setStartingState(std::uint64_t startState) noexcept
+{
+  m_currentState = startState;
+}
+
+std::unique_ptr<RNG> LCG::clone() const 
+{
+  auto out{ std::make_unique<LCG>() };
+  
+  out->m_currentState = m_currentState;
+  out->m_increment = m_increment;
+  
+  return out;
 }
 
 std::uint32_t LCG::nextU32() noexcept 
 {
-  m_state = (m_A * m_state) + m_increment;
-  const std::uint64_t z{ mixBits(m_state) };
-
-  return static_cast<std::uint32_t>(z >> 32);
+  m_currentState = m_currentState * m_kMultiplier + m_increment;
+  return static_cast<std::uint32_t>(m_currentState >> 32);
 }
 
-std::uint64_t LCG::nextU64() noexcept 
+std::uint64_t LCG::nextU64() noexcept
 {
-  const std::uint64_t hi{ static_cast<std::uint64_t>(nextU32()) << 32 };
-  const std::uint64_t lo{ static_cast<std::uint64_t>(nextU32()) };
-
-  return hi | lo;
-}
-
-constexpr std::uint64_t LCG::odd(std::uint64_t x)
-{
-  return (x << 1) | 1ull;
-}
-
-constexpr std::uint64_t LCG::invPow2(std::uint64_t a)
-{
-  std::uint64_t x{ 1 };
-  for (Idx i{}; i < 6; ++i)
-  {
-    x *= (2 - (a * x));
-  }
-
-  return x;
+  m_currentState = ((m_currentState * m_kMultiplier) + m_increment);
+  return m_currentState;
 }
