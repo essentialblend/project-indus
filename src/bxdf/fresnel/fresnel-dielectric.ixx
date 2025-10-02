@@ -5,6 +5,8 @@ import fresnel;
 import vector;
 import types;
 
+import mathfp;
+
 export class FresnelDielectric final : public Fresnel
 {
 public:
@@ -13,31 +15,38 @@ public:
   [[nodiscard]] Float evaluate(Float) const noexcept override;
 
 private:
-  Float m_incidentEta{};
-  Float m_transmittedEta{};
+  Float m_etaIncident{};
+  Float m_etaTransmittance{};
 };
 
-FresnelDielectric::FresnelDielectric(Float incidentEta, Float transmittedEta) noexcept : m_incidentEta{ incidentEta }, m_transmittedEta{ transmittedEta } {}
+FresnelDielectric::FresnelDielectric(Float incidentEta, Float transmittedEta) noexcept : m_etaIncident{ incidentEta }, m_etaTransmittance{ transmittedEta } {}
 
 Float FresnelDielectric::evaluate(Float incidentCosineTheta) const noexcept
 {
-  incidentCosineTheta = std::clamp(incidentCosineTheta, Float(- 1.0), Float(1.0));
+  incidentCosineTheta = clamp(incidentCosineTheta, Float{ -1.0 }, Float{ 1.0 });
 
-  bool isLightEntering{ incidentCosineTheta > 0.0 };
+  const bool isLightEntering{ incidentCosineTheta > Float{ 0.0 } };
 
-  Float etaI{ isLightEntering ? m_incidentEta : m_transmittedEta };
-  Float etaT{ isLightEntering ? m_transmittedEta : m_incidentEta };
+  const Float etaI{ isLightEntering ? m_etaIncident : m_etaTransmittance };
+  const Float etaT{ isLightEntering ? m_etaTransmittance : m_etaIncident };
 
-  Float incidentSinTheta{ Float(std::sqrt(std::max(0.0, 1.0 - (incidentCosineTheta * incidentCosineTheta)))) };
+  if (!isLightEntering) incidentCosineTheta = -incidentCosineTheta;
+
+  Float incidentSinTheta{ safeSqrt(Float{ 1.0 } - sqr(incidentCosineTheta)) };
   Float transmittedSinTheta{ (etaI / etaT) * incidentSinTheta };
 
-  if (transmittedSinTheta >= 1.0) return 1.0;
+  if (transmittedSinTheta >= Float{ 1.0 }) return Float{ 1.0 };
 
-  Float transmittedCosineTheta{ Float(std::sqrt(std::max(0.0, (1.0 - (transmittedSinTheta * transmittedSinTheta))))) };
+  const Float transmittedCosineTheta{ safeSqrt(Float{ 1.0 } - sqr(transmittedSinTheta)) };
 
-  Float Rs{ ((etaI * incidentCosineTheta) - (etaT * transmittedCosineTheta)) / ((etaI * incidentCosineTheta) + (etaT * transmittedCosineTheta)) };
+  const Float r_sDenom{ sumOfProducts(etaI, incidentCosineTheta, etaT, transmittedCosineTheta) };
+  const Float r_pDenom{ sumOfProducts(etaT, incidentCosineTheta, etaI, transmittedCosineTheta) };
 
-  Float Rp{ ((etaT * incidentCosineTheta) - (etaI * transmittedCosineTheta)) / ((etaT * incidentCosineTheta) + (etaI * transmittedCosineTheta)) };
+  if (r_sDenom == Float{ 0.0 } || r_pDenom == Float{ 0.0 }) return Float{ 1.0 };
 
-  return Float(0.5 * ((Rs * Rs) + (Rp * Rp)));
+  const Float r_s{ differenceOfProducts(etaI, incidentCosineTheta, etaT, transmittedCosineTheta) / r_sDenom };
+
+  const Float r_p{ differenceOfProducts(etaT, incidentCosineTheta, etaI, transmittedCosineTheta) / r_pDenom };
+
+  return Float{ Float{ 0.5 } * (sqr(r_s) + sqr(r_p)) };
 }

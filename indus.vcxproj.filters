@@ -72,7 +72,7 @@
     <ClCompile Include="src\camera\perspective-camera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\core-sampling-util.ixx">
+    <ClCompile Include="src\core\utilities\sampling-util.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\onb\onb.ixx">
@@ -93,13 +93,10 @@
     <ClCompile Include="src\materials\material.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\core-util.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\bxdf\bxdf.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\core-imports.ixx">
+    <ClCompile Include="src\core\utilities\imports\core-imports.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\integrator\integrator.ixx">
@@ -157,6 +154,36 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\sampler\stratified-sampler.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\core-scanlines.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\utilities\math-utils\math-util-vi.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\utilities\ray-util.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\interval\interval.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\math\efloat.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\utilities\math-utils\math-fp-ii.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\utilities\math-utils\math-constants-i.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\utilities\math-utils\math-trig-iii.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\utilities\math-utils\math-algebra-iv.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\utilities\math-utils\math-geometry-v.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

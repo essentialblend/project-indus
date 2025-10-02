@@ -8,9 +8,10 @@ import vector;
 import material;
 import point;
 import types;
-import core_util;
 import hit_record;
-import core_sampling_util;
+import mathfp;
+import mathalgebra;
+import mathutil;
 
 export class WOSphere : public WorldObject
 {
@@ -34,7 +35,7 @@ bool WOSphere::checkHit(const Ray& incidentRay, Float tMax, HitRecord& hitRec) c
   const Vec3f oc{ incidentRay.getOrigin() - m_sphereCenter };
   const Float a{ euclideanLengthSq(incidentRay.getDirection()) };
   const Float b{ Float(2) * computeDot(incidentRay.getDirection(), oc) };
-  const Float c{ euclideanLengthSq(oc) - (m_sphereRadius * m_sphereRadius) };
+  const Float c{ differenceOfProducts(euclideanLengthSq(oc), Float(1), m_sphereRadius, m_sphereRadius) };
   
   const auto roots{ evaluateQuadratic(a, b, c) };
   
@@ -44,12 +45,10 @@ bool WOSphere::checkHit(const Ray& incidentRay, Float tMax, HitRecord& hitRec) c
   
   Float root{ t0 };
   
-  if (!(root > Float(0) && root < tMax)) 
+  if (!(root > Float{} && root < tMax)) 
   { 
     root = t1; 
-
-    if (!(root > Float(0) && root < tMax)) 
-      return false; 
+    if (!(root > Float{} && root < tMax)) return false; 
   }
 
   const Point3f pRaw{ incidentRay.getPointAt(root) };
@@ -60,7 +59,7 @@ bool WOSphere::checkHit(const Ray& incidentRay, Float tMax, HitRecord& hitRec) c
   // Use the geometry of the sphere/primitive to get the geometric normal   
   const Point3f pHat{ m_sphereCenter + pLocal };
   
-  // Calculate the error to account for compounding floating point loss of precision 
+  // Calculate the error to account for compounding floating point precision loss
   const Vec3f pError{ gamma(5) * Vec3f{ std::abs(pLocal[0]), std::abs(pLocal[1]), std::abs(pLocal[2]) } };
 
   hitRec.root = root;

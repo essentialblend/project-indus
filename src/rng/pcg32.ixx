@@ -66,7 +66,7 @@ void PCG32::advance(std::int64_t iDelta) noexcept
     delta >>= 1; 
   }
   
-  m_state = accMult * m_state + accPlus;
+  m_state = (accMult * m_state) + accPlus;
 }
 
 std::unique_ptr<RNG> PCG32::clone() const
@@ -74,7 +74,7 @@ std::unique_ptr<RNG> PCG32::clone() const
   auto p{ std::make_unique<PCG32>() };
 
   p->m_state = m_state; 
-  p->m_increment = m_increment; 
+  p->m_increment = m_increment;
   
   return p;
 }

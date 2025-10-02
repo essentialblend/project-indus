@@ -6,43 +6,43 @@ import std;
 import rng;
 import constructs;
 import types;
-import core_sampling_util;
+import samplingutil;
 
 export class LCG final : public RNG 
 {
 public:
   LCG() = default;
-  explicit LCG(std::uint64_t seed, std::uint64_t stream) noexcept;
+  explicit LCG(UInt64 seed, UInt64 stream) noexcept;
 
-  void setSeedAndStream(std::uint64_t seed, std::uint64_t stream) noexcept override;
-  void setSequence(std::uint64_t sequence, std::uint64_t offset) noexcept override;
-  void advance(std::int64_t deltaSteps) noexcept override;
+  void setSeedAndStream(UInt64 seed, UInt64 stream) noexcept override;
+  void setSequence(UInt64 sequence, UInt64 offset) noexcept override;
+  void advance(Int64 deltaSteps) noexcept override;
 
   // Debug
-  void setMultiplier(std::uint64_t multiplier) noexcept;
-  void setIncrement(std::uint64_t increment) noexcept;
-  void setStartingState(std::uint64_t startState) noexcept;
+  void setMultiplier(UInt64 multiplier) noexcept;
+  void setIncrement(UInt64 increment) noexcept;
+  void setStartingState(UInt64 startState) noexcept;
 
   std::unique_ptr<RNG> clone() const override;
 
 protected:
-  std::uint32_t nextU32() noexcept override;
-  std::uint64_t nextU64() noexcept override;
+  UInt32 nextU32() noexcept override;
+  UInt64 nextU64() noexcept override;
 
 private:
   // LCG comprises the recurrence: nextState = (m_kMultiplier * m_currentState) + m_increment
-  //static constexpr std::uint64_t m_kMultiplier{ MMIXLCG::multiplier };
-  std::uint64_t m_kMultiplier{ MMIXLCG::multiplier };
-  std::uint64_t m_currentState{ 0ull };
-  std::uint64_t m_increment{};
+  //static constexpr UInt64 m_kMultiplier{ MMIXLCG::multiplier };
+  UInt64 m_kMultiplier{ MMIXLCG::multiplier };
+  UInt64 m_currentState{ 0ull };
+  UInt64 m_increment{};
 };
 
-LCG::LCG(std::uint64_t seed, std::uint64_t stream) noexcept 
+LCG::LCG(UInt64 seed, UInt64 stream) noexcept 
 { 
   setSeedAndStream(seed, stream); 
 }
 
-void LCG::setSeedAndStream(std::uint64_t seed, std::uint64_t stream) noexcept 
+void LCG::setSeedAndStream(UInt64 seed, UInt64 stream) noexcept 
 {
   // Set the seed provided by the user as the current place in the pRNG tape
   m_currentState = seed;
@@ -50,19 +50,19 @@ void LCG::setSeedAndStream(std::uint64_t seed, std::uint64_t stream) noexcept
   m_increment = (stream << 1u) | 1u;
 }
 
-void LCG::setSequence(std::uint64_t sequence, std::uint64_t offset) noexcept 
+void LCG::setSequence(UInt64 sequence, UInt64 offset) noexcept 
 {
   setSeedAndStream(sequence, sequence);
-  advance(static_cast<std::int64_t>(offset));
+  advance(static_cast<Int64>(offset));
 }
 
-void LCG::advance(std::int64_t deltaSteps) noexcept
+void LCG::advance(Int64 deltaSteps) noexcept
 {
-  std::uint64_t currentMultiplier{ m_kMultiplier };
-  std::uint64_t currentIncrement{ m_increment };
-  std::uint64_t accumulatedMultiplier{ 1ull };
-  std::uint64_t accumulatedIncrement{ 0ull };
-  std::uint64_t steps{ static_cast<std::uint64_t>(deltaSteps) };
+  UInt64 currentMultiplier{ m_kMultiplier };
+  UInt64 currentIncrement{ m_increment };
+  UInt64 accumulatedMultiplier{ 1ull };
+  UInt64 accumulatedIncrement{ 0ull };
+  UInt64 steps{ static_cast<UInt64>(deltaSteps) };
   
   while (steps) 
   {
@@ -81,17 +81,17 @@ void LCG::advance(std::int64_t deltaSteps) noexcept
 
 }
 
-void LCG::setMultiplier(std::uint64_t multiplier) noexcept
+void LCG::setMultiplier(UInt64 multiplier) noexcept
 {
   m_kMultiplier = multiplier;
 }
 
-void LCG::setIncrement(std::uint64_t increment) noexcept
+void LCG::setIncrement(UInt64 increment) noexcept
 {
   m_increment = increment;
 }
 
-void LCG::setStartingState(std::uint64_t startState) noexcept
+void LCG::setStartingState(UInt64 startState) noexcept
 {
   m_currentState = startState;
 }
@@ -102,17 +102,18 @@ std::unique_ptr<RNG> LCG::clone() const
   
   out->m_currentState = m_currentState;
   out->m_increment = m_increment;
-  
+  out->m_kMultiplier = m_kMultiplier;
+
   return out;
 }
 
-std::uint32_t LCG::nextU32() noexcept 
+UInt32 LCG::nextU32() noexcept 
 {
   m_currentState = m_currentState * m_kMultiplier + m_increment;
-  return static_cast<std::uint32_t>(m_currentState >> 32);
+  return static_cast<UInt32>(m_currentState >> 32);
 }
 
-std::uint64_t LCG::nextU64() noexcept
+UInt64 LCG::nextU64() noexcept
 {
   m_currentState = ((m_currentState * m_kMultiplier) + m_increment);
   return m_currentState;

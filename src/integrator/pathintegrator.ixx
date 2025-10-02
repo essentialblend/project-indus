@@ -16,7 +16,8 @@ import colorrgb;
 import core_diag;
 import hit_record;
 import material;
-import core_sampling_util;
+import samplingutil;
+import mathalgebra;
 
 import <cassert>;
 
@@ -68,19 +69,19 @@ ColorRGB PathIntegrator::Li(const Ray& inputRay, const WorldObject& world, Sampl
     const Vec3f unitW_iWorld{ *sampleBSDF->unitW_iWorld };
     const Float PDFVal{ sampleBSDF->PDF };
     const ColorRGB BRDFVal{ sampleBSDF->BRDF };
-    //const BxDFType flags{ sampleBSDF->flags };
+    [[maybe_unused]] const BxDFType flags{ sampleBSDF->flags };
 
-    const Float cosineTheta{ std::abs(computeDot(unitW_iWorld, hit.shadingBasis.getNormal())) };
+    const Float cosineTheta{ absDot(unitW_iWorld, hit.shadingBasis.getNormal()) };
     
-    if (!(PDFVal > 0.0)) break;
+    if (!(PDFVal > Float{})) break;
 
     beta *= BRDFVal * (cosineTheta / PDFVal);
 
     if (m_useRR && bounce >= 5)
     {
-      const Float q{ Float(std::min(Float(0.95), std::max({ beta[0], beta[1], beta[2] }))) };
+      const Float q{ Float{ std::min(Float{ 0.95 }, std::max({ beta[0], beta[1], beta[2] })) } };
       if (RRSample > q) break;
-      beta *= (Float(1.0) / q);   
+      beta *= (Float{ 1.0 } / q);
     }
 
     ray = hit.spawnRay(unitW_iWorld);
@@ -91,11 +92,11 @@ ColorRGB PathIntegrator::Li(const Ray& inputRay, const WorldObject& world, Sampl
 
 ColorRGB PathIntegrator::getBackgroundGradient(const Ray& inputRay)
 {
-  const ColorRGB gradientColorVec{ Float(0.55), Float(0.7), Float(1.0) };
+  const ColorRGB gradientColorVec{ Float{ 0.55 }, Float{ 0.7 }, Float{ 1.0 } };
 
   const Vec3f inputRayDir{ normalize(inputRay.getDirection()) };
-  const Float lerpFactor{ Float(0.75 * (inputRayDir[1] + 1.0)) };
-  const ColorRGB returnedColor{ (Float(1.0 - lerpFactor) * ColorRGB{ 1.0 }) + (lerpFactor * gradientColorVec) };
+  const Float lerpFactor{ Float{ 0.75 } * (inputRayDir[1] + Float{ 1.0 }) };
+  const ColorRGB returnedColor{ (Float{ 1.0 } - lerpFactor) * ColorRGB{ 1.0 } + (lerpFactor * gradientColorVec) };
 
   return returnedColor;
 }

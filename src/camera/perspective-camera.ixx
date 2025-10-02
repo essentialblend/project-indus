@@ -1,10 +1,11 @@
 export module perspectivecamera;
 
-import core_sampling_util;
+import samplingutil;
 
 import projectivecamera;
 import types;
 import vector;
+import mathalgebra;
 
 // TODO: ray differentials, spectral transport
 
@@ -51,23 +52,25 @@ CameraRay PerspectiveCamera::generateRay(const CameraSample& cs) const
   Point3f lensRayOrigin{};
   
   // Raster to camera
-  const Point3f pRaster{ cs.pFilm[0], cs.pFilm[1], 0.0 };
+  const Point3f pRaster{ cs.pFilm[0], cs.pFilm[1], Float{} };
   const Point3f pCamera{ m_cameraFromRaster(pRaster) };
 
   Point3f originCam{};
-  Vec3f unitDirCam{ normalize(Vec3f{ pCamera[0], pCamera[1], pCamera[2]}) };
+  Vec3f unitDirCam{ normalize(Vec3f{ pCamera[0], pCamera[1], pCamera[2] }) };
+
+
 
   // Defocus blur (lensRadius = 0 and defocus blur is disabled)
-  if (m_lensRadius > 0.0)
+  if (m_lensRadius > Float{})
   {
     const auto& lensSample{ concentricSampleDisk(cs.pLens) };
     const Point2f pLens{ lensSample[0] * m_lensRadius, lensSample[1] * m_lensRadius };
-    originCam = Point3f{ pLens[0], pLens[1], 0.0 };
+    originCam = Point3f{ pLens[0], pLens[1], Float{} };
 
     const Float ft{ m_focalDistance / unitDirCam[2] };
     const Point3f pFocus{ originCam + (unitDirCam * ft) };
-    unitDirCam = normalize(Vec3f{ pFocus[0] - originCam[0], pFocus[1] - originCam[1], pFocus[2] - originCam[2] });
+    unitDirCam = normalize(pFocus - originCam);
   }
 
-  return CameraRay{ m_cameraToWorld(Ray{ originCam, unitDirCam }), 1.0 };
+  return CameraRay{ m_cameraToWorld(Ray{ originCam, unitDirCam }), Float{ 1.0 } };
 }

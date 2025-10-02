@@ -44,7 +44,7 @@ constexpr ColorRGB::ColorRGB(Float red, Float green, Float blue) noexcept : m_re
 
 constexpr ColorRGB::ColorRGB(const Vec3f& v) noexcept : m_red{ v[0] }, m_green{ v[1] }, m_blue{ v[2] } {}
 
-constexpr ColorRGB::ColorRGB(const ColorRGBd& c) noexcept : m_red{ static_cast<Float>(c[0]) }, m_green{ static_cast<Float>(c[1]) }, m_blue{ static_cast<Float>(c[2]) } {}
+constexpr ColorRGB::ColorRGB(const ColorRGBd& c) noexcept : m_red{ Float(c[0]) }, m_green{ Float(c[1]) }, m_blue{ Float(c[2]) } {}
 
 constexpr const Float& ColorRGB::operator[](Idx i) const & noexcept
 {
@@ -105,7 +105,7 @@ constexpr ColorRGB& ColorRGB::operator*=(const ColorRGB& c) noexcept
 
 constexpr ColorRGB& ColorRGB::operator/=(Float s) noexcept
 {
-  const Float inv{ Float(1) / s };
+  const Float inv{ Float{ 1 } / s };
   m_red *= inv;
   m_green *= inv;
   m_blue *= inv;

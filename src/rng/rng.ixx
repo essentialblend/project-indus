@@ -2,16 +2,20 @@ export module rng;
 
 import std;
 import concepts;
+import mathutil;
+import mathfp;
+import mathconstants;
+import types;
 
 export class RNG
 {
 public:
   RNG() = default;
 
-  virtual void setSequence(std::uint64_t sequence, std::uint64_t offset) noexcept = 0;
-  virtual void advance(std::int64_t delta) noexcept = 0;
+  virtual void setSequence(UInt64 sequence, UInt64 offset) noexcept = 0;
+  virtual void advance(Int64 delta) noexcept = 0;
   virtual std::unique_ptr<RNG> clone() const = 0;
-  virtual void setSeedAndStream(std::uint64_t seed, std::uint64_t stream) noexcept = 0;
+  virtual void setSeedAndStream(UInt64 seed, UInt64 stream) noexcept = 0;
 
   template<Arithmetic T> 
   T uniform();
@@ -28,74 +32,71 @@ protected:
   RNG& operator=(const RNG&) = delete;
   RNG& operator=(RNG&&) = delete;
 
-  virtual std::uint32_t nextU32() noexcept = 0;
-  virtual std::uint64_t nextU64() noexcept = 0;
-
-
-  static float oneMinusEpsF();
-  static double oneMinusEpsD();
+  virtual UInt32 nextU32() noexcept = 0;
+  virtual UInt64 nextU64() noexcept = 0;
 };
 
-// Return an integer by cardinality
+// Return an integer by cardinality. Pending deeper understanding.
 template<IntegralArithmetic T>
 T RNG::uniform(T cardinality)
 {
-  // Take the two's complement of the cardinality to get an unbiased distribution
-  T threshold{ static_cast<T>(~cardinality + 1u) % cardinality };
-  
-  // Use rejection sampling to only take values above this threshold modulo the cardinality, hence returning a conformant integer 
+  //// Take the two's complement of the cardinality to get an unbiased distribution
+  //T threshold{ static_cast<T>(~cardinality + 1u) % cardinality };
+  //
+  //// Use rejection sampling to only take values above this threshold modulo the cardinality, hence returning a conformant integer 
+  //for (;;) 
+  //{ 
+  //  T r{ uniform<T>() }; 
+  //  if (r >= threshold) return r % cardinality;
+  //}
+
+  using U = std::make_unsigned_t<T>;
+
+  const U ucard{ static_cast<U>(cardinality) };
+  const U threshold{ modPos<U>(-ucard, ucard) };
+
   for (;;) 
-  { 
-    T r{ uniform<T>() }; 
-    if (r >= threshold) return r % cardinality;
+  {
+    const U r{ uniform<U>() };
+    if (r >= threshold) return static_cast<T>(r % ucard);
   }
 }
 
 template<>
-std::uint32_t RNG::uniform<std::uint32_t>()
+UInt32 RNG::uniform<UInt32>()
 {
   return nextU32();
 }
 
 template<>
-std::uint64_t RNG::uniform<std::uint64_t>()
+UInt64 RNG::uniform<UInt64>()
 {
-  return (static_cast<std::uint64_t>(nextU32()) << 32) | nextU32();
+  return (static_cast<UInt64>(nextU32()) << 32) | nextU32();
 }
 
 template<>
-std::int32_t RNG::uniform<std::int32_t>()
+Int32 RNG::uniform<Int32>()
 {
-  std::uint32_t u{ uniform<std::uint32_t>() };
-  std::int32_t s{ std::bit_cast<std::int32_t>(u) };
+  UInt32 u{ uniform<UInt32>() };
+  Int32 s{ std::bit_cast<Int32>(u) };
 
   return s;
 }
 
 template<>
-std::int64_t RNG::uniform<std::int64_t>()
+Int64 RNG::uniform<Int64>()
 {
-  return static_cast<std::int64_t>(uniform<std::uint64_t>());
+  return static_cast<Int64>(uniform<UInt64>());
 }
 
 template<>
 float RNG::uniform<float>()
 {
-  return std::min(oneMinusEpsF(), uniform<std::uint32_t>() * 0x1p-32f);
+  return std::min(oneMinusEpsFloat, uniform<UInt32>() * 0x1p-32f);
 }
 
 template<>
 double RNG::uniform<double>()
 {
-  return std::min(oneMinusEpsD(), static_cast<double>(uniform<std::uint64_t>()) * 0x1p-64);
-}
-
-float RNG::oneMinusEpsF()
-{
-  return std::nextafter(1.0f, 0.0f);
-}
-
-double RNG::oneMinusEpsD()
-{
-  return std::nextafter(1.0, 0.0);
+  return std::min(oneMinusEpsDouble, static_cast<double>(uniform<UInt64>()) * 0x1p-64);
 }

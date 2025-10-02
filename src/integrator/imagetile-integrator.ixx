@@ -5,10 +5,10 @@ import sampler;
 import camerabase;
 import world_object;
 import types;
+import core_scanlines;
 
 // For now, tile = row. Easy to extend later to progressive/Morton tiles.
 // Camera and Sampler are held by reference, assume their lifetimes exceed the integrator (they’re owned by the engine).
-// EvaluatePixelSample() is left pure virtual: derived classes define what to do with each sample (e.g. generate a ray, call Li).
 
 export class ImageTileIntegrator : public Integrator 
 {
@@ -30,16 +30,21 @@ void ImageTileIntegrator::render(const WorldObject& world)
 {
   const auto& res{ m_camera.film().getFilmResolution() };
 
+  ScanlineProgress prog{ static_cast<Int>(res[1]), 40 };
+  prog.begin();
+
   for (Idx row{}; row < res[1]; ++row)
   {
     for (Idx col{}; col < res[0]; ++col)
     {
+      const Point2i pPixel{ col, row };
+      
       for (Idx s{}; s < m_samplerPrototype.getSPP(); ++s)
       {
-        const Point2i pPixel{ col, row };
         m_samplerPrototype.startPixelSample(pPixel, static_cast<Int>(s), 0);        
         evaluatePixelSample(pPixel, static_cast<Int>(s), world, m_samplerPrototype);
       }
     }
+    prog.lineDone(static_cast<Int>(row));
   }
 }

@@ -48,9 +48,16 @@
     <ClCompile Include="src\color\colorrgbd.ixx" />
     <ClCompile Include="src\core\constructs.ixx" />
     <ClCompile Include="src\core\core-diag.ixx" />
-    <ClCompile Include="src\core\core-imports.ixx" />
-    <ClCompile Include="src\core\core-sampling-util.ixx" />
-    <ClCompile Include="src\core\core-util.ixx" />
+    <ClCompile Include="src\core\utilities\imports\core-imports.ixx" />
+    <ClCompile Include="src\core\utilities\math-utils\math-algebra-iv.ixx" />
+    <ClCompile Include="src\core\utilities\math-utils\math-constants-i.ixx" />
+    <ClCompile Include="src\core\utilities\math-utils\math-fp-ii.ixx" />
+    <ClCompile Include="src\core\utilities\math-utils\math-geometry-v.ixx" />
+    <ClCompile Include="src\core\utilities\math-utils\math-trig-iii.ixx" />
+    <ClCompile Include="src\core\utilities\math-utils\math-util-vi.ixx" />
+    <ClCompile Include="src\core\utilities\ray-util.ixx" />
+    <ClCompile Include="src\core\utilities\sampling-util.ixx" />
+    <ClCompile Include="src\core\core-scanlines.ixx" />
     <ClCompile Include="src\core\factory.ixx" />
     <ClCompile Include="src\core\types-concepts\concepts.ixx">
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core-concepts.ifc</ModuleOutputFile>
@@ -71,9 +78,11 @@
     <ClCompile Include="src\integrator\integrator.ixx" />
     <ClCompile Include="src\integrator\pathintegrator.ixx" />
     <ClCompile Include="src\integrator\ray-integrator.ixx" />
+    <ClCompile Include="src\interval\interval.ixx" />
     <ClCompile Include="src\materials\dielectric.ixx" />
     <ClCompile Include="src\materials\material.ixx" />
     <ClCompile Include="src\materials\matte.ixx" />
+    <ClCompile Include="src\math\efloat.ixx" />
     <ClCompile Include="src\math\normal.ixx" />
     <ClCompile Include="src\onb\onb.ixx" />
     <ClCompile Include="src\pixel\pixel.ixx" />

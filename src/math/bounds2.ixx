@@ -69,7 +69,16 @@ constexpr T Bounds2<T>::area() const noexcept
 template<Arithmetic T>
 constexpr bool Bounds2<T>::contains(const Point<T, 2>& p) const noexcept
 {
-  return (p[0] >= pMin[0] && p[0] <= pMax[0] && p[1] >= pMin[1] && p[1] <= pMax[1]);
+  //return (p[0] >= pMin[0] && p[0] <= pMax[0] && p[1] >= pMin[1] && p[1] <= pMax[1]);
+
+  if constexpr (IntegralArithmetic<T>) 
+  {
+    return (p[0] >= pMin[0] && p[0] < pMax[0] && p[1] >= pMin[1] && p[1] < pMax[1]);
+  }
+  else 
+  {
+    return (p[0] >= pMin[0] && p[0] <= pMax[0] && p[1] >= pMin[1] && p[1] <= pMax[1]);
+  }
 }
 
 template <Arithmetic T>

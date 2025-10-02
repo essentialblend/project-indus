@@ -27,12 +27,10 @@ int main()
 	engineCfg.camCfg.lensRadius = 0.0;
 	engineCfg.camCfg.screenWindow = Bounds2f{ {-filmCfg.aspect(), -1}, {filmCfg.aspect(), 1}};
 
-	engineCfg.samplerCfg.strata = Strata2D{ 8, 8 };
+	engineCfg.samplerCfg.strata = Strata2D{ 1, 1 };
 	engineCfg.samplerCfg.samplesPerPixel = static_cast<Int>(engineCfg.samplerCfg.strata.getTotal());
-
 	engineCfg.samplerCfg.isStratified = true;
 	engineCfg.samplerCfg.isJitter = true;
-
 
 	engineCfg.integratorCfg.maxDepth = 8;
 

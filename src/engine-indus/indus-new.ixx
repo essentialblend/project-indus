@@ -48,7 +48,7 @@ void Indus::run()
   auto world = std::make_unique<WorldObjectList>();
 
   auto ground = std::make_shared<MMatte>(ColorRGB(Float(0.40), Float(0.42), Float(0.46)));
-  world->addWorldObj(std::make_unique<WOSphere>(Point3f(Float(0), Float(-1000), Float(0)), Float(1000), ground));
+  world->addWorldObj(std::make_unique<WOSphere>(Point3f(Float{}, Float(-1000), Float{}), Float(1000), ground));
 
   PCG32 rng; rng.setSeedAndStream(0x9E3779B97F4A7C15ull, 0xC2B2AE3D27D4EB4Full);
   auto rf = [&]() {return rng.uniform<float>(); };

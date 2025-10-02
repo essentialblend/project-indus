@@ -33,10 +33,8 @@ void MDielectric::computeScatteringFunctions(HitRecord& hitRec) const
 {
   hitRec.surfaceBSDF = std::make_unique<BSDF>(hitRec.shadingBasis);
 
-  Float eO{ hitRec.hitFrontFace ? m_etaI : m_etaT };
-  Float eI{ hitRec.hitFrontFace ? m_etaT : m_etaI };
-
-  hitRec.surfaceBSDF->setBxDF(std::make_unique<DielectricBxDF>(m_reflectance, m_transmittance, eO, eI));
+  // Pass fixed media: outside: etaI (air), inside: etaT (glass)
+  hitRec.surfaceBSDF->setBxDF(std::make_unique<DielectricBxDF>(m_reflectance, m_transmittance, m_etaI, m_etaT));
 }
 
 MaterialType MDielectric::getMaterialType() const noexcept

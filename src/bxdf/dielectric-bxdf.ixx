@@ -7,7 +7,10 @@ import fresneldielectric;
 import types;
 import constructs;
 import core_diag;
-import core_sampling_util;
+import samplingutil;
+import mathtrig;
+import mathfp;
+import mathgeometry;
 
 export class DielectricBxDF final : public BxDF
 {
@@ -30,14 +33,12 @@ DielectricBxDF::DielectricBxDF(const ColorRGB& reflectance, const ColorRGB& tran
 
 ColorRGB DielectricBxDF::evaluate([[maybe_unused]] const Vec3f& unitW_oLocal, [[maybe_unused]] const Vec3f& unitW_iLocal) const noexcept
 {
-  //if (!isFinite(unitW_oLocal) || !isFinite(unitW_iLocal)) return ColorRGB{ 0 };
-  return ColorRGB{ 0 };
+  return ColorRGB{};
 }
 
 Float DielectricBxDF::PDF([[maybe_unused]] const Vec3f& unitW_oLocal, [[maybe_unused]] const Vec3f& unitW_iLocal) const noexcept
 {
-  //if (!isFinite(unitW_oLocal) || !isFinite(unitW_iLocal)) return 0.f;
-  return 0.f;
+  return Float{};
 }
 
 BxDFType DielectricBxDF::type() const noexcept 
@@ -47,25 +48,29 @@ BxDFType DielectricBxDF::type() const noexcept
 
 std::optional<BSDFSample> DielectricBxDF::sample(const Vec3f& unitW_oLocal, const Point2f& uniformSample) const noexcept
 {
-  if (!isFinite(unitW_oLocal) || !isFinite(m_reflectance) || !isFinite(m_transmittance))
-    return std::nullopt;
+  if (!isFinite(unitW_oLocal) || !isFinite(m_reflectance) || !isFinite(m_transmittance)) return std::nullopt;
 
-  constexpr Float eps = 1e-8f;
-  const Float cosWo = std::abs(std::clamp(unitW_oLocal[2], Float(-1), Float(1)));
-  const Float R = FresnelDielectric{ m_etaI, m_etaT }.evaluate(cosWo);
-  const Float T = Float(1) - R;
-  Float pr = R, pt = T;
+  constexpr Float eps{ 1e-8f };
+  const Float cosWo{ cosineThetaLocal(unitW_oLocal) };
+
+  const Float R{ FresnelDielectric{ m_etaI, m_etaT }.evaluate(cosWo) };
+  const Float T{ Float(1) - R };
+  
+  Float pr{ R }; Float pt{ T };
   if (pr + pt <= 0) return std::nullopt;
 
   BSDFSample s{};
-  const Float uc = uniformSample[0];
+  const Float uc{ uniformSample[0] };
 
-  // Specular reflection branch
+  // reflection branch
   if (uc < pr / (pr + pt)) 
   {
     const Vec3f wiL{ -unitW_oLocal[0], -unitW_oLocal[1], unitW_oLocal[2] };
-    const Float cosR = std::abs(wiL[2]);
+    if (!sameHemisphere(unitW_oLocal, wiL)) return std::nullopt;
+
+    const Float cosR{ absCosineThetaLocal(wiL) };
     if (!isFinite(wiL) || cosR <= 0) return std::nullopt;
+    
     s.unitW_iLocal = wiL;
     s.BRDF = m_reflectance * (R / std::max(cosR, eps));
     s.PDF = pr / (pr + pt);
@@ -73,17 +78,22 @@ std::optional<BSDFSample> DielectricBxDF::sample(const Vec3f& unitW_oLocal, cons
   }
   else
   {
-    // Specular transmission branch
-    const Float etap = (unitW_oLocal[2] >= 0) ? (m_etaI / m_etaT) : (m_etaT / m_etaI);
-    auto tr = refractLocal(unitW_oLocal, etap);
+    // transmission branch
+    const Float etap{ (unitW_oLocal[2] >= 0) ? (m_etaI / m_etaT) : (m_etaT / m_etaI) };
+    auto tr{ refractLocal(unitW_oLocal, etap) };
+
     if (!tr) return std::nullopt;
 
-    const Vec3f wiL = tr->unitW_iLocal;
-    const Float cosT = std::abs(wiL[2]);
+    const Vec3f wiL{ tr->unitW_iLocal };
+    
+    if (sameHemisphere(unitW_oLocal, wiL)) return std::nullopt;
+    
+    const Float cosT{ absCosineThetaLocal(wiL) };
+    
     if (!isFinite(wiL) || cosT <= 0) return std::nullopt;
 
     s.unitW_iLocal = wiL;
-    s.BRDF = m_transmittance * (T / std::max(cosT, eps)) / (etap * etap);
+    s.BRDF = m_transmittance * ((T / std::max(cosT, eps)) / sqr(etap));
     s.PDF = pt / (pr + pt);
     s.flags = BxDFType::Specular | BxDFType::Transmission;
   }

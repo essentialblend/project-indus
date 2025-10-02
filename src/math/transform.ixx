@@ -7,7 +7,8 @@ import vector;
 import point;
 import ray;
 import types;
-import core_util;
+import mathalgebra;
+import mathtrig;
 
 export template<Arithmetic T>
 class Transform final
@@ -174,7 +175,7 @@ Transform<T> Transform<T>::scale(const Vector<T, 3>& v)
 template<Arithmetic T>
 Transform<T> Transform<T>::perspective(T fovDegrees, T nearPlane, T farPlane)
 {
-  T fovRadians{ fovDegrees * (std::numbers::pi_v<T> / 180) };
+  T fovRadians{ degreesToRadians(fovDegrees) };
   T invTan{ T{1} / std::tan(fovRadians / T{2}) };
 
   const Matrix4<T> perspective

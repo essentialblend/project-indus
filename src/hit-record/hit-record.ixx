@@ -9,8 +9,9 @@ import point;
 import onb;
 import types;
 import ray;
-import core_sampling_util;
-import core_util;
+import rayutil;
+import mathalgebra;
+
 
 import <cassert>;
 
@@ -34,8 +35,6 @@ public:
 		Normal3f n{ unitOutward };
 		hitFrontFace = computeDot(inputRay.getDirection(), Vec3f{ unitOutward[0], unitOutward[1], unitOutward[2] }) < 0;
 		
-		if (!hitFrontFace) n = Normal3f{ -n };
-
 		shadingBasis = OrthonormalBasis::fromPBRT(n);
 	}
 

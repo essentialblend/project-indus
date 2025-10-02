@@ -12,6 +12,8 @@ import pixel;
 import point;
 import colorrgb;
 
+import mathfp;
+
 // TODOs: PixelSensor and color space transforms, variance estimators for adaptive sampling, G-buffer attributes, EXR/FP16 output, current PNG
 
 export class Film 
@@ -41,38 +43,38 @@ Film::Film(const Point2i& sceneResPixels) noexcept : m_filmResolution{ sceneResP
 void Film::addSample(const Point2f& pFilm, const ColorRGB& L, Float weight) noexcept
 {
   // Clamp to pixel bounds
-  if (pFilm[0] < 0.0 || pFilm[0] >= static_cast<Float>(m_filmResolution[0]) || pFilm[1] < 0.0 || pFilm[1] >= static_cast<Float>(m_filmResolution[1]))
+  if (pFilm[0] < Float{} || pFilm[0] >= static_cast<Float>(m_filmResolution[0]) || pFilm[1] < Float{} || pFilm[1] >= static_cast<Float>(m_filmResolution[1]))
   {
     return;
   }
 
   // Round down to integer pixel index (PBRT would filter here)
-  int ix = static_cast<int>(std::floor(pFilm[0]));
-  int iy = static_cast<int>(std::floor(pFilm[1]));
+  Int ix{ static_cast<Int>(std::floor(pFilm[0])) };
+  Int iy{ static_cast<Int>(std::floor(pFilm[1])) };
 
-  m_pixels[static_cast<size_t>(iy * m_filmResolution[0] + ix)].addRadiance(ColorRGBd{ L[0], L[1], L[2] }, weight);
+  m_pixels[static_cast<std::size_t>(iy * m_filmResolution[0] + ix)].addRadiance(ColorRGBd{ L[0], L[1], L[2] }, weight);
 }
 
 void Film::addSplat(const Point2f& pFilm, const ColorRGB& L) noexcept
 {
-  if (pFilm[0] < 0.0 || pFilm[0] >= static_cast<double>(m_filmResolution[0]) || pFilm[1] < 0.0 || pFilm[1] >= static_cast<double>(m_filmResolution[1]))
+  if (pFilm[0] < Float{} || pFilm[0] >= static_cast<Float>(m_filmResolution[0]) || pFilm[1] < Float{} || pFilm[1] >= static_cast<Float>(m_filmResolution[1]))
   {
     return;
   }
 
-  int ix = static_cast<int>(std::floor(pFilm[0]));
-  int iy = static_cast<int>(std::floor(pFilm[1]));
+  const Int ix{ static_cast<Int>(std::floor(pFilm[0])) };
+  const Int iy{ static_cast<Int>(std::floor(pFilm[1])) };
 
-  m_pixels[static_cast<size_t>(iy * m_filmResolution[0] + ix)].addSplat(ColorRGBd{ L[0], L[1], L[2] });
+  m_pixels[static_cast<Idx>(iy * m_filmResolution[0] + ix)].addSplat(ColorRGBd{ L[0], L[1], L[2] });
 }
 
 ColorRGB Film::getPixelColor(const Point2i& p, Float splatScale) const noexcept
 {
   if (p[0] < 0 || p[0] >= m_filmResolution[0] || p[1] < 0 || p[1] >= m_filmResolution[1]) {
-    return ColorRGB{ 0.0 };
+    return ColorRGB{};
   }
 
-  auto c = m_pixels[static_cast<size_t>(p[1] * m_filmResolution[0] + p[0])].normalizedColor(splatScale);
+  auto c = m_pixels[static_cast<std::size_t>(p[1] * m_filmResolution[0] + p[0])].normalizedColor(splatScale);
   
   return ColorRGB(Vec3f{ static_cast<Float>(c[0]), static_cast<Float>(c[1]), static_cast<Float>(c[2]) });
 }
@@ -84,11 +86,11 @@ void Film::writeImage(const IndusConfig& indusConfig, const std::string& filenam
 
   const auto srgbEncode = [](Float v) -> Float 
   {
-    if (!std::isfinite(v)) return Float(0);
-    
-    v = std::clamp(v, Float(0), Float(1));
-    
-    return v <= Float(0.0031308) ? v * Float(12.92) : Float(1.055) * std::pow(v, Float(1.0 / 2.4)) - Float(0.055);
+    if (!std::isfinite(v)) return Float{};
+
+    v = clamp(v, Float{}, Float{ 1.0 });
+
+    return v <= Float{ 0.0031308 } ? v * Float{ 12.92 } : Float{ 1.055 } * std::pow(v, Float{ 1.0 / 2.4 }) - Float{ 0.055 };
   };
 
   std::vector<std::uint8_t> frameBytes{};

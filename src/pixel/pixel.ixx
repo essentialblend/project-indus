@@ -4,6 +4,7 @@ import std;
 import vector;
 import colorrgbd;
 import types;
+import mathfp;
 
 /* Pixel.ixx
    Pixel accumulator for Film.
@@ -16,7 +17,7 @@ import types;
    - G-buffer attributes (normals, positions, albedo).
    - Spectral bucket accumulation.
    These will be added once Indus supports adaptive sampling, auxiliary AOVs,
-   or spectral rendering. For now, Pixel is RGB-only and thread-safe.
+   or spectral rendering.
 */
 
 export class Pixel 
@@ -24,7 +25,7 @@ export class Pixel
 public:
   Pixel() noexcept;
 
-  void addRadiance(const ColorRGBd&, double) noexcept;
+  void addRadiance(const ColorRGBd&, Float64) noexcept;
   void addSplat(const ColorRGBd&) noexcept;
 
   [[nodiscard]] ColorRGBd normalizedColor(Float splatScale = 1.0) const noexcept;
@@ -33,22 +34,19 @@ public:
 
 private:
   ColorRGBd m_rgbSum{};
-  double m_weightSum{};
+  Float64 m_weightSum{};
   std::array<std::atomic<Float>, 3> m_rgbSplat{};
 };
 
 Pixel::Pixel() noexcept : m_rgbSum{ 0.0, 0.0, 0.0 }, m_weightSum{ 0.0 }, m_rgbSplat{ 0.0, 0.0, 0.0 } {}
 
-void Pixel::addRadiance(const ColorRGBd& L, double weight) noexcept
+void Pixel::addRadiance(const ColorRGBd& L, Float64 weight) noexcept
 {
-  if (!std::isfinite(weight)) return;
-  if (!(std::isfinite(L[0]) && std::isfinite(L[1]) && std::isfinite(L[2]))) return;
+  if (!isFinite(weight) || !isFinite(L)) return;
 
   for (Idx c{}; c < 3; ++c)
-  {
-    m_rgbSum[c] += L[c] * weight;
-  }
-
+    m_rgbSum[c] = fusedMultiplyAdd(L[c], weight, m_rgbSum[c]);
+  
   m_weightSum += weight;
 }
 
@@ -64,7 +62,7 @@ ColorRGBd Pixel::normalizedColor(Float splatScale) const noexcept
 {
   ColorRGBd c{};
 
-  if (m_weightSum > 0.0 && std::isfinite(m_weightSum)) 
+  if (m_weightSum > Float64{} && isFinite(m_weightSum))
   {
     for (Idx i{}; i < 3; ++i) 
       c[i] = m_rgbSum[i] / m_weightSum;
@@ -73,12 +71,13 @@ ColorRGBd Pixel::normalizedColor(Float splatScale) const noexcept
   // Add splats only if finite
   for (Idx i{}; i < 3; ++i) 
   {
-    const Float s = m_rgbSplat[i].load(std::memory_order_relaxed);
-    if (std::isfinite(s)) c[i] += splatScale * s;
+    const Float s{ m_rgbSplat[i].load(std::memory_order_relaxed) };
+    if (isFinite(s))
+      c[i] = fusedMultiplyAdd(Float64{ splatScale }, Float64{ s }, c[i]);
   }
 
   // Final sanitize
-  for (Idx i{}; i < 3; ++i) if (!std::isfinite(c[i])) c[i] = 0.0;
+  for (Idx i{}; i < 3; ++i) if (!isFinite(c[i])) c[i] = 0.0;
   return c;
 }
 

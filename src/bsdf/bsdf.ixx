@@ -7,7 +7,8 @@ import types;
 import colorrgb;
 import onb;
 import constructs;
-import core_diag;
+import mathfp;
+import mathalgebra;
 
 export class BSDF final
 {
@@ -46,7 +47,7 @@ constexpr BSDF::BSDF(const OrthonormalBasis& basis) noexcept : m_basis{ basis },
 
 [[nodiscard]] Float BSDF::PDF(const Vec3f& unitW_oWorld, const Vec3f& unitW_iWorld) const noexcept
 {
-  if (!m_bxdf) return 0.0f;
+  if (!m_bxdf) return Float{};
 
   if (!isFinite(unitW_oWorld) || !isFinite(unitW_iWorld)) return Float{};
 
@@ -70,7 +71,7 @@ constexpr BSDF::BSDF(const OrthonormalBasis& basis) noexcept : m_basis{ basis },
 
   const Vec3f unitW_iLocal{ *optSample->unitW_iLocal };
   
-  if (optSample->PDF <= 0 || !isFinite(unitW_iLocal) || !isFinite(optSample->PDF) || !isFinite(optSample->BRDF)) return std::nullopt;
+  if (optSample->PDF <= Float{} || !isFinite(unitW_iLocal) || !isFinite(optSample->PDF) || !isFinite(optSample->BRDF)) return std::nullopt;
 
   const Float PDF{ optSample->PDF };
   const ColorRGB BRDF{ optSample->BRDF };

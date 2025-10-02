@@ -4,8 +4,7 @@ import <memory>;
 
 import material;
 import vector;
-import core_sampling_util;
-import core_util;
+import samplingutil;
 import bsdf_new;
 import lambertianBxDF;
 import colorrgb;

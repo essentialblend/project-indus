@@ -4,6 +4,8 @@ import std;
 import vector;
 import point;
 import concepts;
+import types;
+import mathfp;
 
 export template<Arithmetic T>
 class Matrix4 final
@@ -37,6 +39,9 @@ public:
 private:
   std::array<T, 16> m_elements{};
 };
+
+// Type alias for Matrix resides here to break cyclicity
+export using Mat4f = Matrix4<Float>;
 
 // Implementation
 
@@ -76,21 +81,27 @@ constexpr T& Matrix4<T>::operator[](std::size_t row, std::size_t col) & noexcept
 template<Arithmetic T>
 constexpr Matrix4<T> Matrix4<T>::operator*(const Matrix4<T>& mat) const noexcept
 {
-  Matrix4<T> resultMatrix{};
+  Matrix4<T> r{};
 
-  for (std::size_t r{}; r < 4; ++r)
+  for (std::size_t i{}; i < 4; ++i)
   {
-    for (std::size_t c{}; c < 4; ++c)
+    for (std::size_t j{}; j < 4; ++j)
     {
-      resultMatrix[r, c] = T{ 0 };
+      const T a0{ (*this)[i, 0] }; const T a1{ (*this)[i, 1] };
+      const T a2{ (*this)[i, 2] }; const T a3{ (*this)[i, 3] };
+      const T b0{ mat[0, j] }; const T b1{ mat[1, j] };
+      const T b2{ mat[2, j] }; const T b3{ mat[3, j] };
 
-      for (std::size_t k{}; k < 4; ++k)
-      {
-        resultMatrix[r, c] += (*this)[r, k] * mat[k, c];
-      }
+      T t{ a0 * b0 };
+
+      t = fusedMultiplyAdd(a1, b1, t);
+      t = fusedMultiplyAdd(a2, b2, t);
+      t = fusedMultiplyAdd(a3, b3, t);
+      
+      r[i, j] = t;
     }
   }
-  return resultMatrix;
+  return r;
 }
 
 template<Arithmetic T>
@@ -100,7 +111,13 @@ constexpr Vector<T, 4> Matrix4<T>::operator*(const Vector<T, 4>& v) const noexce
 
   for (std::size_t i{}; i < 4; ++i)
   {
-    result[i] = (*this)[i, 0] * v[0] + (*this)[i, 1] * v[1] + (*this)[i, 2] * v[2] + (*this)[i, 3] * v[3];
+    T t{ (*this)[i, 0] * v[0] };
+
+    t = fusedMultiplyAdd((*this)[i, 1], v[1], t);
+    t = fusedMultiplyAdd((*this)[i, 2], v[2], t);
+    t = fusedMultiplyAdd((*this)[i, 3], v[3], t);
+    
+    result[i] = t;
   }
 
   return result;
@@ -282,7 +299,33 @@ constexpr T Matrix4<T>::determinant() const noexcept
 {
   const auto& m = m_elements;
 
-  return m[0] * (m[5] * (m[10] * m[15] - m[11] * m[14]) - m[9] * (m[6] * m[15] - m[7] * m[14]) + m[13] * (m[6] * m[11] - m[7] * m[10])) - m[1] * (m[4] * (m[10] * m[15] - m[11] * m[14]) - m[8] * (m[6] * m[15] - m[7] * m[14]) + m[12] * (m[6] * m[11] - m[7] * m[10])) + m[2] * (m[4] * (m[9] * m[15] - m[11] * m[13]) - m[8] * (m[5] * m[15] - m[7] * m[13]) + m[12] * (m[5] * m[11] - m[7] * m[9])) - m[3] * (m[4] * (m[9] * m[14] - m[10] * m[13]) - m[8] * (m[5] * m[14] - m[6] * m[13]) + m[12] * (m[5] * m[10] - m[6] * m[9]));
+  const T m00{ m[0] }; const T m01{ m[1] }; const T m02{ m[2] }; const T m03{ m[3] };
+  const T m10{ m[4] }; const T m11{ m[5] }; const T m12{ m[6] }; const T m13{ m[7] };
+  const T m20{ m[8] }; const T m21{ m[9] }; const T m22{ m[10] }; const T m23{ m[11] };
+  const T m30{ m[12] }; const T m31{ m[13] }; const T m32{ m[14] }; const T m33{ m[15] };
+
+  const T s0{ differenceOfProducts(m00, m11, m10, m01) };
+  const T s1{ differenceOfProducts(m00, m12, m10, m02) };
+  const T s2{ differenceOfProducts(m00, m13, m10, m03) };
+  const T s3{ differenceOfProducts(m01, m12, m11, m02) };
+  const T s4{ differenceOfProducts(m01, m13, m11, m03) };
+  const T s5{ differenceOfProducts(m02, m13, m12, m03) };
+
+  const T c0{ differenceOfProducts(m20, m31, m30, m21) };
+  const T c1{ differenceOfProducts(m20, m32, m30, m22) };
+  const T c2{ differenceOfProducts(m20, m33, m30, m23) };
+  const T c3{ differenceOfProducts(m21, m32, m31, m22) };
+  const T c4{ differenceOfProducts(m21, m33, m31, m23) };
+  const T c5{ differenceOfProducts(m22, m33, m32, m23) };
+
+  T det{ differenceOfProducts(s0, c5, s1, c4) };
+  
+  det = sumOfProducts(det, T{ 1 }, s2, c3);
+  det = sumOfProducts(det, T{ 1 }, s3, c2);
+  det = differenceOfProducts(det, T{ 1 }, s4, c1);
+  det = sumOfProducts(det, T{ 1 }, s5, c0);
+  
+  return det;
 }
 
 

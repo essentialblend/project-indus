@@ -4,7 +4,7 @@ import std;
 import sampler;
 import types;
 import rng;
-import core_sampling_util;
+import samplingutil;
 
 export class IndependentSampler final : public Sampler
 {

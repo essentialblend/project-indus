@@ -49,9 +49,9 @@ export struct Strata2D final
   Int NX{};
   Int NY{};
 
-  [[nodiscard]] constexpr Int64 getTotal() const noexcept
+  [[nodiscard]] constexpr Int getTotal() const noexcept
   {
-    return NX * NY;
+    return Int{ NX * NY };
   }
 };
 

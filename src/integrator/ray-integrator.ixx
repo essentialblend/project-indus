@@ -31,10 +31,10 @@ void RayIntegrator::evaluatePixelSample(Point2i pPixel, [[maybe_unused]] Int sam
   Point2f uFilm{ sampler.get2D() };
   Point2f uLens{ sampler.get2D() };
 
-  CameraSample cs{ Point2f{ static_cast<Float>(pPixel[0]) + uFilm[0], static_cast<Float>(pPixel[1]) + uFilm[1]}, uLens, Float(0.0) };
+  CameraSample cs{ Point2f{ static_cast<Float>(pPixel[0]) + uFilm[0], static_cast<Float>(pPixel[1]) + uFilm[1]}, uLens, Float{} };
 
   CameraRay ray{ m_camera.generateRay(cs) };
-  if (ray.weight == 0.0) return;
+  if (ray.weight == Float{}) return;
 
   ColorRGB L{ Li(ray.ray, world, sampler) };
   m_camera.film().addSample(cs.pFilm, L, ray.weight);

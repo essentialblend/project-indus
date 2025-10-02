@@ -43,7 +43,7 @@ ProjectiveCamera::ProjectiveCamera(const Transform4f& camToWorld, const CameraSh
   // Screen to NDC
   Transform4f NDCFromScreen
   {
-    Transform4f::scale({ Float(1) / (xmax - xmin), Float(1) / (ymax - ymin), Float(1) }) * Transform4f::translate({ -xmin, -ymax, Float(0) })
+    Transform4f::scale({ Float(1) / (xmax - xmin), Float(1) / (ymax - ymin), Float(1) }) * Transform4f::translate({ -xmin, -ymax, Float{} })
   };
 
   // NDC to raster

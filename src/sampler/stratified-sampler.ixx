@@ -3,9 +3,10 @@ export module stratifiedsampler;
 import std;
 import sampler;
 import constructs;
-import core_sampling_util;
+import samplingutil;
 import rng;
 import types;
+
 
 export class StratifiedSampler final : public Sampler
 {
@@ -44,11 +45,11 @@ StratifiedSampler::StratifiedSampler(Strata2D strata, bool jitter, Int64 seed, s
     m_strata.NY = 1;
   }
 
-  m_invNX = static_cast<Float>(1.0) / static_cast<Float>(m_strata.NX);
-  m_invNY = static_cast<Float>(1.0) / static_cast<Float>(m_strata.NY);
+  m_invNX = Float{ 1.0 } / static_cast<Float>(m_strata.NX);
+  m_invNY = Float{ 1.0 } / static_cast<Float>(m_strata.NY);
 
   const Int64 prod{ static_cast<Int64>(m_strata.NX) * static_cast<Int64>(m_strata.NY) };
-  const Int64 cap{ static_cast<Int64>(std::numeric_limits<Int>::max()) };
+  const Int64 cap{ Int64{ std::numeric_limits<Int>::max() } };
 
   m_spp = static_cast<Int>(prod > cap ? cap : prod);
 }
@@ -64,6 +65,7 @@ void StratifiedSampler::startPixelSample(Point2i pPixel, Int sampleIndex, Int st
   m_sampleIndex = sampleIndex;
   m_dimension = startingDimension;
 
+  // Choose a scrambled bijective key representing pixel and sample index, use it as a seed/stream
   const auto seq{ mixBits(hash(pPixel, m_seed)) };
   
   m_rng->setSeedAndStream(seq, seq);
@@ -80,8 +82,10 @@ Float StratifiedSampler::get1D()
   
   ++m_dimension;
 
-  const Float delta{ m_jitter ? m_rng->uniform<Float>() : 0.5f };
-  return (static_cast<Float>(stratum) + delta) / static_cast<Float>(m_spp);
+  const Float delta{ m_jitter ? m_rng->uniform<Float>() : Float{ 0.5 } };
+  const Float v{ (static_cast<Float>(stratum) + delta) / static_cast<Float>(m_spp) };
+
+  return v;
 }
 
 Point2f StratifiedSampler::get2D()
@@ -89,15 +93,15 @@ Point2f StratifiedSampler::get2D()
   const UInt64 h{ hash(m_currentPixel, m_dimension, m_seed) };
   const Int stratum{ permuteElement(static_cast<Int>(m_sampleIndex), m_spp, h) };
 
-  const Int x{stratum % m_strata.NX };
+  const Int x{ stratum % m_strata.NX };
   const Int y{ stratum / m_strata.NX };
 
-  const Float dx{ m_jitter ? m_rng->uniform<Float>() : 0.5f };
-  const Float dy{ m_jitter ? m_rng->uniform<Float>() : 0.5f };
+  const Float dx{ m_jitter ? m_rng->uniform<Float>() : Float{ 0.5 } };
+  const Float dy{ m_jitter ? m_rng->uniform<Float>() : Float{ 0.5 } };
 
   m_dimension += 2;
 
-  return Point2f{ (Float(x) + dx) * m_invNX, (Float(y) + dy) * m_invNY };
+  return Point2f{ (static_cast<Float>(x) + dx) * m_invNX, (static_cast<Float>(y) + dy) * m_invNY };
 }
 
 Point2f StratifiedSampler::getPixel2D()

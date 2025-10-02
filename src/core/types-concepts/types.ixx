@@ -3,7 +3,6 @@ export module types;
 import std;
 import vector;
 import point;
-import matrix;
 import bounds2;
 import normal;
 
@@ -11,9 +10,11 @@ export using Float = float;
 export using Float64 = double;
 
 export using Int = int;
+export using Int32 = std::int32_t;
 export using Int64 = std::int64_t;
-export using UInt64 = std::uint64_t;
+
 export using UInt32 = std::uint32_t;
+export using UInt64 = std::uint64_t;
 
 export using Idx = std::size_t;
 
@@ -30,12 +31,14 @@ export using Point3d = Point<Float64, 3>;
 
 export using Point4f = Point<Float, 4>;
 
-export using Mat4f = Matrix4<Float>;
+
 
 export using Bounds2f = Bounds2<Float>;
 
 export using Normal3f = Normal<Float>;
 export using Normal3d = Normal<Float64>;
+
+
 
 
 
