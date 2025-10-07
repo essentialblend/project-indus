@@ -13,7 +13,7 @@ public:
 
   [[nodiscard]] constexpr const Point3f& getOrigin() const noexcept;
   [[nodiscard]] constexpr const Vec3f& getDirection() const noexcept;
-  [[nodiscard]] constexpr const Float getShutterTime() const noexcept;
+  [[nodiscard]] constexpr const Float getTimeSeconds() const noexcept;
   [[nodiscard]] constexpr Point3f getPointAt(Float) const noexcept;
 
 
@@ -35,7 +35,7 @@ constexpr const Vec3f& Ray::getDirection() const noexcept
   return m_direction;
 }
 
-constexpr const Float Ray::getShutterTime() const noexcept
+constexpr const Float Ray::getTimeSeconds() const noexcept
 {
   return m_shutterTime;
 }

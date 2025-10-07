@@ -7,12 +7,13 @@ import types;
 import vector;
 import mathalgebra;
 
+
 // TODO: ray differentials, spectral transport
 
 export class PerspectiveCamera : public ProjectiveCamera
 {
 public:
-  PerspectiveCamera(const Transform4f&, const CameraShutter&, Film&, Float, const Bounds2f&, Float, Float) noexcept;
+  PerspectiveCamera(const CameraTransform&, const Transform4f&, const CameraShutter&, Film&, Float, const Bounds2f&, Float, Float) noexcept;
 
   CameraRay generateRay(const CameraSample&) const override;
 
@@ -24,7 +25,7 @@ private:
   Float m_imagePlaneArea{};
 };
 
-PerspectiveCamera::PerspectiveCamera(const Transform4f& camToWorld, const CameraShutter& shutter, Film& film, Float fovDegrees, const Bounds2f& screenWindow, Float lensRadius, Float focalDistance) noexcept : ProjectiveCamera(camToWorld, shutter, film, Transform4f::perspective(fovDegrees, static_cast<Float>(1e-2), static_cast <Float>(1000.0)), screenWindow, lensRadius, focalDistance)
+PerspectiveCamera::PerspectiveCamera(const CameraTransform& cameraTransform, const Transform4f& camToWorld, const CameraShutter& shutter, Film& film, Float fovDegrees, const Bounds2f& screenWindow, Float lensRadius, Float focalDistance) noexcept : ProjectiveCamera(cameraTransform, camToWorld, shutter, film, Transform4f::perspective(fovDegrees, static_cast<Float>(1e-2), static_cast <Float>(1000.0)), screenWindow, lensRadius, focalDistance)
 {
 
   Point3f origin{};
@@ -58,8 +59,6 @@ CameraRay PerspectiveCamera::generateRay(const CameraSample& cs) const
   Point3f originCam{};
   Vec3f unitDirCam{ normalize(Vec3f{ pCamera[0], pCamera[1], pCamera[2] }) };
 
-
-
   // Defocus blur (lensRadius = 0 and defocus blur is disabled)
   if (m_lensRadius > Float{})
   {
@@ -72,5 +71,8 @@ CameraRay PerspectiveCamera::generateRay(const CameraSample& cs) const
     unitDirCam = normalize(pFocus - originCam);
   }
 
-  return CameraRay{ m_cameraToWorld(Ray{ originCam, unitDirCam }), Float{ 1.0 } };
+  const Ray cameraSpaceRay{ originCam, unitDirCam };
+  //const Ray renderSpaceRay{ m_cameraTransform.applyRenderFromWorld(m_cameraToWorld(cameraSpaceRay)) };
+
+  return CameraRay{ m_cameraToWorld(cameraSpaceRay), Float{1.0} };
 }

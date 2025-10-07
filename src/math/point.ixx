@@ -4,7 +4,7 @@ import std;
 import concepts;
 import vector;
 
-export template<Arithmetic T, std::size_t N> requires Arity<N>
+export template<ScalarLike T, std::size_t N> requires Arity<N>
 class Point final
 {
 public:
@@ -29,8 +29,11 @@ public:
   constexpr const T& operator[](std::size_t) const & noexcept;
   constexpr T& operator[](std::size_t) & noexcept;
 
+  constexpr Point& operator*=(T x) noexcept;
+
   constexpr Point operator+(const Vector<T, N>&) const noexcept;
   constexpr Point operator-(const Vector<T, N>&) const noexcept;
+  constexpr Point operator*(T x) const noexcept;
   constexpr Vector<T, N> operator-(const Point&) const noexcept;
 
   ~Point() = default;
@@ -39,32 +42,39 @@ private:
   std::array<T, N> m_elements{};
 };
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Point<T, N>::Point(const std::array<T, N>& values) noexcept : m_elements{ values } {}
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 template<typename ...Args> requires (sizeof...(Args) == N)
 constexpr Point<T, N>::Point(Args... values) noexcept : m_elements{ { static_cast<T>(values)... } } {}
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr bool Point<T, N>::operator==(const Point& p) const noexcept
 {
   return m_elements == p.m_elements;
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr const T& Point<T, N>::operator[](std::size_t i) const & noexcept
 {
   return m_elements[i];
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr T& Point<T, N>::operator[](std::size_t i) & noexcept
 {
   return const_cast<T&>(std::as_const(*this)[i]);
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
+constexpr Point<T, N>& Point<T, N>::operator*=(T x) noexcept 
+{
+  for (std::size_t i{}; i < N; ++i) (*this)[i] = (*this)[i] * x;
+  return *this;
+}
+
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Point<T, N> Point<T, N>::operator+(const Vector<T, N>& v) const noexcept
 {
   Point<T, N> result{};
@@ -76,13 +86,13 @@ constexpr Point<T, N> Point<T, N>::operator+(const Vector<T, N>& v) const noexce
   return result;
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Point<T, N> Point<T, N>::operator-(const Vector<T, N>& v) const noexcept
 {
   return (*this) + (-v);
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Vector<T, N> Point<T, N>::operator-(const Point<T, N>& p) const noexcept
 {
   Vector<T, N> result{};
@@ -92,4 +102,21 @@ constexpr Vector<T, N> Point<T, N>::operator-(const Point<T, N>& p) const noexce
   }
 
   return result;
+}
+
+template<ScalarLike T, std::size_t N> requires Arity<N>
+constexpr Point<T, N> Point<T, N>::operator*(T x) const noexcept
+{
+  Point<T, N> p{ *this };
+  p *= x;
+  return p;
+}
+
+// Free
+
+template<ScalarLike T, std::size_t N> requires Arity<N>
+constexpr Point<T, N> operator*(T x, Point<T, N> p) noexcept 
+{
+  p *= x;
+  return p;
 }

@@ -3,7 +3,7 @@ export module vector;
 import std;
 import concepts;
 
-export template<Arithmetic T, std::size_t N> requires Arity<N>
+export template<ScalarLike T, std::size_t N> requires Arity<N>
 class Vector final
 {
 public:
@@ -52,33 +52,33 @@ private:
 
 // Implementation remains in the interface file
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Vector<T, N>::Vector(const T& val) noexcept
 {
   m_elements.fill(val);
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Vector<T, N>::Vector(const std::array<T, N>& values) noexcept : m_elements{ values } {}
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 template<typename... Args> requires (sizeof...(Args) == N)
 constexpr Vector<T, N>::Vector(Args... vals) noexcept : m_elements{ { static_cast<T>(vals)... } } {}
 
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr const T& Vector<T, N>::operator[](std::size_t i) const & noexcept
 {
   return m_elements[i];
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr T& Vector<T, N>::operator[](std::size_t i) & noexcept
 {
   return const_cast<T&>(std::as_const(*this)[i]);
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr bool Vector<T, N>::operator==(const Vector& other) const noexcept
 {
   for (std::size_t i{}; i < N; ++i)
@@ -88,7 +88,7 @@ constexpr bool Vector<T, N>::operator==(const Vector& other) const noexcept
   return true;
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Vector<T, N> Vector<T, N>::operator-() const noexcept
 {
   Vector<T, N> result{};
@@ -100,7 +100,7 @@ constexpr Vector<T, N> Vector<T, N>::operator-() const noexcept
   return result;
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Vector<T, N>& Vector<T, N>::operator+=(const Vector& rhs) noexcept
 {
   for (std::size_t i{}; i < N; ++i)
@@ -108,27 +108,27 @@ constexpr Vector<T, N>& Vector<T, N>::operator+=(const Vector& rhs) noexcept
   return *this;
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Vector<T, N>& Vector<T, N>::operator-=(const Vector& rhs) noexcept
 {
   return (*this += -rhs);
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Vector<T, N>& Vector<T, N>::operator*=(const T& s) noexcept
 {
   for (std::size_t i{}; i < N; ++i) m_elements[i] *= s;
   return *this;
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Vector<T, N>& Vector<T, N>::operator/=(const T& s) noexcept
 {
   const T inv = T{ 1 } / s;
   return (*this *= inv);
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Vector<T, N> Vector<T, N>::operator+(const Vector& other) const noexcept
 {
   auto temp{ *this };
@@ -136,7 +136,7 @@ constexpr Vector<T, N> Vector<T, N>::operator+(const Vector& other) const noexce
   return temp;
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Vector<T, N> Vector<T, N>::operator-(const Vector& other) const noexcept
 {
   auto temp{ *this };
@@ -144,7 +144,7 @@ constexpr Vector<T, N> Vector<T, N>::operator-(const Vector& other) const noexce
   return temp;
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Vector<T, N> Vector<T, N>::operator*(const T& s) const noexcept
 {
   auto temp{ *this };
@@ -152,7 +152,7 @@ constexpr Vector<T, N> Vector<T, N>::operator*(const T& s) const noexcept
   return temp;
 }
 
-template<Arithmetic T, std::size_t N> requires Arity<N>
+template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Vector<T, N> Vector<T, N>::operator/(const T& s) const noexcept
 {
   auto temp{ *this };
@@ -162,7 +162,7 @@ constexpr Vector<T, N> Vector<T, N>::operator/(const T& s) const noexcept
 
 // Symmetric free-operators
 
-export template<Arithmetic T, std::size_t N> requires Arity<N>
+export template<ScalarLike T, std::size_t N> requires Arity<N>
 constexpr Vector<T, N> operator*(const T& s, const Vector<T, N>& v) noexcept 
 {
   return v * s;

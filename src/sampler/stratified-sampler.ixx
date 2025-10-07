@@ -28,7 +28,7 @@ private:
   Int m_dimension{};
   Int m_spp{ 5 };
   Point2i m_currentPixel{};
-  Strata2D m_strata{};
+  Strata2D m_strata{ 1 };
   Int64 m_sampleIndex{};
   Float m_invNX{};
   Float m_invNY{};

@@ -23,7 +23,7 @@ FresnelDielectric::FresnelDielectric(Float incidentEta, Float transmittedEta) no
 
 Float FresnelDielectric::evaluate(Float incidentCosineTheta) const noexcept
 {
-  incidentCosineTheta = clamp(incidentCosineTheta, Float{ -1.0 }, Float{ 1.0 });
+  incidentCosineTheta = clampUnit(incidentCosineTheta);
 
   const bool isLightEntering{ incidentCosineTheta > Float{ 0.0 } };
 

@@ -13,7 +13,7 @@ export
     return differenceOfProducts(x[0], y[1], x[1], y[0]);
   }
 
-  template<Vector3Like T>
+  template<FloatOnlyVector3Like T>
   [[nodiscard]] T normalizeSafe(const T& v, ScalarOf<T> eps) noexcept
   {
     if (!isFinite(v)) return T{};
@@ -52,26 +52,34 @@ export
     return std::abs(len2 - Float{ 1 }) <= (Float{ 2 } * tol + tol * tol);
   }
 
-  template<Vector3Like V>
+  template<FloatOnlyVector3Like V>
   [[nodiscard]] constexpr auto euclideanLengthSq(const V& v) noexcept
   { 
     return sumOfProducts(v[0], v[0], v[1], v[1], v[2], v[2]);
   }
 
-  template<Vector3Like V>
+  template<FloatOnlyVector3Like V>
   [[nodiscard]] constexpr auto euclideanLength(const V& v) noexcept
   {
     return std::sqrt(euclideanLengthSq(v));
   }
 
-  template<typename M, typename N> requires Vec3Common<M, N>
+  template<typename M, typename N> requires FloatOnlyVec3Common<M, N>
   [[nodiscard]] constexpr auto computeDot(const M& a, const N& b) noexcept
   {
     using S = CommonTypeOfScalars<M, N>;
     return S{ sumOfProducts(S{ a[0] }, S{ b[0] }, S{ a[1] }, S{ b[1] }, S{ a[2] }, S{ b[2] }) };
   }
 
-  template<typename M, typename N> requires Vec3Common<M, N>
+  template<typename M, typename N> requires IntervalOnlyVec3Common<M, N>
+  [[nodiscard]] constexpr auto computeDot(const M& a, const N& b) noexcept
+  {
+    using S = CommonTypeOfScalars<M, N>;
+
+    return fmaI(S{ a[2] }, S{ b[2] }, fmaI(S{ a[1] }, S{ b[1] }, S{ a[0] } *S{ b[0] }));
+  }
+
+  template<typename M, typename N> requires FloatOnlyVec3Common<M, N>
   [[nodiscard]] constexpr auto computeCross(const M& a, const N& b) noexcept
   {
     using S = CommonTypeOfScalars<M, N>;
@@ -79,13 +87,13 @@ export
     return Vector<S, 3>{ differenceOfProducts(S{ a[1] }, S{ b[2] }, S{ a[2] }, S{ b[1] }), differenceOfProducts(S{ a[2] }, S{ b[0] }, S{ a[0] }, S{ b[2] }), differenceOfProducts(S{ a[0] }, S{ b[1] }, S{ a[1] }, S{ b[0] }) };
   }
 
-  template<typename M, typename N> requires Vec3Common<M, N>
+  template<typename M, typename N> requires FloatOnlyVec3Common<M, N>
   [[nodiscard]] constexpr auto absDot(const M& a, const N& b) noexcept
   {
     return std::abs(computeDot(a, b));
   }
 
-  template<Vector3Like V>
+  template<FloatOnlyVector3Like V>
   [[nodiscard]] V normalize(const V& v) noexcept
   {
     using S = ScalarOf<V>;

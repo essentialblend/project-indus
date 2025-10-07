@@ -37,5 +37,5 @@ void RayIntegrator::evaluatePixelSample(Point2i pPixel, [[maybe_unused]] Int sam
   if (ray.weight == Float{}) return;
 
   ColorRGB L{ Li(ray.ray, world, sampler) };
-  m_camera.film().addSample(cs.pFilm, L, ray.weight);
+  m_camera.getFilm().addSample(cs.pFilm, L, ray.weight);
 }

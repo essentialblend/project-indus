@@ -1,7 +1,7 @@
 export module indus;
 
 import std;
-import sphere;
+//import sphere;
 import colorrgb;
 import factory;
 import film;
@@ -10,9 +10,11 @@ import sampler;
 import integrator;
 import constructs;
 import dielectric;
-import matte;
+import diffuse;
 import world_object;
 import pcg32;
+import material;
+import sphere;
 
 export class Indus final
 {
@@ -47,7 +49,7 @@ void Indus::run()
 
   auto world = std::make_unique<WorldObjectList>();
 
-  auto ground = std::make_shared<MMatte>(ColorRGB(Float(0.40), Float(0.42), Float(0.46)));
+  auto ground = std::make_shared<Diffuse>(ColorRGB(Float(0.40), Float(0.42), Float(0.46)));
   world->addWorldObj(std::make_unique<WOSphere>(Point3f(Float{}, Float(-1000), Float{}), Float(1000), ground));
 
   PCG32 rng; rng.setSeedAndStream(0x9E3779B97F4A7C15ull, 0xC2B2AE3D27D4EB4Full);
@@ -56,10 +58,10 @@ void Indus::run()
   std::vector<std::pair<Point3f, Float>> placed;
 
   auto heroGlass = std::make_shared<MDielectric>(ColorRGB{ 1 }, ColorRGB{ 1 }, Float(1.0), Float(1.5));
-  auto heroL = std::make_shared<MMatte>(ColorRGB(Float(0.90), Float(0.35), Float(0.55)));
-  auto heroR = std::make_shared<MMatte>(ColorRGB(Float(0.25), Float(0.70), Float(0.95)));
+  auto heroL = std::make_shared<Diffuse>(ColorRGB(Float(0.90), Float(0.35), Float(0.55)));
+  auto heroR = std::make_shared<Diffuse>(ColorRGB(Float(0.25), Float(0.70), Float(0.95)));
 
-  std::vector<std::tuple<Point3f, Float, std::shared_ptr<IMaterial>>> heroes = {
+  std::vector<std::tuple<Point3f, Float, std::shared_ptr<Material>>> heroes = {
     {Point3f(Float(0.0),Float(1.15),Float(0.8)),Float(1.15),heroGlass},
     {Point3f(Float(-2.4),Float(1.00),Float(1.4)),Float(1.00),heroL},
     {Point3f(Float(2.4),Float(0.90),Float(1.8)),Float(0.90),heroR}
@@ -97,7 +99,7 @@ void Indus::run()
     placed.emplace_back(c, rr);
     if (rf() < 0.72f) {
       auto col = palette[std::min<std::size_t>(palette.size() - 1, std::size_t(rf() * palette.size()))];
-      world->addWorldObj(std::make_unique<WOSphere>(c, rr, std::make_shared<MMatte>(col)));
+      world->addWorldObj(std::make_unique<WOSphere>(c, rr, std::make_shared<Diffuse>(col)));
     }
     else {
       Float eta = Float(1.25) + Float(0.5) * rf();

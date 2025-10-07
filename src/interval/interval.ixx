@@ -3,7 +3,7 @@ export module interval;
 import std;
 import mathconstants;
 import concepts;
-import types;
+import mathfp;
 
 // Pending deeper understanding
 export template<FloatingArithmetic T>
@@ -20,21 +20,34 @@ public:
   [[nodiscard]] constexpr T getWidth() const noexcept;
   [[nodiscard]] constexpr bool contains(T x) const noexcept;
   [[nodiscard]] constexpr bool isDegenerate() const noexcept;
+  [[nodiscard]] constexpr bool isEmpty() const noexcept;
+  
+  [[nodiscard]] constexpr Interval operator-() const noexcept;
+
+  constexpr Interval& operator+=(const Interval& other) noexcept;
+  constexpr Interval& operator-=(const Interval& other) noexcept;
+  constexpr Interval& operator*=(const Interval& other) noexcept;
+  constexpr Interval& operator/=(const Interval& other) noexcept;
+
+  [[nodiscard]] constexpr Interval operator+(const Interval& other) const noexcept;
+  [[nodiscard]] constexpr Interval operator-(const Interval& other) const noexcept;
+  [[nodiscard]] constexpr Interval operator*(const Interval& other) const noexcept;
+  [[nodiscard]] constexpr Interval operator/(const Interval& other) const noexcept;
+
 
 private:
-  T m_low{}, m_high{};
+  T m_low{};
+  T m_upper{};
 };
 
-export using Intervalf = Interval<Float>;
+template<FloatingArithmetic T>
+constexpr Interval<T>::Interval() noexcept : m_low{ +infinity<T> }, m_upper{ -infinity<T> } {}
 
 template<FloatingArithmetic T>
-constexpr Interval<T>::Interval() noexcept : m_low{ +infinity<T> }, m_high{ -infinity<T> } {}
+constexpr Interval<T>::Interval(T v) noexcept : m_low{ v }, m_upper{ v } {}
 
 template<FloatingArithmetic T>
-constexpr Interval<T>::Interval(T v) noexcept : m_low{ v }, m_high{ v } {}
-
-template<FloatingArithmetic T>
-constexpr Interval<T>::Interval(T low, T high) noexcept : m_low{ low < high ? low : high }, m_high{ low < high ? high : low } {}
+constexpr Interval<T>::Interval(T low, T high) noexcept : m_low{ low < high ? low : high }, m_upper{ low < high ? high : low } {}
 
 template<FloatingArithmetic T>
 constexpr T Interval<T>::getLower() const noexcept 
@@ -45,31 +58,136 @@ constexpr T Interval<T>::getLower() const noexcept
 template<FloatingArithmetic T>
 constexpr T Interval<T>::getUpper() const noexcept 
 { 
-  return m_high; 
+  return m_upper; 
 }
 
 template<FloatingArithmetic T>
 constexpr T Interval<T>::getMid() const noexcept 
 { 
-  return (m_low + m_high) * T(0.5); 
+  return (m_low + m_upper) * T{ 0.5 };
 }
 
 template<FloatingArithmetic T>
 constexpr T Interval<T>::getWidth() const noexcept 
 { 
-  return m_high - m_low; 
+  return m_upper - m_low; 
 }
 
 template<FloatingArithmetic T>
 constexpr bool Interval<T>::contains(T x) const noexcept 
 { 
-  return (m_low <= x) && (x <= m_high); 
+  return (m_low <= x) && (x <= m_upper); 
 }
 
 template<FloatingArithmetic T>
 constexpr bool Interval<T>::isDegenerate() const noexcept 
 { 
-  return m_low == m_high; 
+  return m_low == m_upper; 
+}
+
+template<FloatingArithmetic T>
+constexpr bool Interval<T>::isEmpty() const noexcept
+{
+  return m_low > m_upper;
+}
+
+template<FloatingArithmetic T>
+constexpr Interval<T> Interval<T>::operator-() const noexcept 
+{
+  if (isEmpty()) return *this;
+  return Interval<T>{ -m_upper, -m_low };
+}
+
+template<FloatingArithmetic T>
+constexpr Interval<T>& Interval<T>::operator+=(const Interval& other) noexcept
+{
+  m_low = addRoundDown(m_low, other.m_low);
+  m_upper = addRoundUp(m_upper, other.m_upper);
+
+  return *this;
+}
+
+template<FloatingArithmetic T>
+constexpr Interval<T>& Interval<T>::operator-=(const Interval& other) noexcept
+{
+  m_low = subRoundDown(m_low, other.m_upper); 
+  m_upper = subRoundUp(m_upper, other.m_low);
+  
+  return *this;
+}
+
+template<FloatingArithmetic T>
+constexpr Interval<T>& Interval<T>::operator*=(const Interval& other) noexcept
+{
+  const T ll{ mulRoundDown(m_low,  other.m_low) };
+  const T lh{ mulRoundDown(m_low,  other.m_upper) };
+  const T hl{ mulRoundDown(m_upper, other.m_low) };
+  const T hh{ mulRoundDown(m_upper, other.m_upper) };
+  
+  const T LL{ mulRoundUp(m_low,  other.m_low) };
+  const T LH{ mulRoundUp(m_low,  other.m_upper) };
+  const T HL{ mulRoundUp(m_upper, other.m_low) };
+  const T HH{ mulRoundUp(m_upper, other.m_upper) };
+ 
+  m_low = std::min(std::min(ll, lh), std::min(hl, hh));
+  m_upper = std::max(std::max(LL, LH), std::max(HL, HH));
+
+  return *this;
+}
+
+template<FloatingArithmetic T>
+constexpr Interval<T>& Interval<T>::operator/=(const Interval& other) noexcept
+{
+  if (other.getLower() <= T{} && other.getUpper() >= T{})
+  {
+    m_low = -infinity<T>;
+    m_upper = +infinity<T>;
+    
+    return *this;
+  }
+
+  const T rlo{ divRoundDown(T{ 1 }, other.getUpper()) };
+  const T rhi{ divRoundUp(T{ 1 }, other.getLower()) };
+  
+  (*this) *= { std::min(rlo, rhi), std::max(rlo, rhi) };
+
+  return *this;
+}
+
+template<FloatingArithmetic T>
+constexpr Interval<T> Interval<T>::operator+(const Interval& other) const noexcept
+{
+  Interval<T> r{ *this };
+  r += other;
+
+  return r;
+}
+
+template<FloatingArithmetic T>
+constexpr Interval<T> Interval<T>::operator-(const Interval& other) const noexcept
+{
+  Interval<T> r{ *this };
+  r -= other;
+
+  return r;
+}
+
+template<FloatingArithmetic T>
+constexpr Interval<T> Interval<T>::operator*(const Interval& other) const noexcept
+{
+  Interval<T> r{ *this };
+  r *= other;
+
+  return r;
+}
+
+template<FloatingArithmetic T>
+constexpr Interval<T> Interval<T>::operator/(const Interval& other) const noexcept
+{
+  Interval<T> r{ *this };
+  r /= other;
+
+  return r;
 }
 
 // Free
@@ -98,47 +216,6 @@ export
   }
 
   template<FloatingArithmetic T>
-  Interval<T> addI(const Interval<T>& a, const Interval<T>& b) noexcept
-  {
-    return Interval<T>{ addRoundDown(a.getLower(), b.getLower()), addRoundUp(a.getUpper(), b.getUpper()) };
-  }
-
-  template<FloatingArithmetic T>
-  Interval<T> subI(const Interval<T>& a, const Interval<T>& b) noexcept
-  {
-    return Interval<T>{ subRoundDown(a.getLower(), b.getUpper()), subRoundUp(a.getUpper(), b.getLower()) };
-  }
-
-  template<FloatingArithmetic T>
-  Interval<T> mulI(const Interval<T>& a, const Interval<T>& b) noexcept
-  {
-    const T ll{ mulRoundDown(a.getLower(), b.getLower()) };
-    const T lh{ mulRoundDown(a.getLower(), b.getUpper()) };
-    const T hl{ mulRoundDown(a.getUpper(), b.getLower()) };
-    const T hh{ mulRoundDown(a.getUpper(), b.getUpper()) };
-    const T lo{ std::min(std::min(ll, lh), std::min(hl, hh)) };
-
-    const T LL{ mulRoundUp(a.getLower(), b.getLower()) };
-    const T LH{ mulRoundUp(a.getLower(), b.getUpper()) };
-    const T HL{ mulRoundUp(a.getUpper(), b.getLower()) };
-    const T HH{ mulRoundUp(a.getUpper(), b.getUpper()) };
-    const T hi{ std::max(std::max(LL, LH), std::max(HL, HH)) };
-
-    return Interval<T>{ lo, hi };
-  }
-
-  template<FloatingArithmetic T>
-  Interval<T> divI(const Interval<T>& a, const Interval<T>& b) noexcept
-  {
-    if (b.getLower() <= T(0) && b.getUpper() >= T(0)) return fullInterval<T>();
-
-    const T rlo{ divRoundDown(T(1), b.getUpper()) };
-    const T rhi{ divRoundUp(T(1), b.getLower()) };
-
-    return mulI(a, Interval<T>{ rlo, rhi });
-  }
-
-  template<FloatingArithmetic T>
   Interval<T> sqrtI(const Interval<T>& x) noexcept
   {
     const T l{ std::max(T(0), x.getLower()) };
@@ -150,10 +227,14 @@ export
   template<FloatingArithmetic T>
   Interval<T> fmaI(const Interval<T>& x, const Interval<T>& y, const Interval<T>& z) noexcept
   {
-    const T pmin{ std::min(std::min(mulRoundDown(x.getLower(), y.getLower()), mulRoundDown(x.getLower(), y.getUpper())), std::min(mulRoundDown(x.getUpper(), y.getLower()), mulRoundDown(x.getUpper(), y.getUpper()))) };
+    const T xl{ x.getLower() }; const T xh{ x.getUpper() };
+    const T yl{ y.getLower() }; const T yh{ y.getUpper() };
+    const T zl{ z.getLower() }; const T zh{ z.getUpper() };
 
-    const T pmax{ std::max(std::max(mulRoundUp(x.getLower(), y.getLower()), mulRoundUp(x.getLower(), y.getUpper())), std::max(mulRoundUp(x.getUpper(), y.getLower()), mulRoundUp(x.getUpper(), y.getUpper()))) };
+    const T lo{ std::min({ FMARoundDown(xl,yl,zl), FMARoundDown(xl,yh,zl), FMARoundDown(xh,yl,zl), FMARoundDown(xh,yh,zl) }) };
 
-    return Interval<T>{ addRoundDown(pmin, z.getLower()), addRoundUp(pmax, z.getUpper()) };
+    const T hi{ std::max({ FMARoundUp(xl,yl,zh), FMARoundUp(xl,yh,zh), FMARoundUp(xh,yl,zh), FMARoundUp(xh,yh,zh) }) };
+
+    return Interval<T>{lo, hi};
   }
-}
+};

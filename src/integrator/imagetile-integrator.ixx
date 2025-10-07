@@ -28,7 +28,7 @@ ImageTileIntegrator::ImageTileIntegrator(CameraBase& camera, Sampler& sampler) n
 
 void ImageTileIntegrator::render(const WorldObject& world)
 {
-  const auto& res{ m_camera.film().getFilmResolution() };
+  const auto& res{ m_camera.getFilm().getFilmResolution() };
 
   ScanlineProgress prog{ static_cast<Int>(res[1]), 40 };
   prog.begin();

@@ -18,6 +18,7 @@ import hit_record;
 import material;
 import samplingutil;
 import mathalgebra;
+import mathconstants;
 
 import <cassert>;
 
@@ -42,51 +43,47 @@ PathIntegrator::PathIntegrator(CameraBase& camera, Sampler& sampler, Idx maxDept
 
 ColorRGB PathIntegrator::Li(const Ray& inputRay, const WorldObject& world, Sampler& sampler)
 {
-  ColorRGB L{ 0 };
-  ColorRGB beta{ 1 };
-  Ray ray{ inputRay };
+  ColorRGB L{ 0 }, beta{ 1 }; Ray ray{ inputRay };
 
-  for (Idx bounce{}; bounce < m_maxDepth; ++bounce)
+  for (Idx bounce{}; bounce < m_maxDepth; ++bounce) 
   {
-    const Float RRSample{ sampler.get1D() };
-    const Point2f BSDFSample{ sampler.get2D() };
+    const Float RRUSample{ sampler.get1D() };
+    const Point2f BSDFUSample{ sampler.get2D() };
 
-    HitRecord hit{};
-    
-    if (!world.checkHit(ray, std::numeric_limits<Float>::infinity(), hit))
-    {
-      L += beta * getBackgroundGradient(ray);
-      break;
+    auto siOpt{ world.checkHit(ray, infinity<Float>) };
+
+    if (!siOpt) 
+    { 
+      L += beta * getBackgroundGradient(ray); 
+      break; 
     }
-
-    hit.hitMaterial->computeScatteringFunctions(hit);
-
-    if (!hit.surfaceBSDF) break;
-
-    const auto sampleBSDF{ hit.surfaceBSDF->sample(-ray.getDirection(), BSDFSample) };
-    if (!sampleBSDF || !sampleBSDF->unitW_iWorld) break;
-
-    const Vec3f unitW_iWorld{ *sampleBSDF->unitW_iWorld };
-    const Float PDFVal{ sampleBSDF->PDF };
-    const ColorRGB BRDFVal{ sampleBSDF->BRDF };
-    [[maybe_unused]] const BxDFType flags{ sampleBSDF->flags };
-
-    const Float cosineTheta{ absDot(unitW_iWorld, hit.shadingBasis.getNormal()) };
     
-    if (!(PDFVal > Float{})) break;
+    const SurfaceInteraction& si{ *siOpt };
+    auto mat{ si.getMaterial() }; 
+    if (!mat) break;
+    
+    BSDF bsdf{ mat->getBSDF(si) };
 
-    beta *= BRDFVal * (cosineTheta / PDFVal);
+    auto BSDFSample{ bsdf.sample(-ray.getDirection(), BSDFUSample) };
 
-    if (m_useRR && bounce >= 5)
-    {
+    if (!BSDFSample || !BSDFSample->unitW_iWorld || !(BSDFSample->PDF > Float{})) break;
+    
+    const Vec3f wi{ *BSDFSample->unitW_iWorld };
+    const Float incidentCosineTheta{ absDot(wi, si.getShadingBasis().getNormal()) };
+    beta *= BSDFSample->BRDF * (incidentCosineTheta / BSDFSample->PDF);
+    
+    if (m_useRR && bounce >= 5) 
+    { 
       const Float q{ Float{ std::min(Float{ 0.95 }, std::max({ beta[0], beta[1], beta[2] })) } };
-      if (RRSample > q) break;
-      beta *= (Float{ 1.0 } / q);
+      
+      if (RRUSample > q) break;
+
+      beta *= (Float{ 1 } / q); 
     }
-
-    ray = hit.spawnRay(unitW_iWorld);
+    
+    ray = si.spawnRay(wi);
   }
-
+  
   return L;
 }
 

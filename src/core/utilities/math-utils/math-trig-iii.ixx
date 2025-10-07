@@ -20,11 +20,10 @@ export
     return rad * (T{ 180 } / std::numbers::pi_v<T>);
   }
 
-  // Unused
   template <FloatingArithmetic T>
   [[nodiscard]] constexpr T safeACos(T x) noexcept
   {
-    return std::acos(clamp(x, T{ -1 }, T{ 1 }));
+    return std::acos(clampUnit(x));
   }
 
   // Unused

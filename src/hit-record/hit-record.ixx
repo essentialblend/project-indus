@@ -15,7 +15,7 @@ import mathalgebra;
 
 import <cassert>;
 
-export class IMaterial;
+export class Material;
 
 export class HitRecord
 {
@@ -28,7 +28,7 @@ public:
 
 	Float root{};
 	bool hitFrontFace{};
-	std::shared_ptr<IMaterial> hitMaterial;
+	std::shared_ptr<Material> hitMaterial;
 
 	void setFaceNormal(const Ray& inputRay, const Normal3f& unitOutward)
 	{
@@ -42,4 +42,5 @@ public:
 	{
 		return Ray{ offsetRayOrigin(hitPoint, pError, geometricNormal, w), w };
 	}
+
 };

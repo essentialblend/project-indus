@@ -1,21 +1,20 @@
 export module material;
 
-import <memory>;
-
-import hit_record;
+import surfaceinteraction;
+import bsdf_new;
 
 export enum class MaterialType
 {
-	Matte,
+	Diffuse,
 	Glass
 };
 
-export class IMaterial
+export class Material
 {
 public:
-	virtual ~IMaterial() = default;
+	virtual ~Material() = default;
 
-	virtual void computeScatteringFunctions(HitRecord& hitRec) const = 0;
+	virtual BSDF getBSDF(const SurfaceInteraction& si) const = 0;
 
 	virtual MaterialType getMaterialType() const noexcept = 0;
 };

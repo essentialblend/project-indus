@@ -74,6 +74,8 @@
     <ClCompile Include="src\engine-indus\indus-new.ixx" />
     <ClCompile Include="src\film\film.ixx" />
     <ClCompile Include="src\hit-record\hit-record.ixx" />
+    <ClCompile Include="src\hit-record\interactions\interaction.ixx" />
+    <ClCompile Include="src\hit-record\interactions\surface-interaction.ixx" />
     <ClCompile Include="src\integrator\imagetile-integrator.ixx" />
     <ClCompile Include="src\integrator\integrator.ixx" />
     <ClCompile Include="src\integrator\pathintegrator.ixx" />
@@ -81,16 +83,17 @@
     <ClCompile Include="src\interval\interval.ixx" />
     <ClCompile Include="src\materials\dielectric.ixx" />
     <ClCompile Include="src\materials\material.ixx" />
-    <ClCompile Include="src\materials\matte.ixx" />
+    <ClCompile Include="src\materials\diffuse.ixx" />
     <ClCompile Include="src\math\efloat.ixx" />
     <ClCompile Include="src\math\normal.ixx" />
+    <ClCompile Include="src\math\transforms\camera-transform.ixx" />
     <ClCompile Include="src\onb\onb.ixx" />
     <ClCompile Include="src\pixel\pixel.ixx" />
     <ClCompile Include="src\ray\ray.ixx" />
     <ClCompile Include="src\math\bounds2.ixx" />
     <ClCompile Include="src\math\matrix.ixx" />
     <ClCompile Include="src\math\point.ixx" />
-    <ClCompile Include="src\math\transform.ixx" />
+    <ClCompile Include="src\math\transforms\transform.ixx" />
     <ClCompile Include="src\math\vector.ixx">
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)vector.ifc</ModuleOutputFile>
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|x64'">$(IntDir)vector.ifc</ModuleOutputFile>
@@ -111,6 +114,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\world-object\primitive\primitive.ixx" />
+    <ClCompile Include="src\world-object\sphere.ixx" />
+    <ClCompile Include="src\world-object\world-object.ixx" />
     <ClInclude Include="src\tests\colorrgb-tests.hpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
@@ -151,8 +157,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClCompile Include="src\world-object\sphere.ixx" />
-    <ClCompile Include="src\world-object\world-object.ixx" />
+    <ClCompile Include="src\world-object\shape\shape.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dep\stb_image_write.h" />

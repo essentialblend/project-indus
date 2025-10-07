@@ -2,6 +2,7 @@ export module camerabase;
 
 import ray;
 import transform;
+import cameratransform;
 import constructs;
 import film;
 import types;
@@ -16,23 +17,30 @@ public:
   // Generate a primary ray for a sample. Returns weight.
   virtual CameraRay generateRay(const CameraSample&) const = 0;
 
-  [[nodiscard]] const Transform4f& cameraToWorld() const noexcept;
+  [[nodiscard]] const Transform4f& applyCameraToWorld() const noexcept;
+  [[nodiscard]] const CameraTransform& getCameraTransform() const noexcept;
   [[nodiscard]] CameraShutter getShutter() const noexcept;
-  [[nodiscard]] Film& film() const noexcept;
+  [[nodiscard]] Film& getFilm() const noexcept;
 
 protected:
-  CameraBase(const Transform4f&, const CameraShutter&, Film&) noexcept;
+  CameraBase(const CameraTransform&, const Transform4f&, const CameraShutter&, Film&) noexcept;
 
-  Transform4f m_cameraToWorld;
-  CameraShutter m_cameraShutter;
+  Transform4f m_cameraToWorld{};
+  CameraTransform m_cameraTransform{};
+  CameraShutter m_cameraShutter{};
   Film& m_film;
 };
 
-CameraBase::CameraBase(const Transform4f& camToWorld, const CameraShutter& shutter, Film& film) noexcept : m_cameraToWorld{ camToWorld }, m_cameraShutter{ shutter }, m_film{ film } {}
+CameraBase::CameraBase(const CameraTransform& camTransform, const Transform4f& camToWorld, const CameraShutter& shutter, Film& film) noexcept : m_cameraTransform{ camTransform }, m_cameraToWorld{ camToWorld }, m_cameraShutter{ shutter }, m_film{ film } {}
 
-const Transform4f& CameraBase::cameraToWorld() const noexcept
+const Transform4f& CameraBase::applyCameraToWorld() const noexcept
 {
   return m_cameraToWorld;
+}
+
+const CameraTransform& CameraBase::getCameraTransform() const noexcept
+{
+  return m_cameraTransform;
 }
 
 CameraShutter CameraBase::getShutter() const noexcept
@@ -40,7 +48,7 @@ CameraShutter CameraBase::getShutter() const noexcept
   return m_cameraShutter;
 }
 
-Film& CameraBase::film() const noexcept
+Film& CameraBase::getFilm() const noexcept
 {
   return m_film;
 }

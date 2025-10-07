@@ -17,7 +17,7 @@ public:
   virtual ~ProjectiveCamera() = default;
 
 protected:
-  ProjectiveCamera(const Transform4f&, const CameraShutter&, Film&, const Transform4f&, const Bounds2f&, Float, Float) noexcept;
+  ProjectiveCamera(const CameraTransform&, const Transform4f&, const CameraShutter&, Film&, const Transform4f&, const Bounds2f&, Float, Float) noexcept;
 
   // Derived classes must implement ray generation.
   CameraRay generateRay(const CameraSample&) const override = 0;
@@ -33,7 +33,7 @@ protected:
   Float m_focalDistance;
 };
 
-ProjectiveCamera::ProjectiveCamera(const Transform4f& camToWorld, const CameraShutter& shutter, Film& film, const Transform4f& screenFromCamera, const Bounds2f& screenWindow, Float lensRadius, Float focalDistance) noexcept : CameraBase(camToWorld, shutter, film), m_screenFromCamera{ screenFromCamera }, m_lensRadius{ lensRadius }, m_focalDistance{ focalDistance }
+ProjectiveCamera::ProjectiveCamera(const CameraTransform& cameraTransform, const Transform4f& camToWorld, const CameraShutter& shutter, Film& film, const Transform4f& screenFromCamera, const Bounds2f& screenWindow, Float lensRadius, Float focalDistance) noexcept : CameraBase(cameraTransform, camToWorld, shutter, film), m_screenFromCamera{ screenFromCamera }, m_lensRadius{ lensRadius }, m_focalDistance{ focalDistance }
 {
   const Float xmin{ std::min(screenWindow[0][0], screenWindow[1][0]) };
   const Float xmax{ std::max(screenWindow[0][0], screenWindow[1][0]) };

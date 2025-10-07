@@ -10,13 +10,14 @@ import material;
 import dielectricbxdf;
 import colorrgb;
 import types;
+import surfaceinteraction;
 
-export class MDielectric final : public IMaterial 
+export class MDielectric final : public Material 
 {
 public:
   MDielectric(const ColorRGB&, const ColorRGB&, Float, Float) noexcept;
 
-  void computeScatteringFunctions(HitRecord& hitRec) const override;
+  virtual BSDF getBSDF(const SurfaceInteraction& si) const override;
 
   virtual MaterialType getMaterialType() const noexcept override;
 
@@ -29,12 +30,13 @@ private:
 
 MDielectric::MDielectric(const ColorRGB& reflectance, const ColorRGB& transmittance, Float etaI, Float etaT) noexcept : m_reflectance{ reflectance }, m_transmittance{ transmittance }, m_etaI{ etaI }, m_etaT{ etaT } {}
 
-void MDielectric::computeScatteringFunctions(HitRecord& hitRec) const
+BSDF MDielectric::getBSDF(const SurfaceInteraction& si) const 
 {
-  hitRec.surfaceBSDF = std::make_unique<BSDF>(hitRec.shadingBasis);
+  BSDF bsdf{ si.getShadingBasis() };
 
-  // Pass fixed media: outside: etaI (air), inside: etaT (glass)
-  hitRec.surfaceBSDF->setBxDF(std::make_unique<DielectricBxDF>(m_reflectance, m_transmittance, m_etaI, m_etaT));
+  bsdf.setBxDF(std::make_unique<DielectricBxDF>(m_reflectance, m_transmittance, m_etaI, m_etaT));
+
+  return bsdf;
 }
 
 MaterialType MDielectric::getMaterialType() const noexcept

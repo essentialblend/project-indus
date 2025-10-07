@@ -51,7 +51,7 @@
     <ClCompile Include="src\math\point.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\math\transform.ixx">
+    <ClCompile Include="src\math\transforms\transform.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\math\vector.ixx">
@@ -82,12 +82,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\hit-record\hit-record.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world-object\world-object.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\world-object\sphere.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\materials\material.ixx">
@@ -129,7 +123,7 @@
     <ClCompile Include="src\bxdf\fresnel\fresnel-dielectric.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\materials\matte.ixx">
+    <ClCompile Include="src\materials\diffuse.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\tests\main.cpp">
@@ -184,6 +178,27 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\core\utilities\math-utils\math-geometry-v.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hit-record\interactions\interaction.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hit-record\interactions\surface-interaction.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world-object\shape\shape.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\math\transforms\camera-transform.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world-object\world-object.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world-object\primitive\primitive.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\world-object\sphere.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

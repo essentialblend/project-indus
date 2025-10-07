@@ -1,7 +1,6 @@
 export module mathconstants;
 
 import std;
-import types;
 import concepts;
 
 export
@@ -13,7 +12,7 @@ export
   constexpr T epsilonMachine{ std::numeric_limits<T>::epsilon() };
 
   template<class T>
-  constexpr T kSafeNormalizeLen{ T{ 32 } *epsilonMachine<T> };
+  constexpr T kSafeNormalizeLen{ T{ 32 } * epsilonMachine<T> };
 
   float  oneMinusEpsFloat{ std::nextafter(float{1.0}, float{0.0}) };
   double oneMinusEpsDouble{ std::nextafter(1.0, 0.0) };

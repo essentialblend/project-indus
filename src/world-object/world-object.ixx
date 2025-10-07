@@ -5,6 +5,7 @@ import std;
 import ray;
 import hit_record;
 import types;
+import surfaceinteraction;
 
 export class WorldObject abstract
 {
@@ -12,7 +13,7 @@ public:
 	explicit WorldObject() noexcept = default;
 	virtual ~WorldObject() noexcept = default;
 	
-	virtual bool checkHit(const Ray&, Float, HitRecord&) const = 0;
+	virtual std::optional<SurfaceInteraction> checkHit(const Ray&, Float) const = 0;
 };
 
 export class WorldObjectList : public WorldObject
@@ -24,7 +25,7 @@ public:
 	void clearList() noexcept;
 	void addWorldObj(std::unique_ptr<WorldObject>) noexcept;
 
-	bool checkHit(const Ray&, Float, HitRecord&) const override;
+	std::optional<SurfaceInteraction> checkHit(const Ray&, Float) const override;
 
 private:
 	std::vector<std::unique_ptr<WorldObject>> m_worldObjectList{};
@@ -45,20 +46,17 @@ void WorldObjectList::addWorldObj(std::unique_ptr<WorldObject> worldObj) noexcep
 	m_worldObjectList.push_back(std::move(worldObj));
 }
 
-bool WorldObjectList::checkHit(const Ray& incidentRay, Float tMax, HitRecord& hitRec) const
+std::optional<SurfaceInteraction> WorldObjectList::checkHit(const Ray& incidentRay, Float tMax) const
 {
-	HitRecord tempHitRec;
-	bool hitAnything = false;
-	Float closestSoFar = tMax;
-
-	for (const auto& worldObj : m_worldObjectList)
+	std::optional<SurfaceInteraction> best{};
+	Float closest{ tMax };
+	for (const auto& obj : m_worldObjectList)
 	{
-		if (worldObj->checkHit(incidentRay, closestSoFar, tempHitRec))
+		if (auto surfaceInteraction{ obj->checkHit(incidentRay, closest) })
 		{
-			hitAnything = true;
-			closestSoFar = tempHitRec.root;
-			hitRec = std::move(tempHitRec);
+			closest = surfaceInteraction->getTHit();
+			best = std::move(surfaceInteraction);
 		}
 	}
-	return hitAnything;
+	return best;
 }

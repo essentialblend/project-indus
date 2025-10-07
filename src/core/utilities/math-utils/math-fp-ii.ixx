@@ -1,7 +1,6 @@
 export module mathfp;
 
 import std;
-import types;
 import concepts;
 import mathconstants;
 import vector;
@@ -35,74 +34,86 @@ export
     return std::fma(x, y, z);
   }
 
-  [[nodiscard]] Float nextFloatUp(Float x) noexcept
+  template<FloatingArithmetic T>
+  [[nodiscard]] T nextFloatUp(T x) noexcept
   {
     if (std::isnan(x)) return x;
 
-    if (x == infinity<Float>) return x;
+    if (x == infinity<T>) return x;
 
-    if (std::signbit(x) && x == Float{}) x = Float{};
+    if (std::signbit(x) && x == T{}) x = T{};
 
-    return std::nextafter(x, infinity<Float>);
+    return std::nextafter(x, infinity<T>);
   }
 
-  [[nodiscard]] Float nextFloatDown(Float x) noexcept
+  template<FloatingArithmetic T>
+  [[nodiscard]] T nextFloatDown(T x) noexcept
   {
     if (std::isnan(x)) return x;
 
-    if (x == -infinity<Float>) return x;
+    if (x == -infinity<T>) return x;
 
-    if (!std::signbit(x) && x == Float{}) x = -Float{};
+    if (!std::signbit(x) && x == T{}) x = -T{};
 
-    return std::nextafter(x, -infinity<Float>);
+    return std::nextafter(x, -infinity<T>);
   }
 
-  [[nodiscard]] Float addRoundUp(Float a, Float b) noexcept
+  template<FloatingArithmetic T>
+  [[nodiscard]] T addRoundUp(T a, T b) noexcept
   {
     return nextFloatUp(a + b);
   }
 
-  [[nodiscard]] Float addRoundDown(Float a, Float b) noexcept
+  template<FloatingArithmetic T>
+  [[nodiscard]] T addRoundDown(T a, T b) noexcept
   {
     return nextFloatDown(a + b);
   }
 
-  [[nodiscard]] Float subRoundUp(Float a, Float b) noexcept
+  template<FloatingArithmetic T>
+  [[nodiscard]] T subRoundUp(T a, T b) noexcept
   {
     return nextFloatUp(a - b);
   }
 
-  [[nodiscard]] Float subRoundDown(Float a, Float b) noexcept
+  template<FloatingArithmetic T>
+  [[nodiscard]] T subRoundDown(T a, T b) noexcept
   {
     return nextFloatDown(a - b);
   }
 
-  [[nodiscard]] Float mulRoundUp(Float a, Float b) noexcept
+  template<FloatingArithmetic T>
+  [[nodiscard]] T mulRoundUp(T a, T b) noexcept
   {
     return nextFloatUp(a * b);
   }
 
-  [[nodiscard]] Float mulRoundDown(Float a, Float b) noexcept
+  template<FloatingArithmetic T>
+  [[nodiscard]] T mulRoundDown(T a, T b) noexcept
   {
     return nextFloatDown(a * b);
   }
 
-  [[nodiscard]] Float divRoundUp(Float a, Float b) noexcept
+  template <FloatingArithmetic T>
+  [[nodiscard]] T divRoundUp(T a, T b) noexcept
   {
     return nextFloatUp(a / b);
   }
 
-  [[nodiscard]] Float divRoundDown(Float a, Float b) noexcept
+  template <FloatingArithmetic T>
+  [[nodiscard]] T divRoundDown(T a, T b) noexcept
   {
     return nextFloatDown(a / b);
   }
 
-  [[nodiscard]] Float FMARoundUp(Float a, Float b, Float c) noexcept
+  template <FloatingArithmetic T>
+  [[nodiscard]] T FMARoundUp(T a, T b, T c) noexcept
   {
     return nextFloatUp(fusedMultiplyAdd(a, b, c));
   }
 
-  [[nodiscard]] Float FMARoundDown(Float a, Float b, Float c) noexcept
+  template <FloatingArithmetic T>
+  [[nodiscard]] T FMARoundDown(T a, T b, T c) noexcept
   {
     return nextFloatDown(fusedMultiplyAdd(a, b, c));
   }
@@ -120,12 +131,14 @@ export
     return (x * x);
   }
 
-  [[nodiscard]] Float sqrtRoundUp(Float x) noexcept
+  template <FloatingArithmetic T>
+  [[nodiscard]] T sqrtRoundUp(T x) noexcept
   {
     return nextFloatUp(safeSqrt(x));
   }
 
-  [[nodiscard]] Float sqrtRoundDown(Float x) noexcept
+  template <FloatingArithmetic T>
+  [[nodiscard]] T sqrtRoundDown(T x) noexcept
   {
     return nextFloatDown(safeSqrt(x));
   }
@@ -160,23 +173,23 @@ export
 
   // Unused
   template<UnsignedIntegralArithmetic U>
-  [[nodiscard]] constexpr Int floorLog2(U n) noexcept
+  [[nodiscard]] constexpr int floorLog2(U n) noexcept
   {
-    return n ? static_cast<Int>(std::bit_width(n) - 1) : -1;
+    return n ? static_cast<int>(std::bit_width(n) - 1) : -1;
   }
 
   // Unused
   template <UnsignedIntegralArithmetic U>
-  [[nodiscard]] constexpr Int log2Int(U n) noexcept
+  [[nodiscard]] constexpr int log2Int(U n) noexcept
   {
     return floorLog2(n);
   }
 
   // Unused
   template<UnsignedIntegralArithmetic U>
-  [[nodiscard]] constexpr Int log4Int(U n) noexcept
+  [[nodiscard]] constexpr int log4Int(U n) noexcept
   {
-    const Int l2{ floorLog2(n) };
+    const int l2{ floorLog2(n) };
 
     return (l2 < 0) ? -1 : (l2 >> 1);
   }
@@ -278,7 +291,7 @@ export
   template<FloatingArithmetic T>
   [[nodiscard]] constexpr auto floatToBits(T v) noexcept
   {
-    using U = std::conditional_t<sizeof(T) == 4, UInt32, UInt64>;
+    using U = std::conditional_t<sizeof(T) == 4, std::uint32_t, std::uint64_t>;
 
     return std::bit_cast<U>(v);
   }
@@ -291,7 +304,7 @@ export
   }
 
   // Unused
-  [[nodiscard]] constexpr UInt32 reverseBits32(UInt32 n) noexcept
+  [[nodiscard]] constexpr std::uint32_t reverseBits32(std::uint32_t n) noexcept
   {
     n = (n << 16) | (n >> 16);
     n = ((n & 0x00ff00ffu) << 8) | ((n & 0xff00ff00u) >> 8);
@@ -303,10 +316,10 @@ export
   }
 
   // Unused
-  [[nodiscard]] constexpr UInt64 reverseBits64(UInt64 n) noexcept
+  [[nodiscard]] constexpr std::uint64_t reverseBits64(std::uint64_t n) noexcept
   {
-    const UInt64 n0{ reverseBits32(static_cast<UInt32>(n)) };
-    const UInt64 n1{ reverseBits32(static_cast<UInt32>(n >> 32)) };
+    const std::uint64_t n0{ reverseBits32(static_cast<std::uint32_t>(n)) };
+    const std::uint64_t n1{ reverseBits32(static_cast<std::uint32_t>(n >> 32)) };
 
     return (n0 << 32) | n1;
   }
@@ -323,86 +336,92 @@ export
   }
 
   // Unused
-  [[nodiscard]] Int exponentBits(UInt32 b) noexcept
+  [[nodiscard]] int exponentBits(std::uint32_t b) noexcept
   {
-    return static_cast<Int>((b >> 23) & 0xFF) - 127;
+    return static_cast<int>((b >> 23) & 0xFF) - 127;
   }
 
   // Unused
-  [[nodiscard]] UInt32 significandBits(UInt32 b) noexcept
+  [[nodiscard]] std::uint32_t significandBits(std::uint32_t b) noexcept
   {
     return b & 0x007FFFFFu;
   }
 
   // Unused
-  [[nodiscard]] Int log2Int(Float v) noexcept
+  template<FloatingArithmetic T>
+  [[nodiscard]] int log2Int(T v) noexcept
   {
-    if (!isFinite(v) || v <= Float{}) return 0;
+    if (!isFinite(v) || v <= T{}) return 0;
 
-    if (v < Float{ 1.0 }) return -log2Int(Float{ 1.0 } / v);
+    if (v < T{ 1.0 }) return -log2Int(T{ 1.0 } / v);
 
-    constexpr UInt32 midSignif{ 0x003504F3u };
-    const UInt32 bits{ floatToBits<Float>(v) };
-    const Int e{ exponentBits(bits) };
-    const UInt32 s{ significandBits(bits) };
+    constexpr std::uint32_t midSignif{ 0x003504F3u };
+    const std::uint32_t bits{ floatToBits<T>(v) };
+    const int e{ exponentBits(bits) };
+    const std::uint32_t s{ significandBits(bits) };
 
     return e + ((s >= midSignif) ? 1 : 0);
   }
 
   // Unused 
-  [[nodiscard]] Float fastExp(Float x) noexcept
+  template<FloatingArithmetic T>
+  [[nodiscard]] T fastExp(T x) noexcept
   {
-    if (!isFinite(x)) return std::signbit(x) ? Float{} : infinity<Float>;
+    if (!isFinite(x)) return std::signbit(x) ? T{} : infinity<T>;
 
-    const Float xp{ x * 1.442695041f };
-    const Float fxp{ std::floor(xp) };
+    const T xp{ x * 1.442695041f };
+    const T fxp{ std::floor(xp) };
 
-    const Int i{ static_cast<Int>(fxp) };
-    const Float f{ xp - fxp };
+    const int i{ static_cast<int>(fxp) };
+    const T f{ xp - fxp };
 
-    constexpr std::array<Float, 4> c{ 1.0f, 0.695556856f, 0.226173572f, 0.0781455737f };
-    const Float twoToF{ evaluatePolynomial(f, c.begin(), c.end()) };
+    constexpr std::array<T, 4> c{ 1.0f, 0.695556856f, 0.226173572f, 0.0781455737f };
+    const T twoToF{ evaluatePolynomial(f, c.begin(), c.end()) };
 
-    const UInt32 tb{ floatToBits<Float>(twoToF) };
+    const std::uint32_t tb{ floatToBits<T>(twoToF) };
 
-    Int exponent{ static_cast<Int>((tb >> 23) & 0xFF) - 127 + i };
+    int exponent{ static_cast<int>((tb >> 23) & 0xFF) - 127 + i };
 
-    if (exponent < -126) return Float{};
-    if (exponent > 127)  return infinity<Float>;
+    if (exponent < -126) return T{};
+    if (exponent > 127)  return infinity<T>;
 
-    UInt32 bits{ tb & 0x807FFFFFu };
-    bits |= static_cast<UInt32>(exponent + 127) << 23;
+    std::uint32_t bits{ tb & 0x807FFFFFu };
+    bits |= static_cast<std::uint32_t>(exponent + 127) << 23;
 
-    return bitsToFloat<Float>(bits);
+    return bitsToFloat<T>(bits);
   }
 
-  [[nodiscard]] constexpr std::optional<std::pair<Float, Float>> evaluateQuadratic(Float a, Float b, Float c)
+  template<FloatingArithmetic T>
+  [[nodiscard]] constexpr std::optional<std::pair<T, T>> evaluateQuadratic(T a, T b, T c)
   {
     //Float discr{ sqr(b) - (Float(4.0) * a * c) };
-    Float discr{ differenceOfProducts(b, b, 4 * a, c) };
+    T discr{ differenceOfProducts(b, b, 4 * a, c) };
 
     if (discr < 0.0) return std::nullopt;
 
-    Float sqrtDiscr{ safeSqrt(discr) };
+    T sqrtDiscr{ safeSqrt(discr) };
 
-    Float q{ (b < 0) ? Float{ -0.5 } * (b - sqrtDiscr) : Float{ -0.5 } * (b + sqrtDiscr) };
+    T q{ (b < 0) ? T{ -0.5 } * (b - sqrtDiscr) : T{ -0.5 } * (b + sqrtDiscr) };
 
-    // Product of roots with Vieta's gets us the ratios (i.e. t0 = q/a, t1 = (c/a)/t0 => t1 = c/q) 
-    Float t0{ q / a }; Float t1{ c / q };
+    // Product of roots with Viete's gets us the ratios (i.e. t0 = q/a, t1 = (c/a)/t0 => t1 = c/q) 
+    T t0{ q / a }; T t1{ c / q };
 
     if (t0 > t1) std::swap(t0, t1);
 
     return std::make_pair(t0, t1);
   }
 
-  [[nodiscard]] constexpr Float gamma(std::int32_t n) noexcept
+  template<FloatingArithmetic T>
+  [[nodiscard]] constexpr T gamma(std::int32_t n) noexcept
   {
-    return (n * epsilonMachine<Float>) / (Float{ 1 } - (n * epsilonMachine<Float>));
+    return (n * epsilonMachine<T>) / (T{ 1 } - (n * epsilonMachine<T>));
   }
 
-  [[nodiscard]] Float clampUnit(Float x) noexcept
+
+  template<FloatingArithmetic T>
+  [[nodiscard]] T clampUnit(T x) noexcept
   {
-    return clamp(x, Float{ -1 }, Float{ 1 });
+    return clamp(x, T{ -1 }, T{ 1 });
   }
 
   template<Arithmetic T>

@@ -16,7 +16,7 @@ import lcg;
 
 export std::unique_ptr<CameraBase> makeCamera(const CameraConfig& cfg, Film& film)
 {
-  return std::make_unique<PerspectiveCamera>(cfg.cameraToWorld, cfg.cameraShutter, film, cfg.fovDegrees, cfg.screenWindow, cfg.lensRadius,cfg.focalDistance);
+  return std::make_unique<PerspectiveCamera>(cfg.cameraTransform, cfg.cameraToWorld, cfg.cameraShutter, film, cfg.fovDegrees, cfg.screenWindow, cfg.lensRadius,cfg.focalDistance);
 }
 
 export std::unique_ptr<Film> makeFilm(const FilmConfig& cfg)
