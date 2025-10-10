@@ -1,4 +1,4 @@
-﻿export module core_scanlines;
+﻿export module scanlines;
 
 import std;
 import types;

@@ -6,7 +6,6 @@ import vector;
 import fresneldielectric;
 import types;
 import constructs;
-import core_diag;
 import samplingutil;
 import mathtrig;
 import mathfp;

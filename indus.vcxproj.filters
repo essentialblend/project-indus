@@ -105,10 +105,7 @@
     <ClCompile Include="src\integrator\pathintegrator.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\core-diag.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\core\factory.ixx">
+    <ClCompile Include="src\core\utilities\engine-utils\factory.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\engine-indus\indus-new.ixx">
@@ -150,7 +147,7 @@
     <ClCompile Include="src\sampler\stratified-sampler.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\core-scanlines.ixx">
+    <ClCompile Include="src\core\utilities\engine-utils\scanlines.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\core\utilities\math-utils\math-util-vi.ixx">
@@ -198,7 +195,10 @@
     <ClCompile Include="src\world-object\primitive\primitive.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\world-object\sphere.ixx">
+    <ClCompile Include="src\world-object\shape\sphere-new.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core\utilities\engine-utils\rendertimer.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

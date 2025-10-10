@@ -72,7 +72,7 @@ CameraRay PerspectiveCamera::generateRay(const CameraSample& cs) const
   }
 
   const Ray cameraSpaceRay{ originCam, unitDirCam };
-  //const Ray renderSpaceRay{ m_cameraTransform.applyRenderFromWorld(m_cameraToWorld(cameraSpaceRay)) };
+  const Ray renderSpaceRay{ m_cameraTransform.applyRenderFromWorld(m_cameraToWorld(cameraSpaceRay)) };
 
-  return CameraRay{ m_cameraToWorld(cameraSpaceRay), Float{1.0} };
+  return CameraRay{ renderSpaceRay, Float{1.0} };
 }

@@ -11,7 +11,7 @@ import types;
 import pixel;
 import point;
 import colorrgb;
-
+import rendertimer;
 import mathfp;
 
 // TODOs: PixelSensor and color space transforms, variance estimators for adaptive sampling, G-buffer attributes, EXR/FP16 output, current PNG
@@ -25,7 +25,7 @@ public:
   void addSplat(const Point2f& pFilm, const ColorRGB& L) noexcept;
 
   [[nodiscard]] ColorRGB getPixelColor(const Point2i& p, Float splatScale = 1.0) const noexcept;
-  void writeImage(const IndusConfig& indusConfig, const std::string& filename = {}) const;
+  void writeImage(const IndusConfig& indusConfig, const RenderTimer& renderTimer, const std::string& filename = {}) const;
 
   [[nodiscard]] Point2i getFilmResolution() const noexcept;
 
@@ -79,7 +79,7 @@ ColorRGB Film::getPixelColor(const Point2i& p, Float splatScale) const noexcept
   return ColorRGB(Vec3f{ static_cast<Float>(c[0]), static_cast<Float>(c[1]), static_cast<Float>(c[2]) });
 }
 
-void Film::writeImage(const IndusConfig& indusConfig, const std::string& filename) const
+void Film::writeImage(const IndusConfig& indusConfig, const RenderTimer& renderTimer, const std::string& filename) const
 {
   const Int resWidth{ m_filmResolution[0] };
   const Int resHeight{ m_filmResolution[1] };
@@ -113,10 +113,47 @@ void Film::writeImage(const IndusConfig& indusConfig, const std::string& filenam
 
   std::filesystem::create_directories("renders");
 
+  const auto ms{ renderTimer.getMillisec() };
+  const Int mm{ static_cast<Int>(ms / 60000) };
+  const Int ss{ static_cast<Int>((ms / 1000) % 60) };
+  
+  const std::string ss2{ (ss < 10 ? "0" : "") + std::to_string(ss) };
+
+  const auto gcd = [](Int a, Int b) 
+  { 
+    while (b) 
+    { 
+      Int t = a % b; 
+      a = b; 
+      b = t; 
+    } 
+    return a; 
+  };
+  
+  const Int g{ gcd(resWidth, resHeight) };
+  const std::string ar{ std::to_string(resWidth / g) + "x" + std::to_string(resHeight / g) };
+  const std::string resLabel{ std::to_string(resHeight) + "p" };
+
   const auto now{ std::chrono::system_clock::now().time_since_epoch() };
-  const auto seconds{ std::chrono::duration_cast<std::chrono::seconds>(now).count() };
+  const auto secs{ static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::seconds>(now).count()) };
+  
+  const auto base36 = [](std::uint64_t v) 
+  { 
+    std::string s;
+    const char* d{ "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
+    do 
+    { 
+      s.push_back(d[v % 36]); 
+      v /= 36; 
+    } while (v);
+    std::reverse(s.begin(), s.end()); return s; 
+  };
+  
+  const std::string shortId{ base36(secs % 2176782336ULL) };
   const std::string base{ filename.empty() ? "indus" : filename };
-  const std::string outPath{ "renders/" + base + "_" + std::to_string(resWidth) + "x" + std::to_string(resHeight) + "_spp" + std::to_string(indusConfig.samplerCfg.samplesPerPixel) + "_" + std::to_string(seconds) + ".png" };
+  const std::string outPath{ "renders/" + base + "_" + ar + "_" + resLabel +
+    "_spp" + std::to_string(indusConfig.samplerCfg.samplesPerPixel) +
+    "_" + std::to_string(mm) + "m" + ss2 + "s_" + shortId + ".png" };
 
   stbi_write_png(outPath.c_str(), resWidth, resHeight, 3, frameBytes.data(), resWidth * 3);
 }

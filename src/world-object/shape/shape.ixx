@@ -4,8 +4,9 @@ import std;
 import surfaceinteraction;
 import types;
 import transform;
+import constructs;
 
-export struct ShapeIntersection final 
+export struct ShapeIntersection final
 {
   SurfaceInteraction interaction;
   Float tHit{};
@@ -19,6 +20,8 @@ public:
   [[nodiscard]] virtual std::optional<ShapeIntersection> intersect(const Ray& ray, Float rayParamTMax) const = 0;
 
   [[nodiscard]] virtual bool intersectP(const Ray& ray, Float rayParamTMax) const = 0;
-
+  
+  [[nodiscard]] virtual std::optional<QuadricIntersection> intersectT(const Ray&, Float) const = 0;
+  [[nodiscard]] virtual SurfaceInteraction interactionFromIntersection(const QuadricIntersection&, const Vec3f& w_oWorld, Float timeSec) const = 0;
   //[[nodiscard]] virtual Bounds3f getBounds() const noexcept = 0;
 };

@@ -5,7 +5,7 @@ import sampler;
 import camerabase;
 import world_object;
 import types;
-import core_scanlines;
+import scanlines;
 
 // For now, tile = row. Easy to extend later to progressive/Morton tiles.
 // Camera and Sampler are held by reference, assume their lifetimes exceed the integrator (they’re owned by the engine).

@@ -6,6 +6,8 @@ import std;
 import camerabase;
 import film;
 import constructs;
+import mathalgebra;
+import mathtrig;
 
 // Omitted (TODOs):
 // - RayDifferential generation.

@@ -6,7 +6,6 @@ import types;
 import constructs;
 import point;
 import onb;
-import core_diag;
 import mathconstants;
 import mathfp;
 import mathalgebra;

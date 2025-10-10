@@ -13,7 +13,6 @@ import world_object;
 import ray;
 import types;
 import colorrgb;
-import core_diag;
 import hit_record;
 import material;
 import samplingutil;

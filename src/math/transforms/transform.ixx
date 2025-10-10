@@ -77,6 +77,7 @@ constexpr Vector<T, 3> Transform<T>::operator()(const Vector<T, 3>& v) const
   return { res[0], res[1], res[2] };
 }
 
+// Uses inverse transpose to transform normals
 template<Arithmetic T>
 constexpr Normal<T> Transform<T>::operator()(const Normal<T>& n) const
 {
@@ -143,7 +144,7 @@ constexpr Vector<Interval<T>, 3> Transform<T>::operator()(const Vector<Interval<
 
   const auto ax = [&](int i) -> Interval<T> 
   {
-    return fmaI(x, Interval<T>{Cx[i]}, fmaI(y, Interval<T>{Cy[i]}, z* Interval<T>{Cz[i]}));
+    return fmaI(x, Interval<T>{Cx[i]}, fmaI(y, Interval<T>{ Cy[i]}, z * Interval<T>{ Cz[i] }));
   };
 
   return Vector<Interval<T>, 3>{ ax(0), ax(1), ax(2) };
@@ -190,11 +191,12 @@ Transform<T> Transform<T>::lookAt(const Point<T, 3>& eye, const Point<T, 3>& tar
 {
   Vector<T, 3> f{ normalize(target - eye) };
   Vector<T, 3> up{ normalize(upHint) };
-  if (std::abs(computeDot(f, up)) > T{ 0.999 }) up = { T{0},T{1},T{0} };
+  if (std::abs(computeDot(f, up)) > T{ 0.999 }) up = { T{ 0 }, T{ 1 }, T{ 0 } };
   Vector<T, 3> r{ normalize(computeCross(up, f)) };
   Vector<T, 3> u{ computeCross(f, r) };
 
-  Matrix4<T> camToWorld{
+  Matrix4<T> camToWorld
+  {
     Vector<T, 4>{ r[0], r[1], r[2], T{ 0 } },
     Vector<T, 4>{ u[0], u[1], u[2], T{ 0 } },
     Vector<T, 4>{ f[0], f[1], f[2], T{ 0 } },

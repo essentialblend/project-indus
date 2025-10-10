@@ -47,7 +47,7 @@
     <ClCompile Include="src\color\colorrgb.ixx" />
     <ClCompile Include="src\color\colorrgbd.ixx" />
     <ClCompile Include="src\core\constructs.ixx" />
-    <ClCompile Include="src\core\core-diag.ixx" />
+    <ClCompile Include="src\core\utilities\engine-utils\rendertimer.ixx" />
     <ClCompile Include="src\core\utilities\imports\core-imports.ixx" />
     <ClCompile Include="src\core\utilities\math-utils\math-algebra-iv.ixx" />
     <ClCompile Include="src\core\utilities\math-utils\math-constants-i.ixx" />
@@ -57,8 +57,8 @@
     <ClCompile Include="src\core\utilities\math-utils\math-util-vi.ixx" />
     <ClCompile Include="src\core\utilities\ray-util.ixx" />
     <ClCompile Include="src\core\utilities\sampling-util.ixx" />
-    <ClCompile Include="src\core\core-scanlines.ixx" />
-    <ClCompile Include="src\core\factory.ixx" />
+    <ClCompile Include="src\core\utilities\engine-utils\scanlines.ixx" />
+    <ClCompile Include="src\core\utilities\engine-utils\factory.ixx" />
     <ClCompile Include="src\core\types-concepts\concepts.ixx">
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core-concepts.ifc</ModuleOutputFile>
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|x64'">$(IntDir)core-concepts.ifc</ModuleOutputFile>
@@ -115,7 +115,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\world-object\primitive\primitive.ixx" />
-    <ClCompile Include="src\world-object\sphere.ixx" />
+    <ClCompile Include="src\world-object\shape\sphere-new.ixx" />
     <ClCompile Include="src\world-object\world-object.ixx" />
     <ClInclude Include="src\tests\colorrgb-tests.hpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>

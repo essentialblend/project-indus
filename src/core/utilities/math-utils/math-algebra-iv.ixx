@@ -24,7 +24,6 @@ export
 
     const auto inv{ static_cast<decltype(len2)>(1) / std::sqrt(len2) };
 
-    // return T{ v[0] * inv, v[1] * inv, v[2] * inv };
     return T{ v * inv };
   }
 
