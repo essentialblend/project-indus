@@ -43,9 +43,8 @@ Sphere::Sphere(const Transform4f& renderFromObject, const Transform4f& objectFro
 
 //Bounds3f Sphere::getBounds() const noexcept 
 //{
-//  const Point3f pMin{ -m_radius, -m_radius, m_zMin };
-//  const Point3f pMax{ m_radius,  m_radius, m_zMax };
-//  
+//  const Point3f pMin{ -m_radius, -m_radius,  m_zMin };
+//  const Point3f pMax{ m_radius,  m_radius,  m_zMax };
 //  return m_renderFromObject(Bounds3f{ pMin, pMax });
 //}
 
@@ -62,13 +61,32 @@ std::optional<QuadricIntersection> Sphere::intersectT(const Ray& r, Float tMax) 
 std::optional<QuadricIntersection> Sphere::basicIntersect(const Ray& ray, Float rayParamTMax) const
 {
   // Get ray in render space, convert to interval, and transform to object space
-  const auto rayOriginPoint3f{ ray.getOrigin() }; const auto rayDirVec3f{ ray.getDirection() };
-  
-  const Point3fi rayOriginPoint3fi{ m_objectFromRender(Point3fi{ makeInterval(rayOriginPoint3f[0]), makeInterval(rayOriginPoint3f[1]), makeInterval(rayOriginPoint3f[2]) }) };
-  const Vec3fi rayDirVec3fi{ m_objectFromRender(Vec3fi{ makeInterval(rayDirVec3f[0]), makeInterval(rayDirVec3f[1]), makeInterval(rayDirVec3f[2]) }) };
+  const auto& rayOriginPoint3f{ ray.getOrigin() }; 
+  const auto& rayDirVec3f{ ray.getDirection() };
+ 
+  Point3fi rayOriginPoint3fi{ m_objectFromRender(Point3fi{ rayOriginPoint3f }) };
+  const Vec3fi rayDirVec3fi{ m_objectFromRender(Vec3fi{ rayDirVec3f }) };
+
+  // Since render->object space causes ULP-drift, we offset the ray and adjust tMax to prevent overshooting
+  Float rayParamTMaxObj{ rayParamTMax };
+  {
+    const Vec3f dObj{ rayDirVec3fi };
+    const Float lengthSq{ computeDot(dObj, dObj) };
+
+    if (lengthSq > Float{})
+    {
+      const Vec3f absd{ std::abs(dObj[0]), std::abs(dObj[1]), std::abs(dObj[2]) };
+      const Float dt{ computeDot(absd, rayOriginPoint3fi.getError<Float>()) / lengthSq };
+      const Vec3fi dI{ dObj };
+      const Intervalf dtI{ dt };
+
+      rayOriginPoint3fi = rayOriginPoint3fi + (dI * dtI);
+      rayParamTMaxObj -= dt;
+    }
+  }
 
   // ||p||^2 = R^2 => ||o + td||^2 - R^2 = 0 => t^2||d||^2 + 2t(d.o) + (||o||^2 - R^2) = 0 => at^2 + bt + c = 0
-  // Then,-----a = ||d||^2, b = 2(d.o), c = ||o||^2 - R^2, where ||n||^2 = dot(n, n)
+  // Then, a = ||d||^2, b = 2(d.o), c = ||o||^2 - R^2, where ||n||^2 = dot(n, n)
   const Intervalf a{ computeDot(rayDirVec3fi, rayDirVec3fi) };
   const Intervalf b{ Intervalf{ 2 } * computeDot(rayDirVec3fi, rayOriginPoint3fi) };
   const Intervalf c{ computeDot(rayOriginPoint3fi, rayOriginPoint3fi) - (Intervalf{ m_radius } * Intervalf{ m_radius }) };
@@ -94,7 +112,7 @@ std::optional<QuadricIntersection> Sphere::basicIntersect(const Ray& ray, Float 
   // If any root is closer to the origin, check that first by setting it as t0. Return early if both candidates are OOB
   if (firstCandidateRoot.getLower() > secondCandidateRoot.getLower()) std::swap(firstCandidateRoot, secondCandidateRoot);
 
-  if (firstCandidateRoot.getUpper() > rayParamTMax || secondCandidateRoot.getLower() <= Float{}) return std::nullopt;
+  if (firstCandidateRoot.getUpper() > rayParamTMaxObj || secondCandidateRoot.getLower() <= Float{}) return std::nullopt;
 
   // Set a root, evaluate the angles and check for clipping
   Intervalf finalCandidateRoot{ firstCandidateRoot };
@@ -104,12 +122,12 @@ std::optional<QuadricIntersection> Sphere::basicIntersect(const Ray& ray, Float 
   { 
     finalCandidateRoot = secondCandidateRoot;
     usedFront = false; 
-    if (finalCandidateRoot.getUpper() > rayParamTMax) return std::nullopt;
+    if (finalCandidateRoot.getUpper() > rayParamTMaxObj) return std::nullopt;
   }
 
   // Convert interval ray to float using midpoints for intersection point computation
-  const Point3f rayOriginP3f{ Float(rayOriginPoint3fi[0].getMid()), Float(rayOriginPoint3fi[1].getMid()), Float(rayOriginPoint3fi[2].getMid()) };
-  const Vec3f rayDirV3f{ Float(rayDirVec3fi[0].getMid()), Float(rayDirVec3fi[1].getMid()), Float(rayDirVec3fi[2].getMid()) };
+  const Point3f rayOriginP3f{ rayOriginPoint3fi };
+  const Vec3f rayDirV3f{ rayDirVec3fi };
 
   auto computePHitPhi = [&](const Intervalf& tI, Point3f& pOut, Float& phiOut) 
   {
@@ -138,7 +156,7 @@ std::optional<QuadricIntersection> Sphere::basicIntersect(const Ray& ray, Float 
   if (clipped(p, phi)) 
   {
     if (!usedFront) return std::nullopt;
-    if (secondCandidateRoot.getUpper() > rayParamTMax) return std::nullopt;
+    if (secondCandidateRoot.getUpper() > rayParamTMaxObj) return std::nullopt;
     
     finalCandidateRoot = secondCandidateRoot;
     

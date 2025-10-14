@@ -13,6 +13,7 @@ import mathtrig;
 import normal;
 import point;
 import interval;
+import mathconstants;
 
 export template<Arithmetic T>
 class Transform final
@@ -30,12 +31,21 @@ public:
 
   constexpr auto operator<=>(const Transform&) const noexcept = delete;
 
-  constexpr Vector<T, 3> operator()(const Vector<T, 3>&) const;
-  constexpr Normal<T> operator()(const Normal<T>&) const;
-  constexpr Point<T, 3> operator()(const Point<T, 3>&) const;
+  constexpr Vector<T, 3> operator()(const Vector<T, 3>&) const noexcept;
+  constexpr Normal<T> operator()(const Normal<T>&) const noexcept;
+  constexpr Point<T, 3> operator()(const Point<T, 3>&) const noexcept;
   constexpr Ray operator()(const Ray& r) const;
   constexpr Point<Interval<T>, 3> operator()(const Point<Interval<T>, 3>& p) const noexcept;
   constexpr Vector<Interval<T>, 3> operator()(const Vector<Interval<T>, 3>& v) const noexcept;
+
+  constexpr Point<T, 3> applyInverse(const Point<T, 3>&) const noexcept;
+  constexpr Vector<T, 3> applyInverse(const Vector<T, 3>&) const noexcept;
+  constexpr Normal<T> applyInverse(const Normal<T>&) const noexcept;
+  constexpr Ray applyInverse(const Ray&) const noexcept;
+  
+  constexpr Transform getInverseTransform() const noexcept;
+
+  constexpr bool hasScale() const noexcept;
 
   constexpr Transform operator*(const Transform&) const noexcept;
 
@@ -69,7 +79,7 @@ template<Arithmetic T>
 constexpr Transform<T>::Transform(const Matrix4<T>& forward) noexcept : m_forward{ forward }, m_inverse{ forward.inverse() } {}
 
 template<Arithmetic T>
-constexpr Vector<T, 3> Transform<T>::operator()(const Vector<T, 3>& v) const
+constexpr Vector<T, 3> Transform<T>::operator()(const Vector<T, 3>& v) const noexcept
 {
   const Vector<T, 4> hv{ v[0], v[1], v[2], T{ 0 } };
   const Vector<T, 4> res{ m_forward * hv };
@@ -79,7 +89,7 @@ constexpr Vector<T, 3> Transform<T>::operator()(const Vector<T, 3>& v) const
 
 // Uses inverse transpose to transform normals
 template<Arithmetic T>
-constexpr Normal<T> Transform<T>::operator()(const Normal<T>& n) const
+constexpr Normal<T> Transform<T>::operator()(const Normal<T>& n) const noexcept
 {
   const T x{ n[0] }; const T y{ n[1] }; const T z{ n[2] };
 
@@ -91,7 +101,7 @@ constexpr Normal<T> Transform<T>::operator()(const Normal<T>& n) const
 }
 
 template<Arithmetic T>
-constexpr Point<T, 3> Transform<T>::operator()(const Point<T, 3>& p) const
+constexpr Point<T, 3> Transform<T>::operator()(const Point<T, 3>& p) const noexcept
 {
   const Vector<T, 4> hp{ p[0], p[1], p[2], T{ 1 } };
   const Vector<T, 4> res{ m_forward * hp };
@@ -151,9 +161,39 @@ constexpr Vector<Interval<T>, 3> Transform<T>::operator()(const Vector<Interval<
 }
 
 template<Arithmetic T>
+constexpr Point<T, 3> Transform<T>::applyInverse(const Point<T, 3>& p) const noexcept
+{
+  return Transform{ m_inverse, m_forward }(p);
+}
+
+template<Arithmetic T>
+constexpr Vector<T, 3> Transform<T>::applyInverse(const Vector<T, 3>& v) const noexcept
+{
+  return Transform{ m_inverse, m_forward }(v);
+}
+
+template<Arithmetic T>
+constexpr Normal<T> Transform<T>::applyInverse(const Normal<T>& n) const noexcept
+{
+  return Transform{ m_inverse, m_forward }(n);
+}
+
+template<Arithmetic T>
+constexpr Ray Transform<T>::applyInverse(const Ray& r) const noexcept
+{
+  return Transform{ m_inverse, m_forward }(r);
+}
+
+template<Arithmetic T>
+constexpr Transform<T> Transform<T>::getInverseTransform() const noexcept
+{
+  return Transform{ m_inverse, m_forward };
+}
+
+template<Arithmetic T>
 constexpr Transform<T> Transform<T>::operator*(const Transform<T>& other) const noexcept
 {
-  return Transform<T>{ m_forward* other.m_forward, other.m_inverse* m_inverse };
+  return Transform<T>{ m_forward * other.m_forward, other.m_inverse * m_inverse };
 }
 
 template<Arithmetic T>
@@ -255,7 +295,7 @@ template<Arithmetic T>
 Transform<T> Transform<T>::perspective(T fovDegrees, T nearPlane, T farPlane)
 {
   T fovRadians{ degreesToRadians(fovDegrees) };
-  T invTan{ T{1} / std::tan(fovRadians / T{2}) };
+  T invTan{ T{1} / std::tan(fovRadians / T{ 2 }) };
 
   const Matrix4<T> perspective
   {
@@ -266,4 +306,19 @@ Transform<T> Transform<T>::perspective(T fovDegrees, T nearPlane, T farPlane)
   };
 
   return Transform<T>::scale({ invTan, invTan, 1 }) * Transform<T>{ perspective };
+}
+
+template<Arithmetic T>
+constexpr bool Transform<T>::hasScale() const noexcept
+{
+  const Vector<T, 3> ex{ (*this)(Vector<T, 3>{T{ 1 }, T{ 0 }, T{ 0 }}) };
+  const Vector<T, 3> ey{ (*this)(Vector<T, 3>{T{ 0 }, T{ 1 }, T{ 0 }}) };
+  const Vector<T, 3> ez{ (*this)(Vector<T, 3>{T{ 0 }, T{ 0 }, T{ 1 }}) };
+
+  constexpr T one{ 1 };
+  constexpr T eps{ kSafeNormalizeLen<T> };
+  
+  const auto dev = [&](T s) { return std::abs(s - one) > eps; };
+  
+  return dev(euclideanLengthSq(ex)) || dev(euclideanLengthSq(ey)) || dev(euclideanLengthSq(ez));
 }

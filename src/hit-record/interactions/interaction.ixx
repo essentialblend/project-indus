@@ -5,6 +5,7 @@ import types;
 import ray;
 import mathalgebra;
 import rayutil;
+import constructs;
 
 export class Interaction
 {
@@ -64,17 +65,17 @@ Ray Interaction::spawnRay(const Vec3f& unitWorldDir) const
   if (m_hasNormal)
   {
     Point3f origin{ offsetRayOrigin(m_worldPos, m_worldError, m_worldNormal, unitWorldDir) };
-    return Ray{ origin, unitWorldDir };
+    return Ray{ origin, unitWorldDir, m_timeSec };
   }
 
-  return Ray{ m_worldPos, unitWorldDir };
+  return Ray{ m_worldPos, unitWorldDir, m_timeSec };
 }
 
 Ray Interaction::spawnRayTo(const Point3f& worldTargetPoint) const
 {
   Vec3f dir{ worldTargetPoint - m_worldPos };
 
-  if (euclideanLengthSq(dir) == Float{}) return Ray{ m_worldPos, Vec3f{} };
+  if (euclideanLengthSq(dir) == Float{}) return Ray{ m_worldPos, Vec3f{}, m_timeSec };
   
   dir = normalize(dir);
   

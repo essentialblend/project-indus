@@ -17,11 +17,10 @@ int main()
   const auto& filmCfg{ engineCfg.filmCfg };
 
 	engineCfg.filmCfg.filename = "test";
-	engineCfg.filmCfg.resolution = { 640/4, 360/4 };
+	engineCfg.filmCfg.resolution = { 1920, 1080 };
 
 	engineCfg.camCfg.cameraShutter = { 0.0, 1.0 };
 	engineCfg.camCfg.cameraToWorld = Transform4f::lookAt(Point3f{ 0, 2.0, -5.5 }, Point3f{ 0, 0.5, 0 }, Vec3f{ 0, 1.0, 0 });
-	engineCfg.camCfg.cameraTransform = CameraTransform{ engineCfg.camCfg.cameraToWorld, engineCfg.camCfg.cameraToWorld.swapsHandedness() };
 
 	engineCfg.camCfg.focalDistance = 10.0;
 	engineCfg.camCfg.fovDegrees = 45.0;

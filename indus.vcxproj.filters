@@ -201,6 +201,9 @@
     <ClCompile Include="src\core\utilities\engine-utils\rendertimer.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\math\transforms\animated-transform.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dep\stb_image_write.h">

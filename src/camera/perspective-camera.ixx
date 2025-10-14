@@ -6,6 +6,7 @@ import projectivecamera;
 import types;
 import vector;
 import mathalgebra;
+import mathfp;
 
 
 // TODO: ray differentials, spectral transport
@@ -50,7 +51,7 @@ PerspectiveCamera::PerspectiveCamera(const CameraTransform& cameraTransform, con
 
 CameraRay PerspectiveCamera::generateRay(const CameraSample& cs) const
 {
-  Point3f lensRayOrigin{};
+  // Point3f lensRayOrigin{};
   
   // Raster to camera
   const Point3f pRaster{ cs.pFilm[0], cs.pFilm[1], Float{} };
@@ -71,8 +72,10 @@ CameraRay PerspectiveCamera::generateRay(const CameraSample& cs) const
     unitDirCam = normalize(pFocus - originCam);
   }
 
-  const Ray cameraSpaceRay{ originCam, unitDirCam };
-  const Ray renderSpaceRay{ m_cameraTransform.applyRenderFromWorld(m_cameraToWorld(cameraSpaceRay)) };
+  const Float t{ lerp(cs.time, m_cameraShutter.shutterOpen, m_cameraShutter.shutterClose) };
+
+  const Ray cameraSpaceRay{ originCam, unitDirCam, t };
+  const Ray renderSpaceRay{ m_cameraTransform.applyRenderFromCamera(cameraSpaceRay) };
 
   return CameraRay{ renderSpaceRay, Float{1.0} };
 }

@@ -53,17 +53,16 @@ void Indus::run()
 
   auto makePrim = [&](const Point3f& c, Float r, std::shared_ptr<Material> m)
   {
-    // world-space placement
     const Transform4f worldFromObject = Transform4f::translate({ c[0], c[1], c[2] });
 
-    // convert to render (camera) space
-    const Transform4f renderFromObject = m_camera->getCameraTransform().getRenderFromWorld() * worldFromObject;
+    const Transform4f renderFromWorld = m_camera->getCameraTransform().getRenderFromWorld();
+    const Transform4f renderFromObject = renderFromWorld * worldFromObject;
 
     const Transform4f objectFromRender{ renderFromObject.getInv(), renderFromObject.get() };
 
-    auto s = std::make_shared<Sphere>(renderFromObject, objectFromRender, false, r, -r, r, 360.f);
+    auto s = std::make_shared<Sphere>(renderFromObject, objectFromRender, false, r, -r, r, Float{ 360 });
+
     return std::make_unique<GeometricPrimitive>(s, std::move(m));
-    
   };
 
   auto ground = std::make_shared<Diffuse>(ColorRGB(Float(0.40), Float(0.42), Float(0.46)));

@@ -31,7 +31,7 @@ public:
   static constexpr Matrix4 zero() noexcept;
   static constexpr Matrix4 identity() noexcept;
   constexpr Matrix4<T> transpose() const noexcept;
-  constexpr Matrix4<T> inverse() const;
+  constexpr Matrix4<T> inverse() const noexcept;
   constexpr T determinant() const noexcept;
 
   ~Matrix4() noexcept = default;
@@ -161,7 +161,7 @@ constexpr Matrix4<T> Matrix4<T>::transpose() const noexcept
 }
 
 template<Arithmetic T>
-constexpr Matrix4<T> Matrix4<T>::inverse() const
+constexpr Matrix4<T> Matrix4<T>::inverse() const noexcept
 {
   Matrix4 inv{};
 

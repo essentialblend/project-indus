@@ -33,9 +33,9 @@ void RayIntegrator::evaluatePixelSample(Point2i pPixel, [[maybe_unused]] Int sam
 
   CameraSample cs{ Point2f{ static_cast<Float>(pPixel[0]) + uFilm[0], static_cast<Float>(pPixel[1]) + uFilm[1]}, uLens, Float{} };
 
-  CameraRay ray{ m_camera.generateRay(cs) };
-  if (ray.weight == Float{}) return;
+  CameraRay renderSpaceRay{ m_camera.generateRay(cs) };
+  if (renderSpaceRay.weight == Float{}) return;
 
-  ColorRGB L{ Li(ray.ray, world, sampler) };
-  m_camera.getFilm().addSample(cs.pFilm, L, ray.weight);
+  ColorRGB L{ Li(renderSpaceRay.ray, world, sampler) };
+  m_camera.getFilm().addSample(cs.pFilm, L, renderSpaceRay.weight);
 }

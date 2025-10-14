@@ -86,6 +86,7 @@
     <ClCompile Include="src\materials\diffuse.ixx" />
     <ClCompile Include="src\math\efloat.ixx" />
     <ClCompile Include="src\math\normal.ixx" />
+    <ClCompile Include="src\math\transforms\animated-transform.ixx" />
     <ClCompile Include="src\math\transforms\camera-transform.ixx" />
     <ClCompile Include="src\onb\onb.ixx" />
     <ClCompile Include="src\pixel\pixel.ixx" />
@@ -253,6 +254,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>

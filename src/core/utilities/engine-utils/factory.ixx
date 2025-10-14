@@ -13,10 +13,19 @@ import integrator;
 import pathintegrator;
 import pcg32;
 import lcg;
+import animatedtransform;
+import cameratransform;
 
 export std::unique_ptr<CameraBase> makeCamera(const CameraConfig& cfg, Film& film)
 {
-  return std::make_unique<PerspectiveCamera>(cfg.cameraTransform, cfg.cameraToWorld, cfg.cameraShutter, film, cfg.fovDegrees, cfg.screenWindow, cfg.lensRadius,cfg.focalDistance);
+  const Float startTime{ cfg.cameraShutter.shutterOpen };
+  const Float endTime{ cfg.cameraShutter.shutterClose };
+
+  const AnimatedTransform worldFromCamera{ cfg.cameraToWorld, startTime, cfg.cameraToWorld, endTime };
+
+  const CameraTransform cameraTransform{ worldFromCamera, cfg.renderingSpace };
+
+  return std::make_unique<PerspectiveCamera>(cameraTransform, cfg.cameraToWorld, cfg.cameraShutter, film, cfg.fovDegrees, cfg.screenWindow, cfg.lensRadius, cfg.focalDistance);
 }
 
 export std::unique_ptr<Film> makeFilm(const FilmConfig& cfg)

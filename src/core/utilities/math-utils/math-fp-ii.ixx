@@ -3,7 +3,7 @@ export module mathfp;
 import std;
 import concepts;
 import mathconstants;
-import vector;
+//import vector;
 
 export
 {
@@ -15,7 +15,7 @@ export
 
     return val;
   }
-
+  
   template<Arithmetic T>
   [[nodiscard]] constexpr bool isFinite(T toCheck) noexcept
   {
@@ -430,9 +430,9 @@ export
     return abs(x) <= eps;
   }
 
-  template<Arithmetic T, std::size_t N>
-  constexpr bool nearZero(const Vector<T, N>& v, T eps) noexcept 
-  {
-    return computeDot(v, v) <= sqr(eps);
-  }
+  //template<Arithmetic T, std::size_t N>
+  //constexpr bool nearZero(const Vector<T, N>& v, T eps) noexcept 
+  //{
+  //  return computeDot(v, v) <= sqr(eps);
+  //}
 }

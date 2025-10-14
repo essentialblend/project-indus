@@ -7,7 +7,6 @@ import vector;
 import ray;
 import transform;
 import colorrgb;
-import cameratransform;
 
 export
 {
@@ -36,15 +35,17 @@ export
     Float shutterClose{};
   };
 
+  enum class RenderingSpace { World, CameraWorld, Camera };
+  
   struct CameraConfig final
   {
-    CameraTransform cameraTransform{};
     Transform4f cameraToWorld;
     Float fovDegrees{};
     CameraShutter cameraShutter{};
     Float lensRadius{};
     Float focalDistance{};
     Bounds2f screenWindow{};
+    RenderingSpace renderingSpace{ RenderingSpace::CameraWorld };
   };
 
   struct Strata2D final
@@ -71,7 +72,7 @@ export
   struct IntegratorConfig final
   {
     Idx maxDepth{};
-    bool useRR{ false };
+    bool useRR{ true };
   };
 
   struct IndusConfig final
@@ -128,5 +129,7 @@ export
     Point3f pHitPos{};
     Float phi{};
   };
+
+
 }
 
