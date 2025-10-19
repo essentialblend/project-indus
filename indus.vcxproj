@@ -35,67 +35,70 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\bsdf\bsdf.ixx" />
-    <ClCompile Include="src\bxdf\bxdf.ixx" />
-    <ClCompile Include="src\bxdf\dielectric-bxdf.ixx" />
-    <ClCompile Include="src\bxdf\fresnel\fresnel-dielectric.ixx" />
-    <ClCompile Include="src\bxdf\fresnel\fresnel.ixx" />
-    <ClCompile Include="src\bxdf\lambertian-bxdf.ixx" />
-    <ClCompile Include="src\camera\camera-base.ixx" />
-    <ClCompile Include="src\camera\perspective-camera.ixx" />
-    <ClCompile Include="src\camera\projective-camera.ixx" />
-    <ClCompile Include="src\color\colorrgb.ixx" />
-    <ClCompile Include="src\color\colorrgbd.ixx" />
-    <ClCompile Include="src\core\constructs.ixx" />
-    <ClCompile Include="src\core\utilities\engine-utils\rendertimer.ixx" />
-    <ClCompile Include="src\core\utilities\imports\core-imports.ixx" />
-    <ClCompile Include="src\core\utilities\math-utils\math-algebra-iv.ixx" />
-    <ClCompile Include="src\core\utilities\math-utils\math-constants-i.ixx" />
-    <ClCompile Include="src\core\utilities\math-utils\math-fp-ii.ixx" />
-    <ClCompile Include="src\core\utilities\math-utils\math-geometry-v.ixx" />
-    <ClCompile Include="src\core\utilities\math-utils\math-trig-iii.ixx" />
-    <ClCompile Include="src\core\utilities\math-utils\math-util-vi.ixx" />
-    <ClCompile Include="src\core\utilities\ray-util.ixx" />
-    <ClCompile Include="src\core\utilities\sampling-util.ixx" />
-    <ClCompile Include="src\core\utilities\engine-utils\scanlines.ixx" />
-    <ClCompile Include="src\core\utilities\engine-utils\factory.ixx" />
-    <ClCompile Include="src\core\types-concepts\concepts.ixx">
+    <ClCompile Include="src\components\constructs\sampling-constructs.ixx" />
+    <ClCompile Include="src\components\primitive\bvh-aggregate.ixx" />
+    <ClCompile Include="src\engine-systems\bsdf\bsdf.ixx" />
+    <ClCompile Include="src\components\bxdf\bxdf.ixx" />
+    <ClCompile Include="src\components\bxdf\dielectric-bxdf.ixx" />
+    <ClCompile Include="src\components\bxdf\fresnel\fresnel-dielectric.ixx" />
+    <ClCompile Include="src\components\bxdf\fresnel\fresnel.ixx" />
+    <ClCompile Include="src\components\bxdf\lambertian-bxdf.ixx" />
+    <ClCompile Include="src\engine-systems\camera\camera-base.ixx" />
+    <ClCompile Include="src\engine-systems\camera\perspective-camera.ixx" />
+    <ClCompile Include="src\engine-systems\camera\projective-camera.ixx" />
+    <ClCompile Include="src\components\color\colorrgb.ixx" />
+    <ClCompile Include="src\components\color\colorrgbd.ixx" />
+    <ClCompile Include="src\components\constructs\camera-constructs.ixx" />
+    <ClCompile Include="src\components\constructs\engine-constructs.ixx" />
+    <ClCompile Include="src\components\constructs\misc-constructs.ixx" />
+    <ClCompile Include="src\components\constructs\intersection-constructs.ixx" />
+    <ClCompile Include="src\components\utilities\engine-utils\rendertimer.ixx" />
+    <ClCompile Include="src\components\utilities\math-utils\math-algebra-iv.ixx" />
+    <ClCompile Include="src\components\utilities\math-utils\math-constants-i.ixx" />
+    <ClCompile Include="src\components\utilities\math-utils\math-fp-ii.ixx" />
+    <ClCompile Include="src\components\utilities\math-utils\math-geometry-v.ixx" />
+    <ClCompile Include="src\components\utilities\math-utils\math-trig-iii.ixx" />
+    <ClCompile Include="src\components\utilities\math-utils\math-util-vi.ixx" />
+    <ClCompile Include="src\components\utilities\ray-util.ixx" />
+    <ClCompile Include="src\components\utilities\sampling-util.ixx" />
+    <ClCompile Include="src\components\utilities\engine-utils\scanlines.ixx" />
+    <ClCompile Include="src\components\utilities\engine-utils\factory.ixx" />
+    <ClCompile Include="src\components\types-concepts\concepts.ixx">
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core-concepts.ifc</ModuleOutputFile>
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|x64'">$(IntDir)core-concepts.ifc</ModuleOutputFile>
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">$(IntDir)core-concepts.ifc</ModuleOutputFile>
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)core-concepts.ifc</ModuleOutputFile>
     </ClCompile>
-    <ClCompile Include="src\core\types-concepts\types.ixx">
+    <ClCompile Include="src\components\types-concepts\types.ixx">
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)types.ifc</ModuleOutputFile>
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|x64'">$(IntDir)types.ifc</ModuleOutputFile>
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">$(IntDir)types.ifc</ModuleOutputFile>
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)types.ifc</ModuleOutputFile>
     </ClCompile>
     <ClCompile Include="src\engine-indus\indus-new.ixx" />
-    <ClCompile Include="src\film\film.ixx" />
-    <ClCompile Include="src\hit-record\hit-record.ixx" />
-    <ClCompile Include="src\hit-record\interactions\interaction.ixx" />
-    <ClCompile Include="src\hit-record\interactions\surface-interaction.ixx" />
-    <ClCompile Include="src\integrator\imagetile-integrator.ixx" />
-    <ClCompile Include="src\integrator\integrator.ixx" />
-    <ClCompile Include="src\integrator\pathintegrator.ixx" />
-    <ClCompile Include="src\integrator\ray-integrator.ixx" />
-    <ClCompile Include="src\interval\interval.ixx" />
-    <ClCompile Include="src\materials\dielectric.ixx" />
-    <ClCompile Include="src\materials\material.ixx" />
-    <ClCompile Include="src\materials\diffuse.ixx" />
-    <ClCompile Include="src\math\efloat.ixx" />
-    <ClCompile Include="src\math\normal.ixx" />
-    <ClCompile Include="src\math\transforms\animated-transform.ixx" />
-    <ClCompile Include="src\math\transforms\camera-transform.ixx" />
-    <ClCompile Include="src\onb\onb.ixx" />
-    <ClCompile Include="src\pixel\pixel.ixx" />
-    <ClCompile Include="src\ray\ray.ixx" />
-    <ClCompile Include="src\math\bounds2.ixx" />
-    <ClCompile Include="src\math\matrix.ixx" />
-    <ClCompile Include="src\math\point.ixx" />
-    <ClCompile Include="src\math\transforms\transform.ixx" />
-    <ClCompile Include="src\math\vector.ixx">
+    <ClCompile Include="src\engine-systems\film\film.ixx" />
+    <ClCompile Include="src\components\interaction\interaction.ixx" />
+    <ClCompile Include="src\components\interaction\surface-interaction.ixx" />
+    <ClCompile Include="src\engine-systems\integrator\imagetile-integrator.ixx" />
+    <ClCompile Include="src\engine-systems\integrator\integrator.ixx" />
+    <ClCompile Include="src\engine-systems\integrator\pathintegrator.ixx" />
+    <ClCompile Include="src\engine-systems\integrator\ray-integrator.ixx" />
+    <ClCompile Include="src\components\interval\interval.ixx" />
+    <ClCompile Include="src\components\materials\dielectric.ixx" />
+    <ClCompile Include="src\components\materials\material.ixx" />
+    <ClCompile Include="src\components\materials\diffuse.ixx" />
+    <ClCompile Include="src\components\math\bounds.ixx" />
+    <ClCompile Include="src\components\math\efloat.ixx" />
+    <ClCompile Include="src\components\math\normal.ixx" />
+    <ClCompile Include="src\components\math\transforms\animated-transform.ixx" />
+    <ClCompile Include="src\components\math\transforms\camera-transform.ixx" />
+    <ClCompile Include="src\components\onb\onb.ixx" />
+    <ClCompile Include="src\components\pixel\pixel.ixx" />
+    <ClCompile Include="src\components\ray\ray.ixx" />
+    <ClCompile Include="src\components\math\matrix.ixx" />
+    <ClCompile Include="src\components\math\point.ixx" />
+    <ClCompile Include="src\components\math\transforms\transform.ixx" />
+    <ClCompile Include="src\components\math\vector.ixx">
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)vector.ifc</ModuleOutputFile>
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|x64'">$(IntDir)vector.ifc</ModuleOutputFile>
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">$(IntDir)vector.ifc</ModuleOutputFile>
@@ -104,61 +107,17 @@
     <ClCompile Include="src\main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Tests|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\rng\lcg.ixx" />
-    <ClCompile Include="src\rng\pcg32.ixx" />
-    <ClCompile Include="src\rng\rng.ixx" />
-    <ClCompile Include="src\sampler\independent-sampler.ixx" />
-    <ClCompile Include="src\sampler\sampler.ixx" />
-    <ClCompile Include="src\sampler\stratified-sampler.ixx" />
-    <ClCompile Include="src\tests\main.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="src\world-object\primitive\primitive.ixx" />
-    <ClCompile Include="src\world-object\shape\sphere-new.ixx" />
-    <ClCompile Include="src\world-object\world-object.ixx" />
-    <ClInclude Include="src\tests\colorrgb-tests.hpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="src\tests\hitrec-tests.hpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="src\tests\mat4-tests.hpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="src\tests\normal-tests.hpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="src\tests\onb-tests.hpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="src\tests\point3-tests.hpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="src\tests\ray-tests.hpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="src\tests\samplingutils-tests.hpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="src\tests\transform-tests.hpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="src\tests\vec3-tests.hpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
-    <ClCompile Include="src\world-object\shape\shape.ixx" />
+    <ClCompile Include="src\engine-systems\rng\lcg.ixx" />
+    <ClCompile Include="src\engine-systems\rng\pcg32.ixx" />
+    <ClCompile Include="src\engine-systems\rng\rng.ixx" />
+    <ClCompile Include="src\engine-systems\sampler\independent-sampler.ixx" />
+    <ClCompile Include="src\engine-systems\sampler\sampler.ixx" />
+    <ClCompile Include="src\engine-systems\sampler\stratified-sampler.ixx" />
+    <ClCompile Include="src\components\primitive\list-aggregate.ixx" />
+    <ClCompile Include="src\components\primitive\primitive.ixx" />
+    <ClCompile Include="src\engine-systems\scene\scene.ixx" />
+    <ClCompile Include="src\components\shape\sphere-new.ixx" />
+    <ClCompile Include="src\components\shape\shape.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dep\stb_image_write.h" />

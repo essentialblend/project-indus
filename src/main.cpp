@@ -1,5 +1,4 @@
 ﻿
-import core_imports;
 import indus;
 import vector;
 import std;
@@ -10,6 +9,8 @@ import types;
 import matrix;
 import lcg;
 import cameratransform;
+import bounds;
+import engineconstructs;
 
 int main()
 {
@@ -26,13 +27,15 @@ int main()
 	engineCfg.camCfg.fovDegrees = 45.0;
 	engineCfg.camCfg.lensRadius = 0.0;
 	engineCfg.camCfg.screenWindow = Bounds2f{ { -filmCfg.aspect(), -1 }, { filmCfg.aspect(), 1 } };
+  engineCfg.camCfg.renderingSpace = RenderingSpace::World;
 
-	engineCfg.samplerCfg.strata = Strata2D{ 2 };
+	engineCfg.samplerCfg.strata = Strata2D{ 12 };
 	engineCfg.samplerCfg.samplesPerPixel = static_cast<Int>(engineCfg.samplerCfg.strata.getTotal());
 	engineCfg.samplerCfg.isStratified = true;
 	engineCfg.samplerCfg.isJitter = true;
 
 	engineCfg.integratorCfg.maxDepth = 8;
+  engineCfg.integratorCfg.useRR = true;
 
 	Indus engine{ engineCfg };
 	engine.run();
