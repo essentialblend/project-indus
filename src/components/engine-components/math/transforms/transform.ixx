@@ -2,7 +2,7 @@ export module transform;
 
 import std;
 import concepts;
-import matrix;
+import squarematrix;
 import vector;
 import point;
 import ray;
@@ -16,67 +16,55 @@ import interval;
 import mathconstants;
 
 export template<Arithmetic T>
-class Transform final
+class Transform final 
 {
 public:
+
   constexpr Transform() noexcept = default;
-  constexpr Transform(const Matrix4<T>&, const Matrix4<T>&) noexcept;
-  constexpr Transform(const Matrix4<T>&) noexcept;
+  constexpr Transform(const SquareMatrix<T, 4>& m, const SquareMatrix<T, 4>& mInv) noexcept;
 
   constexpr Transform(const Transform&) noexcept = default;
   constexpr Transform(Transform&&) noexcept = default;
-
   constexpr Transform& operator=(const Transform&) noexcept = default;
   constexpr Transform& operator=(Transform&&) noexcept = default;
-
-  constexpr auto operator<=>(const Transform&) const noexcept = delete;
 
   constexpr Vector<T, 3> operator()(const Vector<T, 3>&) const noexcept;
   constexpr Normal<T> operator()(const Normal<T>&) const noexcept;
   constexpr Point<T, 3> operator()(const Point<T, 3>&) const noexcept;
-  constexpr Ray operator()(const Ray& r) const noexcept;
-  constexpr Point<Interval<T>, 3> operator()(const Point<Interval<T>, 3>& p) const noexcept;
-  constexpr Vector<Interval<T>, 3> operator()(const Vector<Interval<T>, 3>& v) const noexcept;
+  constexpr Ray operator()(const Ray&) const noexcept;
 
-  constexpr Point<T, 3> applyInverse(const Point<T, 3>&) const noexcept;
+  constexpr Vector<Interval<T>, 3> operator()(const Vector<Interval<T>, 3>&) const noexcept;
+  constexpr Point<Interval<T>, 3> operator()(const Point<Interval<T>, 3>&) const noexcept;
+
   constexpr Vector<T, 3> applyInverse(const Vector<T, 3>&) const noexcept;
   constexpr Normal<T> applyInverse(const Normal<T>&) const noexcept;
+  constexpr Point<T, 3> applyInverse(const Point<T, 3>&) const noexcept;
   constexpr Ray applyInverse(const Ray&) const noexcept;
-  
-  constexpr Transform getInverseTransform() const noexcept;
 
+  constexpr Transform getInverseTransform() const noexcept;
   constexpr bool hasScale() const noexcept;
+  constexpr bool swapsHandedness() const noexcept;
 
   constexpr Transform operator*(const Transform&) const noexcept;
 
-  constexpr const Matrix4<T>& get() const noexcept;
-  constexpr const Matrix4<T>& getInv() const noexcept;
-
-  constexpr bool swapsHandedness() const noexcept;
+  constexpr const SquareMatrix<T, 4>& get() const noexcept;
+  constexpr const SquareMatrix<T, 4>& getInv() const noexcept;
 
   static Transform lookAt(const Point<T, 3>&, const Point<T, 3>&, const Vector<T, 3>&);
   static Transform translate(const Vector<T, 3>&);
   static Transform scale(const Vector<T, 3>&);
-  //static Transform rotateX(T);
-  //static Transform rotateY(T);
-  //static Transform rotateZ(T);
-  static Transform perspective(T, T, T);
-
-  ~Transform() noexcept = default;
+  static Transform perspective(T fovDegrees, T n, T f);
 
 private:
-  Matrix4<T> m_forward{};
-  Matrix4<T> m_inverse{};
+  SquareMatrix<T, 4> m_forward{};
+  SquareMatrix<T, 4> m_inverse{};
 };
 
 export using Transform4f = Transform<Float>;
 
 // Implementation
 template<Arithmetic T>
-constexpr Transform<T>::Transform(const Matrix4<T>& forward, const Matrix4<T>& inverse) noexcept : m_forward{ forward }, m_inverse{ inverse } {}
-
-template<Arithmetic T>
-constexpr Transform<T>::Transform(const Matrix4<T>& forward) noexcept : m_forward{ forward }, m_inverse{ forward.inverse() } {}
+constexpr Transform<T>::Transform(const SquareMatrix<T, 4>& forward, const SquareMatrix<T, 4>& inverse) noexcept : m_forward{ forward }, m_inverse{ inverse } {}
 
 template<Arithmetic T>
 constexpr Vector<T, 3> Transform<T>::operator()(const Vector<T, 3>& v) const noexcept
@@ -129,6 +117,7 @@ constexpr Ray Transform<T>::operator()(const Ray& r) const noexcept
   {
     const Vector<T, 3> absd{ std::abs(d2[0]), std::abs(d2[1]), std::abs(d2[2]) };
     const Float dt{ computeDot(absd, oI.getError<Float>()) / lenSq };
+    
     oI = oI + Vector<Interval<T>, 3>{ d2 } * Interval<T>{ dt };
     
     tMax -= dt;
@@ -212,13 +201,13 @@ constexpr Transform<T> Transform<T>::operator*(const Transform<T>& other) const 
 }
 
 template<Arithmetic T>
-constexpr const Matrix4<T>& Transform<T>::get() const noexcept
+constexpr const SquareMatrix<T, 4>& Transform<T>::get() const noexcept
 {
   return m_forward;
 }
 
 template<Arithmetic T>
-constexpr const Matrix4<T>& Transform<T>::getInv() const noexcept
+constexpr const SquareMatrix<T, 4>& Transform<T>::getInv() const noexcept
 {
   return m_inverse;
 }
@@ -246,42 +235,49 @@ constexpr bool Transform<T>::swapsHandedness() const noexcept
 template<Arithmetic T>
 Transform<T> Transform<T>::lookAt(const Point<T, 3>& eye, const Point<T, 3>& target, const Vector<T, 3>& upHint)
 {
+  // Decide the camera's forward direction based on the provided target and eye points, then choose a candidate up vector
   Vector<T, 3> f{ normalize(target - eye) };
   Vector<T, 3> up{ normalize(upHint) };
-  if (std::abs(computeDot(f, up)) > T{ 0.999 }) up = { T{ 0 }, T{ 1 }, T{ 0 } };
+
+  // Test if forward and up cancel, in which case we flip and choose a different candidate up axis
+  if (std::abs(computeDot(f, up)) > T{ 0.999 }) up = { T{0}, T{1}, T{0} };
+
+  // Use the forward and up to decide the right axis, and then use the right and forward to get the actual up axis 
   Vector<T, 3> r{ normalize(computeCross(up, f)) };
   Vector<T, 3> u{ computeCross(f, r) };
 
-  Matrix4<T> camToWorld
-  {
-    Vector<T, 4>{ r[0], r[1], r[2], T{ 0 } },
-    Vector<T, 4>{ u[0], u[1], u[2], T{ 0 } },
-    Vector<T, 4>{ f[0], f[1], f[2], T{ 0 } },
-    Vector<T, 4>{ eye[0], eye[1], eye[2], T{ 1 } }
-  };
-  
-  return Transform<T>{ camToWorld };
+  // Now we construct the camToWorld/worldFromCam matrix where each column encodes one of the three (r, u, f) coordinate axes
+  SquareMatrix<T, 4> camToWorld
+  { { 
+      Vector<T,4>{ r[0], r[1], r[2], T{ 0 } }, 
+      Vector<T,4>{ u[0], u[1], u[2], T{ 0 } }, 
+      Vector<T,4>{ f[0], f[1], f[2], T{ 0 } }, 
+      Vector<T,4>{ eye[0], eye[1], eye[2], T{ 1 } } 
+  } };
+
+  // Setup the dot product for the last column of the inverse matrix
+  const auto& dotREye{ computeDot(r, eye) };
+  const auto& dotUEye{ computeDot(u, eye) };
+  const auto& dotFEye{ computeDot(f, eye) };
+
+  // Since our coordinate transform is a rotation at heart, M^{-1} = M^T, the last column is simply -dot(R^t, e) giving us the inverse matrix
+  SquareMatrix<T, 4> worldToCam
+  { {
+    Vector<T,4>{ r[0],  u[0],  f[0],  T{ 0 } },
+    Vector<T,4>{ r[1],  u[1],  f[1],  T{ 0 } },
+    Vector<T,4>{ r[2],  u[2],  f[2],  T{ 0 } },
+    Vector<T,4>{ -dotREye, -dotUEye, -dotFEye, T{ 1 } }
+  } };
+
+  return Transform<T>{ camToWorld, worldToCam };
 }
 
 template<Arithmetic T>
 Transform<T> Transform<T>::translate(const Vector<T, 3>& v)
 {
-  Matrix4<T> m
-  {
-    Vector<T, 4>{1, 0, 0, 0},
-    Vector<T, 4>{0, 1, 0, 0},
-    Vector<T, 4>{0, 0, 1, 0},
-    Vector<T, 4>{v[0], v[1], v[2], 1}
-  };
+  SquareMatrix<T, 4> m{ { Vector<T, 4>{ 1, 0, 0, 0 }, Vector<T, 4>{ 0, 1, 0, 0 }, Vector<T, 4>{ 0, 0, 1, 0 }, Vector<T, 4>{ v[0], v[1], v[2], 1 } } };
 
-
-  Matrix4<T> mInv
-  {
-    Vector<T, 4>{1, 0, 0, 0},
-    Vector<T, 4>{0, 1, 0, 0},
-    Vector<T, 4>{0, 0, 1, 0},
-    Vector<T, 4>{-v[0], -v[1], -v[2], 1}
-  };
+  SquareMatrix<T, 4> mInv{ { Vector<T, 4>{ 1, 0, 0, 0 }, Vector<T, 4>{ 0, 1, 0, 0 }, Vector<T, 4>{ 0, 0, 1, 0 }, Vector<T, 4>{ -v[0], -v[1], -v[2], 1 } } };
 
   return { m, mInv };
 }
@@ -289,21 +285,9 @@ Transform<T> Transform<T>::translate(const Vector<T, 3>& v)
 template<Arithmetic T>
 Transform<T> Transform<T>::scale(const Vector<T, 3>& v)
 {
-  Matrix4<T> m
-  {
-    Vector<T, 4>{v[0], 0, 0, 0},
-    Vector<T, 4>{0, v[1], 0, 0},
-    Vector<T, 4>{0, 0, v[2], 0},
-    Vector<T, 4>{0, 0, 0, 1}
-  };
+  SquareMatrix<T, 4> m{ { Vector<T, 4>{ v[0], 0, 0, 0 }, Vector<T, 4>{ 0, v[1], 0, 0 }, Vector<T, 4>{ 0, 0, v[2], 0 }, Vector<T, 4>{ 0, 0, 0, 1 } } };
 
-  Matrix4<T> mInv
-  {
-    Vector<T, 4>{1 / v[0], 0, 0, 0},
-    Vector<T, 4>{0, 1 / v[1], 0, 0},
-    Vector<T, 4>{0, 0, 1 / v[2], 0},
-    Vector<T, 4>{0, 0, 0, 1}
-  };
+  SquareMatrix<T, 4> mInv{ { Vector<T, 4>{ 1 / v[0], 0, 0, 0 }, Vector<T, 4>{ 0, 1 / v[1], 0, 0 }, Vector<T, 4>{ 0, 0, 1 / v[2], 0 }, Vector<T, 4>{ 0, 0, 0, 1 } } };
 
   return { m, mInv };
 }
@@ -311,18 +295,27 @@ Transform<T> Transform<T>::scale(const Vector<T, 3>& v)
 template<Arithmetic T>
 Transform<T> Transform<T>::perspective(T fovDegrees, T nearPlane, T farPlane)
 {
-  T fovRadians{ degreesToRadians(fovDegrees) };
-  T invTan{ T{1} / std::tan(fovRadians / T{ 2 }) };
+  const T s{ T{ 1 } / std::tan(degreesToRadians(fovDegrees) / T{ 2 }) };
+  const T a{ farPlane / (farPlane - nearPlane) };
+  const T b{ -(farPlane * nearPlane) / (farPlane - nearPlane) };
 
-  const Matrix4<T> perspective
-  {
-    Vector<T, 4>{1, 0, 0, 0},
-    Vector<T, 4>{0, 1, 0, 0},
-    Vector<T, 4>{0, 0, farPlane / (farPlane - nearPlane), 1},
-    Vector<T, 4>{0, 0, -farPlane * nearPlane / (farPlane - nearPlane), 0}
-  };
+  const SquareMatrix<T, 4> perspectiveMat
+  { { 
+    Vector<T,4>{ 1, 0, 0, 0 }, 
+    Vector<T,4>{ 0, 1, 0, 0 }, 
+    Vector<T,4>{ 0, 0, a, 1 }, 
+    Vector<T,4>{ 0, 0, b, 0 } 
+  } };
 
-  return Transform<T>::scale({ invTan, invTan, 1 }) * Transform<T>{ perspective };
+  const SquareMatrix<T, 4> invPerspectiveMat
+  { {
+    Vector<T,4>{ 1, 0, 0, 0},
+    Vector<T,4>{ 0, 1, 0, 0},
+    Vector<T,4>{ 0, 0, 0, T{1} / b},
+    Vector<T,4>{ 0, 0, T{1}, -a / b}
+  } };
+  
+  return Transform<T>::scale({ s, s, 1 }) * Transform<T>{ perspectiveMat, invPerspectiveMat };
 }
 
 template<Arithmetic T>

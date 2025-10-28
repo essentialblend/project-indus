@@ -5,7 +5,7 @@ import transform;
 import cameratransform;
 import cameraconstructs;
 import samplingconstructs;
-import film;
+import filmbase;
 import types;
 
 // Omitted/TODO: Animated transforms (CameraTransform), Mediums, RDs
@@ -21,18 +21,18 @@ public:
   [[nodiscard]] const Transform4f& applyCameraToWorld() const noexcept;
   [[nodiscard]] const CameraTransform& getCameraTransform() const noexcept;
   [[nodiscard]] CameraShutter getShutter() const noexcept;
-  [[nodiscard]] Film& getFilm() const noexcept;
+  [[nodiscard]] FilmBase& getFilm() const noexcept;
 
 protected:
-  CameraBase(const CameraTransform&, const Transform4f&, const CameraShutter&, Film&) noexcept;
+  CameraBase(const CameraTransform&, const Transform4f&, const CameraShutter&, FilmBase&) noexcept;
 
   Transform4f m_cameraToWorld{};
   CameraTransform m_cameraTransform{};
   CameraShutter m_cameraShutter{};
-  Film& m_film;
+  FilmBase& m_film;
 };
 
-CameraBase::CameraBase(const CameraTransform& camTransform, const Transform4f& camToWorld, const CameraShutter& shutter, Film& film) noexcept : m_cameraTransform{ camTransform }, m_cameraToWorld{ camToWorld }, m_cameraShutter{ shutter }, m_film{ film } {}
+CameraBase::CameraBase(const CameraTransform& camTransform, const Transform4f& camToWorld, const CameraShutter& shutter, FilmBase& film) noexcept : m_cameraTransform{ camTransform }, m_cameraToWorld{ camToWorld }, m_cameraShutter{ shutter }, m_film{ film } {}
 
 const Transform4f& CameraBase::applyCameraToWorld() const noexcept
 {
@@ -49,7 +49,7 @@ CameraShutter CameraBase::getShutter() const noexcept
   return m_cameraShutter;
 }
 
-Film& CameraBase::getFilm() const noexcept
+FilmBase& CameraBase::getFilm() const noexcept
 {
   return m_film;
 }

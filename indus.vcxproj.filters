@@ -18,40 +18,31 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\color\colorrgb.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\components\color\colorrgbd.ixx">
+    <ClCompile Include="src\components\engine-components\color\colorrgb.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\components\constructs\misc-constructs.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\types-concepts\concepts.ixx">
+    <ClCompile Include="src\components\types\concepts.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\types-concepts\types.ixx">
+    <ClCompile Include="src\components\types\types.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine-systems\film\film.ixx">
+    <ClCompile Include="src\components\film-components\pixel\pixel.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\pixel\pixel.ixx">
+    <ClCompile Include="src\components\engine-components\ray\ray.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\ray\ray.ixx">
+    <ClCompile Include="src\components\engine-components\math\point.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\math\matrix.ixx">
+    <ClCompile Include="src\components\engine-components\math\transforms\transform.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\math\point.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\components\math\transforms\transform.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\components\math\vector.ixx">
+    <ClCompile Include="src\components\engine-components\math\vector.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\engine-systems\sampler\sampler.ixx">
@@ -72,16 +63,16 @@
     <ClCompile Include="src\components\utilities\sampling-util.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\onb\onb.ixx">
+    <ClCompile Include="src\components\engine-components\onb\onb.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\math\normal.ixx">
+    <ClCompile Include="src\components\engine-components\math\normal.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\materials\material.ixx">
+    <ClCompile Include="src\components\engine-components\materials\material.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\bxdf\bxdf.ixx">
+    <ClCompile Include="src\components\engine-components\bxdf\bxdf.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\engine-systems\integrator\integrator.ixx">
@@ -99,19 +90,19 @@
     <ClCompile Include="src\components\utilities\engine-utils\factory.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine-indus\indus-new.ixx">
+    <ClCompile Include="src\components\indus\indus-new.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\bxdf\lambertian-bxdf.ixx">
+    <ClCompile Include="src\components\engine-components\bxdf\lambertian-bxdf.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\bxdf\fresnel\fresnel.ixx">
+    <ClCompile Include="src\components\engine-components\bxdf\fresnel\fresnel.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\bxdf\fresnel\fresnel-dielectric.ixx">
+    <ClCompile Include="src\components\engine-components\bxdf\fresnel\fresnel-dielectric.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\materials\diffuse.ixx">
+    <ClCompile Include="src\components\engine-components\materials\diffuse.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\engine-systems\rng\rng.ixx">
@@ -126,10 +117,10 @@
     <ClCompile Include="src\engine-systems\bsdf\bsdf.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\materials\dielectric.ixx">
+    <ClCompile Include="src\components\engine-components\materials\dielectric.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\bxdf\dielectric-bxdf.ixx">
+    <ClCompile Include="src\components\engine-components\bxdf\dielectric-bxdf.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\engine-systems\sampler\stratified-sampler.ixx">
@@ -144,10 +135,10 @@
     <ClCompile Include="src\components\utilities\ray-util.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\interval\interval.ixx">
+    <ClCompile Include="src\components\engine-components\interval\interval.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\math\efloat.ixx">
+    <ClCompile Include="src\components\engine-components\math\efloat.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\components\utilities\math-utils\math-fp-ii.ixx">
@@ -165,31 +156,31 @@
     <ClCompile Include="src\components\utilities\math-utils\math-geometry-v.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\interaction\interaction.ixx">
+    <ClCompile Include="src\components\engine-components\interaction\interaction.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\interaction\surface-interaction.ixx">
+    <ClCompile Include="src\components\engine-components\interaction\surface-interaction.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\shape\shape.ixx">
+    <ClCompile Include="src\components\engine-components\shape\shape.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\math\transforms\camera-transform.ixx">
+    <ClCompile Include="src\components\engine-components\math\transforms\camera-transform.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\primitive\primitive.ixx">
+    <ClCompile Include="src\components\engine-components\primitive\primitive.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\shape\sphere-new.ixx">
+    <ClCompile Include="src\components\engine-components\shape\sphere-new.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\components\utilities\engine-utils\rendertimer.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\math\transforms\animated-transform.ixx">
+    <ClCompile Include="src\components\engine-components\math\transforms\animated-transform.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\math\bounds.ixx">
+    <ClCompile Include="src\components\engine-components\math\bounds.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\components\constructs\engine-constructs.ixx">
@@ -201,16 +192,37 @@
     <ClCompile Include="src\components\constructs\intersection-constructs.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\primitive\list-aggregate.ixx">
+    <ClCompile Include="src\components\engine-components\primitive\list-aggregate.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\engine-systems\scene\scene.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\primitive\bvh-aggregate.ixx">
+    <ClCompile Include="src\components\engine-components\primitive\bvh-aggregate.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\components\constructs\sampling-constructs.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\engine-systems\film\film-base.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\engine-systems\film\rgb-film.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\engine-components\math\squarematrix.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\film-components\filter\filter.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\constructs\dictionaries.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\utilities\color-utils.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\film-components\pixelsensor\pixelsensor.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

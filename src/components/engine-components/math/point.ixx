@@ -24,6 +24,9 @@ public:
   template<FloatingArithmetic U = T> requires (!IntervalScalarLike<T>)
   constexpr explicit Point(const Point<Interval<U>, N>&) noexcept;
 
+  template<ScalarLike U> requires (!IntervalScalarLike<T> && !IntervalScalarLike<U>&& std::convertible_to<U, T>)
+  constexpr explicit Point(const Point<U, N>&) noexcept;
+
   constexpr Point(const Point&) noexcept = default;
   constexpr Point(Point&&) noexcept = default;
 
@@ -62,12 +65,23 @@ template<typename ...Args> requires (sizeof...(Args) == N)
 constexpr Point<T, N>::Point(Args... values) noexcept : m_elements{ { static_cast<T>(values)... } } {}
 
 template<ScalarLike T, std::size_t N> requires Arity234<N>
+template<ScalarLike U> requires (!IntervalScalarLike<T> && !IntervalScalarLike<U>&& std::convertible_to<U, T>)
+constexpr Point<T, N>::Point(const Point<U, N>& other) noexcept 
+{
+  for (std::size_t i{}; i < N; ++i) 
+  {
+    m_elements[i] = static_cast<T>(other[i]);
+  }
+}
+
+
+template<ScalarLike T, std::size_t N> requires Arity234<N>
 template<FloatingArithmetic U> requires IntervalScalarLike<T>
 constexpr Vector<U, N> Point<T, N>::getError() const noexcept
 {
   Vector<U, N> out{};
 
-  for (std::size_t i = 0; i < N; ++i) 
+  for (std::size_t i{}; i < N; ++i)
   {
     const U lo{ static_cast<U>(m_elements[i].getLower()) };
     const U hi{ static_cast<U>(m_elements[i].getUpper()) };

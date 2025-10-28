@@ -9,7 +9,7 @@ import ray;
 import types;
 import mathfp;
 
-export template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+export template<ScalarLike T, std::size_t N> requires Arity23<N>
 class Bounds final
 {
 public:
@@ -20,20 +20,17 @@ public:
 
   constexpr explicit Bounds(const Point<T, N>&, const Point<T, N>&) noexcept;
 
-  template<FloatScalarLike U>
+  template<ScalarLike U>
   constexpr explicit Bounds(const Bounds<U, N>&) noexcept;
 
-  [[nodiscard]] constexpr Point<T, N> getMin() noexcept;
-  [[nodiscard]] constexpr Point<T, N> getMax() noexcept;
-
-  template <typename Self>
-  [[nodiscard]] constexpr decltype(auto) operator[](this Self&&, int) noexcept;
+  [[nodiscard]] constexpr const Point<T, N>& getMin() const noexcept;
+  [[nodiscard]] constexpr const Point<T, N>& getMax() const noexcept;
 
   [[nodiscard]] constexpr Point<T, N> getCorner(int) const noexcept;
   [[nodiscard]] constexpr Vector<T, N> getDiagonal() const noexcept;
   [[nodiscard]] constexpr int getMaxDimension() const noexcept;
-  [[nodiscard]] constexpr Point<T, N> lerp(const Point<T, N>&) const noexcept;
-  [[nodiscard]] constexpr Vector<T, N> offset(const Point<T, N>&) const noexcept;
+  [[nodiscard]] constexpr Point<T, N> lerp(const Point<T, N>&) const noexcept requires FloatScalarLike<T>;
+  [[nodiscard]] constexpr Vector<T, N> offset(const Point<T, N>&) const noexcept requires FloatScalarLike<T>;
   [[nodiscard]] constexpr bool isEmpty() const noexcept;
   [[nodiscard]] constexpr bool isDegenerate() const noexcept;
 
@@ -58,9 +55,9 @@ public:
   [[nodiscard]] static constexpr decltype(U{} - T{}) getDistance(const Point<U, N>&, const Bounds&) noexcept;
   
   template<FloatingArithmetic U>
-  [[nodiscard]] static constexpr Bounds expandBoundsByDelta(const Bounds&, U) noexcept;
+  [[nodiscard]] static constexpr Bounds expandBoundsByDelta(const Bounds&, U) noexcept requires FloatScalarLike<T>;
 
-  [[nodiscard]] constexpr std::optional<RayBoxHit> intersectPRange(const Ray&) const noexcept requires Arity3<N>;
+  [[nodiscard]] constexpr std::optional<RayBoxHit> intersectPRange(const Ray&) const noexcept requires Arity3<N> && FloatScalarLike<T>;
 
   [[nodiscard]] constexpr SphereBounds getBoundingSphere() const noexcept requires Arity3<N>;
 
@@ -70,9 +67,12 @@ private:
 };
 
 export using Bounds2f = Bounds<Float, 2>;
-export using Bounds3f = Bounds<Float, 3>;
+export using Bounds2i = Bounds<Int, 2>;
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+export using Bounds3f = Bounds<Float, 3>;
+export using Bounds3i = Bounds<Int, 3>;
+
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr Bounds<T, N>::Bounds() noexcept 
 {
   const T lo{ std::numeric_limits<T>::lowest() };
@@ -84,11 +84,11 @@ constexpr Bounds<T, N>::Bounds() noexcept
   }
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr Bounds<T, N>::Bounds(const Point<T, N>& point) noexcept
   : m_min(point), m_max(point) {}
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr Bounds<T, N>::Bounds(const Point<T, N>& minPoint, const Point<T, N>& maxPoint) noexcept 
 {
   for (std::size_t i{}; i < N; ++i)
@@ -101,8 +101,8 @@ constexpr Bounds<T, N>::Bounds(const Point<T, N>& minPoint, const Point<T, N>& m
   }
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
-template<FloatScalarLike U>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike U>
 constexpr Bounds<T, N>::Bounds(const Bounds<U, N>& b) noexcept 
 {
   if (b.isEmpty()) 
@@ -118,28 +118,19 @@ constexpr Bounds<T, N>::Bounds(const Bounds<U, N>& b) noexcept
   }
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
-constexpr Point<T, N> Bounds<T, N>::getMin() noexcept
+template<ScalarLike T, std::size_t N> requires Arity23<N>
+constexpr const Point<T, N>& Bounds<T, N>::getMin() const noexcept
 {
   return m_min;
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
-constexpr Point<T, N> Bounds<T, N>::getMax() noexcept
+template<ScalarLike T, std::size_t N> requires Arity23<N>
+constexpr const Point<T, N>& Bounds<T, N>::getMax() const noexcept
 {
   return m_max;
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
-template<typename Self>
-constexpr decltype(auto) Bounds<T, N>::operator[](this Self&& self, int i) noexcept
-{
-  if (i == 0) return std::forward_like<Self>(self.m_min);
-  
-  return std::forward_like<Self>(self.m_max);
-}
-
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr Point<T, N> Bounds<T, N>::getCorner(int i) const noexcept 
 {
   Point<T, N> p{};
@@ -150,13 +141,13 @@ constexpr Point<T, N> Bounds<T, N>::getCorner(int i) const noexcept
   return p;
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr Vector<T, N> Bounds<T, N>::getDiagonal() const noexcept 
 {
   return m_max - m_min;
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr int Bounds<T, N>::getMaxDimension() const noexcept
 {
   const Vector<T, N> d{ getDiagonal() };
@@ -171,8 +162,8 @@ constexpr int Bounds<T, N>::getMaxDimension() const noexcept
   }
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
-constexpr Point<T, N> Bounds<T, N>::lerp(const Point<T, N>& pointToLerp) const noexcept 
+template<ScalarLike T, std::size_t N> requires Arity23<N>
+constexpr Point<T, N> Bounds<T, N>::lerp(const Point<T, N>& pointToLerp) const noexcept requires FloatScalarLike<T>
 {
   Point<T, N> p{};
   
@@ -186,8 +177,8 @@ constexpr Point<T, N> Bounds<T, N>::lerp(const Point<T, N>& pointToLerp) const n
   return p;
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
-constexpr Vector<T, N> Bounds<T, N>::offset(const Point<T, N>& p) const noexcept 
+template<ScalarLike T, std::size_t N> requires Arity23<N>
+constexpr Vector<T, N> Bounds<T, N>::offset(const Point<T, N>& p) const noexcept requires FloatScalarLike<T>
 {
   Vector<T, N> o{};
 
@@ -201,7 +192,7 @@ constexpr Vector<T, N> Bounds<T, N>::offset(const Point<T, N>& p) const noexcept
   return o;
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr bool Bounds<T, N>::isEmpty() const noexcept 
 {
   for (std::size_t i{}; i < N; ++i)
@@ -210,7 +201,7 @@ constexpr bool Bounds<T, N>::isEmpty() const noexcept
   return false;
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr bool Bounds<T, N>::isDegenerate() const noexcept 
 {
   // Degenerate if any extent == 0 (valid but measure-zero box)
@@ -220,7 +211,7 @@ constexpr bool Bounds<T, N>::isDegenerate() const noexcept
   return false;
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr T Bounds<T, N>::getArea() const noexcept requires Arity2<N>
 {
   if (isEmpty()) return T{ 0 };
@@ -230,7 +221,7 @@ constexpr T Bounds<T, N>::getArea() const noexcept requires Arity2<N>
   return e[0] * e[1];
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr T Bounds<T, N>::getSurfaceArea() const noexcept requires Arity3<N> 
 {
   if (isEmpty()) return T{ 0 };
@@ -242,7 +233,7 @@ constexpr T Bounds<T, N>::getSurfaceArea() const noexcept requires Arity3<N>
   return T{ 2 } * (x * y + x * z + y * z);
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr T Bounds<T, N>::getVolume() const noexcept requires Arity3<N> 
 {
   if (isEmpty()) return T{ 0 };
@@ -254,7 +245,7 @@ constexpr T Bounds<T, N>::getVolume() const noexcept requires Arity3<N>
   return x * y * z;
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr Bounds<T, N> Bounds<T, N>::getUnion(const Bounds& b, const Point<T, N>& p) noexcept 
 {
   if (b.isEmpty()) return Bounds{ p };
@@ -271,7 +262,7 @@ constexpr Bounds<T, N> Bounds<T, N>::getUnion(const Bounds& b, const Point<T, N>
   return Bounds{ mn, mx };
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr Bounds<T, N> Bounds<T, N>::getUnion(const Bounds& a, const Bounds& b) noexcept 
 {
   if (a.isEmpty()) return b;
@@ -289,7 +280,7 @@ constexpr Bounds<T, N> Bounds<T, N>::getUnion(const Bounds& a, const Bounds& b) 
   return Bounds{ mn, mx };
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr Bounds<T, N> Bounds<T, N>::getIntersect(const Bounds& b) const noexcept 
 {
   if (isEmpty() || b.isEmpty()) return Bounds{};
@@ -308,7 +299,7 @@ constexpr Bounds<T, N> Bounds<T, N>::getIntersect(const Bounds& b) const noexcep
   return Bounds{ mn, mx };
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr bool Bounds<T, N>::overlaps(const Bounds& a, const Bounds& b) noexcept 
 {
   for (std::size_t i = 0; i < N; ++i)
@@ -317,7 +308,7 @@ constexpr bool Bounds<T, N>::overlaps(const Bounds& a, const Bounds& b) noexcept
   return true;
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr bool Bounds<T, N>::inside(const Point<T, N>& p, const Bounds& b) noexcept 
 {
   for (std::size_t i{}; i < N; ++i)
@@ -326,7 +317,7 @@ constexpr bool Bounds<T, N>::inside(const Point<T, N>& p, const Bounds& b) noexc
   return true;
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr bool Bounds<T, N>::insideExclusive(const Point<T, N>& p, const Bounds& b) noexcept 
 {
   for (std::size_t i = 0; i < N; ++i)
@@ -335,7 +326,7 @@ constexpr bool Bounds<T, N>::insideExclusive(const Point<T, N>& p, const Bounds&
   return true;
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 template<FloatingArithmetic U>
 constexpr decltype(U{} - T{}) Bounds<T, N>::getDistanceSq(const Point<U, N>& p, const Bounds& b) noexcept 
 {
@@ -345,7 +336,7 @@ constexpr decltype(U{} - T{}) Bounds<T, N>::getDistanceSq(const Point<U, N>& p, 
   
   for (std::size_t i{}; i < N; ++i)
   {
-    const RT dx{ 0 };
+    RT dx{ 0 };
 
     if (p[i] < b.m_min[i]) dx = RT{ b.m_min[i] - p[i] };
     else if (p[i] > b.m_max[i]) dx = RT{ p[i] - b.m_max[i] };
@@ -356,7 +347,7 @@ constexpr decltype(U{} - T{}) Bounds<T, N>::getDistanceSq(const Point<U, N>& p, 
   return sum;
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 template<FloatingArithmetic U>
 constexpr decltype(U{} - T{}) Bounds<T, N>::getDistance(const Point<U, N>& p, const Bounds& b) noexcept
 {
@@ -365,9 +356,9 @@ constexpr decltype(U{} - T{}) Bounds<T, N>::getDistance(const Point<U, N>& p, co
   return RT(std::sqrt(RT(getDistanceSq(p, b))));
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 template<FloatingArithmetic U>
-constexpr Bounds<T, N> Bounds<T, N>::expandBoundsByDelta(const Bounds& a, U delta) noexcept 
+constexpr Bounds<T, N> Bounds<T, N>::expandBoundsByDelta(const Bounds& a, U delta) noexcept requires FloatScalarLike<T>
 {
   Point<T, N> mn{};
   Point<T, N> mx{};
@@ -383,8 +374,8 @@ constexpr Bounds<T, N> Bounds<T, N>::expandBoundsByDelta(const Bounds& a, U delt
   return Bounds{ mn, mx };
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
-constexpr std::optional<RayBoxHit> Bounds<T, N>::intersectPRange(const Ray& ray) const noexcept requires Arity3<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
+constexpr std::optional<RayBoxHit> Bounds<T, N>::intersectPRange(const Ray& ray) const noexcept requires Arity3<N> && FloatScalarLike<T>
 {
   if (isEmpty()) return std::nullopt;
 
@@ -400,7 +391,7 @@ constexpr std::optional<RayBoxHit> Bounds<T, N>::intersectPRange(const Ray& ray)
     
     if (tNear > tFar) std::swap(tNear, tFar);
     
-    tFar *= T{ 1 } + T{ 2 } * T{ gamma<T>(3) };
+    tFar *= T{ 1 } + T{ 2 } * gamma<T>(3);
     
     t0 = (tNear > t0) ? tNear : t0;
     t1 = (tFar < t1) ? tFar : t1;
@@ -411,7 +402,7 @@ constexpr std::optional<RayBoxHit> Bounds<T, N>::intersectPRange(const Ray& ray)
   return RayBoxHit{ t0, t1 };
 }
 
-template<FloatScalarLike T, std::size_t N> requires Arity23<N>
+template<ScalarLike T, std::size_t N> requires Arity23<N>
 constexpr SphereBounds Bounds<T, N>::getBoundingSphere() const noexcept  requires Arity3<N> 
 {
   if (isEmpty()) return { {}, T{0} };

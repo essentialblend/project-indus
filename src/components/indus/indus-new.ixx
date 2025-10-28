@@ -4,7 +4,7 @@ import std;
 import spherenew;
 import colorrgb;
 import factory;
-import film;
+import filmbase;
 import camerabase;
 import sampler;
 import integrator;
@@ -20,6 +20,7 @@ import miscconstructs;
 import bvhaggregate;
 import mathalgebra;
 import mathconstants;
+import mathfp;
 
 export class Indus final
 {
@@ -32,13 +33,15 @@ public:
 private:
   IndusConfig m_cfg{};
 
-  std::unique_ptr<Film> m_film{};
+  std::unique_ptr<FilmBase> m_film{};
   std::unique_ptr<CameraBase> m_camera{};
   std::unique_ptr<Sampler> m_sampler{};
   std::unique_ptr<Integrator> m_integrator{};
 
-  std::shared_ptr<Primitive> makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld);
+  std::shared_ptr<Primitive> makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld, const Point2f& matteXZ, const Point2f& glassXZ = {});
+
   std::shared_ptr<Primitive> makeLegacyHeroScene(const Transform4f& renderFromWorld);
+
 };
 
 Indus::Indus(const IndusConfig& cfg) noexcept : m_cfg{ cfg } {}
@@ -60,8 +63,11 @@ void Indus::run()
     m_camera->getCameraTransform().getRenderFromWorld()
   };
 
+  const Point2f matteBallPosition{ 0.75, -1.25 };
+  const Point2f dielectricBallPosition{ 0, 0 };
+
   // build Shirley scene BVH root (Middle split, 4 prims/node inside)
-  std::shared_ptr<Primitive> root{ makeShirleyBook1BVHRoot(renderFromWorld) };
+  std::shared_ptr<Primitive> root{ makeShirleyBook1BVHRoot(renderFromWorld, matteBallPosition, dielectricBallPosition) };
 
   // wrap in Scene
   Scene scene{ root };
@@ -73,74 +79,98 @@ void Indus::run()
 
   // print BVH stats
   if (auto bvh = std::dynamic_pointer_cast<BVHAggregate>(scene.getSceneRoot()))
-    bvh->printBVHStats(m_film->getFilmResolution()[0], m_film->getFilmResolution()[1], m_cfg.samplerCfg.samplesPerPixel, timer.getMillisec());
+    bvh->printBVHStats(m_film->getFilmResolution()[0], m_film->getFilmResolution()[1], m_cfg.samplerCfg.samplesPerPixel, static_cast<double>(timer.getMillisec()));
 
   m_film->writeImage(m_cfg, timer);
 }
 
-std::shared_ptr<Primitive>
-Indus::makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld)
+std::shared_ptr<Primitive> Indus::makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld, const Point2f& matteXZ, const Point2f& glassXZ)
 {
-  auto hash01 = [](int a, int b, int k) noexcept -> Float {
-    std::uint32_t v = std::uint32_t(a * 73856093) ^ std::uint32_t(b * 19349663) ^ std::uint32_t(k * 83492791);
-    v ^= v >> 17; v *= 0xED5AD4BBu; v ^= v >> 11; v *= 0xAC4C1B51u; v ^= v >> 15; v *= 0x31848BABu; v ^= v >> 14;
-    return Float(v & 0x00FFFFFFu) / Float(16777216.0f);
-    };
-
-  auto makePrim = [&](const Point3f& c, Float r, std::shared_ptr<Material> m) {
-    const Transform4f worldFromObject{ Transform4f::translate(Vec3f{ c[0], c[1], c[2] }) };
-    const Transform4f renderFromObject{ renderFromWorld * worldFromObject };
-    const Transform4f objectFromRender{ Transform4f{ renderFromObject.getInv(), renderFromObject.get() } };
-    auto s = std::make_shared<Sphere>(renderFromObject, objectFromRender, false, r, -r, r, Float{ 360 });
-    return std::make_shared<GeometricPrimitive>(s, std::move(m));
-    };
-
   std::vector<std::shared_ptr<Primitive>> prims;
 
-  // ground
-  prims.push_back(makePrim(Point3f{ 0,-1000,0 }, Float{ 1000 }, std::make_shared<Diffuse>(ColorRGB{ .5f,.5f,.5f })));
+  const Point3f gc{ 0, -1000, 0 }; const Float gRGround{ 1000 };
+  {
+    const Transform4f wO{ Transform4f::translate(Vec3f{ gc[0], gc[1], gc[2] }) };
+    const Transform4f rO{ renderFromWorld * wO };
+    const Transform4f oR{ Transform4f{ rO.getInv(), rO.get() } };
+    auto s = std::make_shared<Sphere>(rO, oR, false, gRGround, -gRGround, gRGround, Float{ 360 });
+    auto m = std::make_shared<Diffuse>(ColorRGB{ Float{0.5}, Float{0.5}, Float{0.5} });
+    prims.push_back(std::make_shared<GeometricPrimitive>(s, m));
+  }
 
-  // canonical big spheres: center front, sides pushed slightly back along +z
-  const Float Rbig{ 1 }, zBack{ -1.5f };
-  const Point3f Cc{ 0,1,0 }, Cl{ -4,1,zBack }, Cr{ 4,1,zBack };
-  prims.push_back(makePrim(Cc, Rbig, std::make_shared<MDielectric>(ColorRGB{ 1,1,1 }, ColorRGB{ 1,1,1 }, Float{ 1 }, Float{ 1.5 })));
-  prims.push_back(makePrim(Cl, Rbig, std::make_shared<Diffuse>(ColorRGB{ .4f,.2f,.1f })));
-  prims.push_back(makePrim(Cr, Rbig, std::make_shared<Diffuse>(ColorRGB{ .7f,.6f,.5f })));
+  auto surfaceY = [](Float x, Float z, Float r)->Float {
+    const Float R{ 1000 }, cy{ -1000 }; const Float t{ R * R - (x * x + z * z) };
+    const double yg{ static_cast<double>(cy) + std::sqrt(std::max(0.0, static_cast<double>(t))) };
+    return static_cast<Float>(yg) + r;
+    };
 
-  // small spheres with simple collision evasion (big–small and small–small)
-  std::vector<Point3f> accepted; accepted.reserve(600);
-  const Float rSmall{ .2f }, pad{ .02f };
-  for (int a = -11; a < 11; ++a) for (int b = -11; b < 11; ++b) {
-    const Point3f c{ Float(a) + .9f * hash01(a,b,1), rSmall, Float(b) + .9f * hash01(a,b,2) };
+  const Float gR{ 1.0f }, gIOR{ 1.5f };
+  const Point3f gC{ glassXZ[0], surfaceY(glassXZ[0], glassXZ[1], gR), glassXZ[1] };
+  {
+    const Transform4f wO{ Transform4f::translate(Vec3f{ gC[0], gC[1], gC[2] }) };
+    const Transform4f rO{ renderFromWorld * wO };
+    const Transform4f oR{ Transform4f{ rO.getInv(), rO.get() } };
+    auto s = std::make_shared<Sphere>(rO, oR, false, gR, -gR, gR, Float{ 360 });
+    auto m = std::make_shared<MDielectric>(ColorRGB{ 1, 1, 1 }, ColorRGB{ 1, 1, 1 }, Float{ 1 }, gIOR);
+    prims.push_back(std::make_shared<GeometricPrimitive>(s, m));
+  }
 
-    // keep away from the three big spheres
-    if (euclideanLength(c - Cc) < (Rbig + rSmall + pad)) continue;
-    if (euclideanLength(c - Cl) < (Rbig + rSmall + pad)) continue;
-    if (euclideanLength(c - Cr) < (Rbig + rSmall + pad)) continue;
+  const Float mR{ 1.0f };
+  const Point3f mC{ matteXZ[0], surfaceY(matteXZ[0], matteXZ[1], mR), matteXZ[1] };
+  {
+    const Transform4f wO{ Transform4f::translate(Vec3f{ mC[0], mC[1], mC[2] }) };
+    const Transform4f rO{ renderFromWorld * wO };
+    const Transform4f oR{ Transform4f{ rO.getInv(), rO.get() } };
+    auto s = std::make_shared<Sphere>(rO, oR, false, mR, -mR, mR, Float{ 360 });
+    auto m = std::make_shared<Diffuse>(ColorRGB{ Float{0.8}, Float{0.2}, Float{0.2} });
+    prims.push_back(std::make_shared<GeometricPrimitive>(s, m));
+  }
 
-    // keep away from previously placed small spheres
+  const int N{ 450 }; const Float rmin{ 0.25f }, rmax{ 0.35f }, pad{ 0.02f };
+  const Float xmin{ -20 }, xmax{ 20 }, zmin{ -7 }, zmax{ 25 };
+  std::mt19937_64 rng{ 0xC0FFEEull };
+  std::uniform_real_distribution<Float> ux(xmin, xmax), uz(zmin, zmax), ur(rmin, rmax), u01(0, 1), uc(0.2f, 0.9f);
+
+  std::vector<Point3f> centers; centers.reserve(N + 2);
+  std::vector<Float>   radii;   radii.reserve(N + 2);
+  centers.push_back(gC); radii.push_back(gR);
+  centers.push_back(mC); radii.push_back(mR);
+
+  int attempts{}; const int maxAttempts{ 10000 };
+  while (static_cast<int>(centers.size()) - 2 < N && attempts++ < maxAttempts)
+  {
+    const Float x{ ux(rng) }, z{ uz(rng) }, r{ ur(rng) };
+    const Point3f c{ x, surfaceY(x, z, r), z };
+
     bool clash{};
-    for (const auto& p : accepted)
-      if (euclideanLength(c - p) < (Float{ 2 }*rSmall + pad)) { clash = true; break; }
+    for (size_t i{}; i < centers.size(); ++i) {
+      const Float dist2{ euclideanLengthSq(centers[i] - c) };
+      const Float rr{ radii[i] + r + pad };
+      if (dist2 < rr * rr) { clash = true; break; }
+    }
     if (clash) continue;
 
-    accepted.push_back(c);
+    centers.push_back(c); radii.push_back(r);
 
-    // material
-    std::shared_ptr<Material> m;
-    if (hash01(a, b, 3) < .85f) {
-      const ColorRGB c1{ hash01(a,b,4),hash01(a,b,5),hash01(a,b,6) };
-      const ColorRGB c2{ hash01(a,b,7),hash01(a,b,8),hash01(a,b,9) };
-      m = std::make_shared<Diffuse>(ColorRGB{ c1[0] * c2[0], c1[1] * c2[1], c1[2] * c2[2] });
+    std::shared_ptr<Material> mat;
+    if (u01(rng) < Float{ 0.75 }) {
+      const ColorRGB a{ uc(rng), uc(rng), uc(rng) }, b{ uc(rng), uc(rng), uc(rng) };
+      mat = std::make_shared<Diffuse>(ColorRGB{ a[0] * b[0], a[1] * b[1], a[2] * b[2] });
     }
     else {
-      m = std::make_shared<MDielectric>(ColorRGB{ 1,1,1 }, ColorRGB{ 1,1,1 }, Float{ 1 }, Float{ 1.5 });
+      mat = std::make_shared<MDielectric>(ColorRGB{ 1,1,1 }, ColorRGB{ 1,1,1 }, Float{ 1 }, Float{ 1.5 });
     }
-    prims.push_back(makePrim(c, rSmall, m));
+
+    const Transform4f wO{ Transform4f::translate(Vec3f{ c[0], c[1], c[2] }) };
+    const Transform4f rO{ renderFromWorld * wO };
+    const Transform4f oR{ Transform4f{ rO.getInv(), rO.get() } };
+    auto s = std::make_shared<Sphere>(rO, oR, false, r, -r, r, Float{ 360 });
+    prims.push_back(std::make_shared<GeometricPrimitive>(s, mat));
   }
 
   return std::make_shared<BVHAggregate>(std::move(prims), 4, BVHSplitMethod::SAH);
 }
+
 
 std::shared_ptr<Primitive>
 Indus::makeLegacyHeroScene(const Transform4f& renderFromWorld)

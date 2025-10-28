@@ -4,7 +4,7 @@ import types;
 
 import std;
 import camerabase;
-import film;
+import filmbase;
 import cameraconstructs;
 import mathalgebra;
 import mathtrig;
@@ -20,7 +20,7 @@ public:
   virtual ~ProjectiveCamera() = default;
 
 protected:
-  ProjectiveCamera(const CameraTransform&, const Transform4f&, const CameraShutter&, Film&, const Transform4f&, const Bounds2f&, Float, Float) noexcept;
+  ProjectiveCamera(const CameraTransform&, const Transform4f&, const CameraShutter&, FilmBase&, const Transform4f&, const Bounds2f&, Float, Float) noexcept;
 
   // Derived classes must implement ray generation.
   CameraRay generateRay(const CameraSample&) const override = 0;
@@ -36,12 +36,15 @@ protected:
   Float m_focalDistance;
 };
 
-ProjectiveCamera::ProjectiveCamera(const CameraTransform& cameraTransform, const Transform4f& camToWorld, const CameraShutter& shutter, Film& film, const Transform4f& screenFromCamera, const Bounds2f& screenWindow, Float lensRadius, Float focalDistance) noexcept : CameraBase(cameraTransform, camToWorld, shutter, film), m_screenFromCamera{ screenFromCamera }, m_lensRadius{ lensRadius }, m_focalDistance{ focalDistance }
+ProjectiveCamera::ProjectiveCamera(const CameraTransform& cameraTransform, const Transform4f& camToWorld, const CameraShutter& shutter, FilmBase& film, const Transform4f& screenFromCamera, const Bounds2f& screenWindow, Float lensRadius, Float focalDistance) noexcept : CameraBase(cameraTransform, camToWorld, shutter, film), m_screenFromCamera{ screenFromCamera }, m_lensRadius{ lensRadius }, m_focalDistance{ focalDistance }
 {
-  const Float xmin{ std::min(screenWindow[0][0], screenWindow[1][0]) };
-  const Float xmax{ std::max(screenWindow[0][0], screenWindow[1][0]) };
-  const Float ymin{ std::min(screenWindow[0][1], screenWindow[1][1]) };
-  const Float ymax{ std::max(screenWindow[0][1], screenWindow[1][1]) };
+  const auto& mn{ screenWindow.getMin() };
+  const auto& mx{ screenWindow.getMax() };
+
+  const Float xmin{ std::min(mn[0], mx[0]) };
+  const Float xmax{ std::max(mn[0], mx[0]) };
+  const Float ymin{ std::min(mn[1], mx[1]) };
+  const Float ymax{ std::max(mn[1], mx[1]) };
 
   // Screen to NDC
   Transform4f NDCFromScreen

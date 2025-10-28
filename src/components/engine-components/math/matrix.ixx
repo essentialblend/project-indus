@@ -297,12 +297,14 @@ constexpr Matrix4<T> Matrix4<T>::inverse() const noexcept
 template<Arithmetic T>
 constexpr T Matrix4<T>::determinant() const noexcept
 {
-  const auto& m = m_elements;
-
-  const T m00{ m[0] }; const T m01{ m[1] }; const T m02{ m[2] }; const T m03{ m[3] };
-  const T m10{ m[4] }; const T m11{ m[5] }; const T m12{ m[6] }; const T m13{ m[7] };
-  const T m20{ m[8] }; const T m21{ m[9] }; const T m22{ m[10] }; const T m23{ m[11] };
-  const T m30{ m[12] }; const T m31{ m[13] }; const T m32{ m[14] }; const T m33{ m[15] };
+  const T m00{ (*this)[0, 0] }; const T m01{ (*this)[0, 1] };
+  const T m02{ (*this)[0, 2] }; const T m03{ (*this)[0, 3] };
+  const T m10{ (*this)[1, 0] }; const T m11{ (*this)[1, 1] }; 
+  const T m12{ (*this)[1, 2] }; const T m13{ (*this)[1, 3] };
+  const T m20{ (*this)[2, 0] }; const T m21{ (*this)[2, 1] };
+  const T m22{ (*this)[2, 2] }; const T m23{ (*this)[2, 3] };
+  const T m30{ (*this)[3, 0] }; const T m31{ (*this)[3, 1] }; 
+  const T m32{ (*this)[3, 2] }; const T m33{ (*this)[3, 3] };
 
   const T s0{ differenceOfProducts(m00, m11, m10, m01) };
   const T s1{ differenceOfProducts(m00, m12, m10, m02) };
@@ -319,7 +321,7 @@ constexpr T Matrix4<T>::determinant() const noexcept
   const T c5{ differenceOfProducts(m22, m33, m32, m23) };
 
   T det{ differenceOfProducts(s0, c5, s1, c4) };
-  
+
   det = sumOfProducts(det, T{ 1 }, s2, c3);
   det = sumOfProducts(det, T{ 1 }, s3, c2);
   det = differenceOfProducts(det, T{ 1 }, s4, c1);

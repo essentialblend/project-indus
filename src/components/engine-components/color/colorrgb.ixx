@@ -1,7 +1,6 @@
 export module colorrgb;
 
 import types;
-import colorrgbd;
 
 export class ColorRGB final
 {
@@ -10,7 +9,6 @@ public:
   [[nodiscard]] constexpr explicit ColorRGB(Float) noexcept;
   [[nodiscard]] constexpr explicit ColorRGB(Float, Float, Float) noexcept;
   [[nodiscard]] explicit constexpr ColorRGB(const Vec3f&) noexcept;
-  [[nodiscard]] explicit constexpr ColorRGB(const ColorRGBd&) noexcept;
 
   [[nodiscard]] constexpr const Float& operator[](Idx) const & noexcept;
   [[nodiscard]] constexpr Float& operator[](Idx) & noexcept;
@@ -43,8 +41,6 @@ constexpr ColorRGB::ColorRGB(Float col) noexcept : m_red{ col }, m_green{ col },
 constexpr ColorRGB::ColorRGB(Float red, Float green, Float blue) noexcept : m_red{ red }, m_green{ green }, m_blue{ blue } {}
 
 constexpr ColorRGB::ColorRGB(const Vec3f& v) noexcept : m_red{ v[0] }, m_green{ v[1] }, m_blue{ v[2] } {}
-
-constexpr ColorRGB::ColorRGB(const ColorRGBd& c) noexcept : m_red{ Float(c[0]) }, m_green{ Float(c[1]) }, m_blue{ Float(c[2]) } {}
 
 constexpr const Float& ColorRGB::operator[](Idx i) const & noexcept
 {

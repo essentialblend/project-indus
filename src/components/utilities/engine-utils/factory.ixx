@@ -4,7 +4,7 @@ import std;
 import engineconstructs;
 import types;
 import camerabase;
-import film;
+import filmbase;
 import perspectivecamera;
 import sampler;
 import independentsampler;
@@ -15,8 +15,12 @@ import pcg32;
 import lcg;
 import animatedtransform;
 import cameratransform;
+import filter;
+import dictionaries;
+import rgbfilm;
+import pixelsensor;
 
-export std::unique_ptr<CameraBase> makeCamera(const CameraConfig& cfg, Film& film)
+export std::unique_ptr<CameraBase> makeCamera(const CameraConfig& cfg, FilmBase& film)
 {
   const Float startTime{ cfg.cameraShutter.shutterOpen };
   const Float endTime{ cfg.cameraShutter.shutterClose };
@@ -28,9 +32,16 @@ export std::unique_ptr<CameraBase> makeCamera(const CameraConfig& cfg, Film& fil
   return std::make_unique<PerspectiveCamera>(cameraTransform, cfg.cameraToWorld, cfg.cameraShutter, film, cfg.fovDegrees, cfg.screenWindow, cfg.lensRadius, cfg.focalDistance);
 }
 
-export std::unique_ptr<Film> makeFilm(const FilmConfig& cfg)
+export std::unique_ptr<FilmBase> makeFilm(const FilmConfig& cfg)
 {
-  return std::make_unique<Film>(cfg.resolution);
+  const RGBColorSpace& colorSpace{ ColorRegistry::sRGB() };
+
+  std::unique_ptr<Filter> filter{ std::make_unique<BoxFilter>(cfg.filterRadius) };
+
+  const PixelSensor sensor{ colorSpace.XYZFromRGB, colorSpace, cfg.imagingRatio };
+  
+  return std::make_unique<RGBFilm>(cfg.resolution, cfg.crop, cfg.diagonalMM,
+    std::move(filter), sensor);
 }
 
 export std::unique_ptr<Sampler> makeSampler(const SamplerConfig& cfg, Int seed = 0)

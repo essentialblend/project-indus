@@ -12,6 +12,7 @@ import colorrgb;
 import cameraconstructs;
 import samplingconstructs;
 import mathfp;
+import filter;
 
 export class RayIntegrator : public ImageTileIntegrator 
 {
@@ -33,11 +34,19 @@ void RayIntegrator::evaluatePixelSample(Point2i pPixel, [[maybe_unused]] Int sam
   Point2f uFilm{ sampler.get2D() };
   Point2f uLens{ sampler.get2D() };
 
+  const FilterSample filterSample{ m_camera.getFilm().getFilter().getFilterSampleAtOffset(uFilm) };
+
+  const Point2f pPixelCenter{ static_cast<Float>(pPixel[0]) + Float{ 0.5 }, static_cast<Float>(pPixel[1]) + Float{ 0.5 } };
+
+  const Point2f pFilm{ pPixelCenter[0] + filterSample.pOffset[0], pPixelCenter[1] + filterSample.pOffset[1] };
+
   CameraSample cs{ Point2f{ static_cast<Float>(pPixel[0]) + uFilm[0], static_cast<Float>(pPixel[1]) + uFilm[1]}, uLens, Float{} };
 
   CameraRay renderSpaceRay{ m_camera.generateRay(cs) };
+
   if (isZero(renderSpaceRay.weight)) return;
 
   ColorRGB L{ Li(renderSpaceRay.ray, scene, sampler) };
-  m_camera.getFilm().addSample(cs.pFilm, L, renderSpaceRay.weight);
+
+  m_camera.getFilm().addSample(cs.pFilm, L, renderSpaceRay.weight * filterSample.weightOverPDF);
 }

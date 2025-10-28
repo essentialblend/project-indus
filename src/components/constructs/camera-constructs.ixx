@@ -3,10 +3,12 @@ export module cameraconstructs;
 import std;
 import types;
 import ray;
+import bounds;
+import squarematrix;
 
 export
 {
-  enum class ColorEncoding { Linear, sRGB, Gamma22 };
+  enum class ColorEncoding { Linear, sRGB };
 
   struct CameraShutter final
   {
@@ -19,6 +21,10 @@ export
   struct FilmConfig final
   {
     Point2i resolution{};
+    Bounds2i crop{};
+    float diagonalMM{};
+    Vec2f filterRadius{ Float{ 0.5 }, Float{ 0.5 } };
+    Float imagingRatio{ Float{ 1 } };
     std::string filename{};
 
     constexpr Float aspect() const noexcept
@@ -31,5 +37,29 @@ export
   {
     Ray ray{};
     Float weight{};
+  };
+
+  struct FilterSample
+  {
+    Point2f pOffset{};
+    Float weightOverPDF{};
+  };
+
+  struct RGBCIE1931Vertices
+  {
+    Vec2f xRyR{};
+    Vec2f xGyG{};
+    Vec2f xByB{};
+    Vec2f xWyW{};
+  };
+
+  struct RGBColorSpace
+  {
+    RGBCIE1931Vertices RGBVertices{};
+
+    Mat3d XYZFromRGB{};
+    Mat3d RGBFromXYZ{};
+
+    Vec3d luminanceFromRGB{};
   };
 }

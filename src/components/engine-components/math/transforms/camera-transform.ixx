@@ -4,7 +4,7 @@ import std;
 import transform;
 import types;
 import ray;
-import matrix;
+import squarematrix;
 import concepts;
 import miscconstructs;
 import samplingconstructs;
