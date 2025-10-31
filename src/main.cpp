@@ -18,24 +18,25 @@ import mathconstants;
 import mathtrig;
 import mathalgebra;
 
+
 int main()
 {
 	IndusConfig engineCfg{};
   auto& filmCfg{ engineCfg.filmCfg };
 
 	engineCfg.filmCfg.filename = "test";
-	engineCfg.filmCfg.resolution = { 640, 360 };
+	engineCfg.filmCfg.resolution = { 1920, 1080 };
 	filmCfg.crop = Bounds2i{ Point2i{ 0, 0 }, filmCfg.resolution };
 	filmCfg.diagonalMM = Float{ 43.266615 };
-	filmCfg.filterRadius = Vec2f{ Float{ 0.5 }, Float{ 0.5 } };
+	filmCfg.filterRadius = Vec2f{ Float{ 0.5 } };
 	filmCfg.imagingRatio = Float{ 1 };
 
 	engineCfg.camCfg.cameraShutter = { 0.0, 1.0 };
 	engineCfg.camCfg.cameraToWorld = Transform4f::lookAt(Point3f{ 0, 2, -5 }, Point3f{ 0, 0, 0 }, Vec3f{ 0, 1.0, 0 });
 
-	engineCfg.camCfg.focalDistance = 4.225;
-	engineCfg.camCfg.fovDegrees = 45;
-	engineCfg.camCfg.lensRadius = 0.025;
+	engineCfg.camCfg.focalDistance = Float{ 4.225 };
+	engineCfg.camCfg.fovDegrees = Float{ 45 };
+	engineCfg.camCfg.lensRadius = Float{ 0.066 };
 	engineCfg.camCfg.screenWindow = Bounds2f{ { -filmCfg.aspect(), -1 }, { filmCfg.aspect(), 1 } };
   engineCfg.camCfg.renderingSpace = RenderingSpace::World;
 
@@ -44,7 +45,7 @@ int main()
 	engineCfg.samplerCfg.isStratified = true;
 	engineCfg.samplerCfg.isJitter = true;
 	
-	engineCfg.integratorCfg.maxDepth = 25;
+	engineCfg.integratorCfg.maxDepth = 50;
   engineCfg.integratorCfg.useRR = true;
 
 	Indus engine{ engineCfg };

@@ -126,7 +126,7 @@
     <ClCompile Include="src\engine-systems\sampler\stratified-sampler.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\engine-utils\scanlines.ixx">
+    <ClCompile Include="src\components\utilities\engine-utils\render-progress.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\components\utilities\math-utils\math-util-vi.ixx">
@@ -219,10 +219,19 @@
     <ClCompile Include="src\components\constructs\dictionaries.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\color-utils.ixx">
+    <ClCompile Include="src\components\utilities\engine-utils\color.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\components\film-components\pixelsensor\pixelsensor.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\utilities\engine-utils\parallel.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\utilities\engine-utils\threadpool\threadpool.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\utilities\engine-utils\threadpool\job.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

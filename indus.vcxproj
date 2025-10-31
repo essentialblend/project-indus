@@ -41,7 +41,10 @@
     <ClCompile Include="src\components\engine-components\math\squarematrix.ixx" />
     <ClCompile Include="src\components\film-components\pixelsensor\pixelsensor.ixx" />
     <ClCompile Include="src\components\engine-components\primitive\bvh-aggregate.ixx" />
-    <ClCompile Include="src\components\utilities\color-utils.ixx" />
+    <ClCompile Include="src\components\utilities\engine-utils\color.ixx" />
+    <ClCompile Include="src\components\utilities\engine-utils\parallel.ixx" />
+    <ClCompile Include="src\components\utilities\engine-utils\threadpool\job.ixx" />
+    <ClCompile Include="src\components\utilities\engine-utils\threadpool\threadpool.ixx" />
     <ClCompile Include="src\engine-systems\bsdf\bsdf.ixx" />
     <ClCompile Include="src\components\engine-components\bxdf\bxdf.ixx" />
     <ClCompile Include="src\components\engine-components\bxdf\dielectric-bxdf.ixx" />
@@ -65,7 +68,7 @@
     <ClCompile Include="src\components\utilities\math-utils\math-util-vi.ixx" />
     <ClCompile Include="src\components\utilities\ray-util.ixx" />
     <ClCompile Include="src\components\utilities\sampling-util.ixx" />
-    <ClCompile Include="src\components\utilities\engine-utils\scanlines.ixx" />
+    <ClCompile Include="src\components\utilities\engine-utils\render-progress.ixx" />
     <ClCompile Include="src\components\utilities\engine-utils\factory.ixx" />
     <ClCompile Include="src\components\types\concepts.ixx">
       <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)core-concepts.ifc</ModuleOutputFile>

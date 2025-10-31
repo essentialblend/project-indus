@@ -22,6 +22,8 @@ public:
 
   virtual void addSample(const Point2f& pFilm, const ColorRGB& L, Float64 weight) noexcept = 0;
 
+  //virtual void notifyTileComplete(const Bounds2i& tile) noexcept = 0;
+
   virtual void addSplat(const Point2f& pFilm, const ColorRGB& L) noexcept = 0;
 
   [[nodiscard]] virtual ColorRGB getPixelColor(const Point2i& p, Float splatScale) const noexcept = 0;

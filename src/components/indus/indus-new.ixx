@@ -21,6 +21,8 @@ import bvhaggregate;
 import mathalgebra;
 import mathconstants;
 import mathfp;
+import threadpool;
+import parallel;
 
 export class Indus final
 {
@@ -38,10 +40,14 @@ private:
   std::unique_ptr<Sampler> m_sampler{};
   std::unique_ptr<Integrator> m_integrator{};
 
+  std::unique_ptr<ThreadPool> m_engineThreadPool{};
+  
   std::shared_ptr<Primitive> makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld, const Point2f& matteXZ, const Point2f& glassXZ = {});
 
   std::shared_ptr<Primitive> makeLegacyHeroScene(const Transform4f& renderFromWorld);
 
+  void initializeParallelSystems(std::size_t numThreads) noexcept;
+  void shutdownParallelSystems() noexcept;
 };
 
 Indus::Indus(const IndusConfig& cfg) noexcept : m_cfg{ cfg } {}
@@ -57,6 +63,8 @@ void Indus::setup()
 void Indus::run()
 {
   setup();
+  
+  initializeParallelSystems(std::max(1u, std::thread::hardware_concurrency()));
 
   // get renderFromWorld from the camera transform
   const Transform4f renderFromWorld{
@@ -126,8 +134,8 @@ std::shared_ptr<Primitive> Indus::makeShirleyBook1BVHRoot(const Transform4f& ren
     prims.push_back(std::make_shared<GeometricPrimitive>(s, m));
   }
 
-  const int N{ 450 }; const Float rmin{ 0.25f }, rmax{ 0.35f }, pad{ 0.02f };
-  const Float xmin{ -20 }, xmax{ 20 }, zmin{ -7 }, zmax{ 25 };
+  const int N{ 650 }; const Float rmin{ 0.175f }, rmax{ 0.33f }, pad{ 0.025f };
+  const Float xmin{ -15 }, xmax{ 15 }, zmin{ -10 }, zmax{ 15 };
   std::mt19937_64 rng{ 0xC0FFEEull };
   std::uniform_real_distribution<Float> ux(xmin, xmax), uz(zmin, zmax), ur(rmin, rmax), u01(0, 1), uc(0.2f, 0.9f);
 
@@ -143,22 +151,26 @@ std::shared_ptr<Primitive> Indus::makeShirleyBook1BVHRoot(const Transform4f& ren
     const Point3f c{ x, surfaceY(x, z, r), z };
 
     bool clash{};
-    for (size_t i{}; i < centers.size(); ++i) {
+    for (size_t i{}; i < centers.size(); ++i) 
+    {
       const Float dist2{ euclideanLengthSq(centers[i] - c) };
       const Float rr{ radii[i] + r + pad };
       if (dist2 < rr * rr) { clash = true; break; }
     }
+    
     if (clash) continue;
 
     centers.push_back(c); radii.push_back(r);
 
     std::shared_ptr<Material> mat;
-    if (u01(rng) < Float{ 0.75 }) {
+    if (u01(rng) < Float{ 0.75 }) 
+    {
       const ColorRGB a{ uc(rng), uc(rng), uc(rng) }, b{ uc(rng), uc(rng), uc(rng) };
       mat = std::make_shared<Diffuse>(ColorRGB{ a[0] * b[0], a[1] * b[1], a[2] * b[2] });
     }
-    else {
-      mat = std::make_shared<MDielectric>(ColorRGB{ 1,1,1 }, ColorRGB{ 1,1,1 }, Float{ 1 }, Float{ 1.5 });
+    else 
+    {
+      mat = std::make_shared<MDielectric>(ColorRGB{ 1, 1, 1 }, ColorRGB{ 1, 1, 1 }, Float{ 1 }, Float{ 1.5 });
     }
 
     const Transform4f wO{ Transform4f::translate(Vec3f{ c[0], c[1], c[2] }) };
@@ -258,4 +270,24 @@ Indus::makeLegacyHeroScene(const Transform4f& renderFromWorld)
   }
 
   return std::make_shared<BVHAggregate>(std::move(prims), 4, BVHSplitMethod::SAH);
+}
+
+void Indus::initializeParallelSystems(std::size_t numThreads) noexcept
+{
+  if (!m_engineThreadPool)
+  {
+    m_engineThreadPool = std::make_unique<ThreadPool>(numThreads);
+    ParallelSystems::setEngineThreadPool(*m_engineThreadPool);
+  }
+}
+
+void Indus::shutdownParallelSystems() noexcept
+{
+  if (m_engineThreadPool)
+  {
+    m_engineThreadPool->shutdownThreadPool();
+    m_engineThreadPool.reset();
+
+    ParallelSystems::resetThreadPool();
+  }
 }

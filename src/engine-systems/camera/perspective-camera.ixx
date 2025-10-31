@@ -8,6 +8,9 @@ import vector;
 import mathalgebra;
 import mathfp;
 import filmbase;
+import mathtrig;
+import mathconstants;
+import engineconstructs;
 
 // TODO: ray differentials, spectral transport
 
@@ -24,10 +27,20 @@ private:
   
   Float m_cosTotalWidth{};
   Float m_imagePlaneArea{};
+
+  Float m_lensRadiusMM{};
+  Float m_zAxialMM{};
+  Float m_exposureScale{};
 };
 
 PerspectiveCamera::PerspectiveCamera(const CameraTransform& cameraTransform, const Transform4f& camToWorld, const CameraShutter& shutter, FilmBase& film, Float fovDegrees, const Bounds2f& screenWindow, Float lensRadius, Float focalDistance) noexcept : ProjectiveCamera(cameraTransform, camToWorld, shutter, film, Transform4f::perspective(fovDegrees, static_cast<Float>(1e-2), static_cast <Float>(1000.0)), screenWindow, lensRadius, focalDistance)
 {
+
+  const PhysicalUnits physicalUnits{};
+
+  m_lensRadiusMM = m_lensRadius * physicalUnits.unitLengthInMM;
+  m_zAxialMM = Float{ 1 } * physicalUnits.unitLengthInMM;
+  m_exposureScale = (m_lensRadiusMM > 0) ? ((kPi * (m_lensRadiusMM * m_lensRadiusMM)) / (m_zAxialMM * m_zAxialMM)) : Float{ 1 };
 
   Point3f origin{};
 
@@ -68,14 +81,19 @@ CameraRay PerspectiveCamera::generateRay(const CameraSample& cs) const
     originCam = Point3f{ pLens[0], pLens[1], Float{} };
 
     const Float ft{ m_focalDistance / unitDirCam[2] };
-    const Point3f pFocus{ originCam + (unitDirCam * ft) };
+    const Point3f pFocus{ Point3f{} + (unitDirCam * ft) };
     unitDirCam = normalize(pFocus - originCam);
   }
 
-  const Float t{ lerp(cs.time, m_cameraShutter.shutterOpen, m_cameraShutter.shutterClose) };
+  const Float lerped_t{ lerp(cs.time, m_cameraShutter.shutterOpen, m_cameraShutter.shutterClose) };
 
-  const Ray cameraSpaceRay{ originCam, unitDirCam, t };
+  const Ray cameraSpaceRay{ originCam, unitDirCam, lerped_t };
   const Ray renderSpaceRay{ m_cameraTransform.applyRenderFromCamera(cameraSpaceRay) };
 
-  return CameraRay{ renderSpaceRay, Float{ 1.0 } };
+  const Float cosineTheta{ std::max(Float{}, unitDirCam[2]) };
+  
+  // Ae/z^2 factor pending real lenses 
+  const Float camWeight{ sqr(sqr(cosineTheta)) * m_exposureScale };
+
+  return CameraRay{ renderSpaceRay, camWeight, m_exposureScale };
 }

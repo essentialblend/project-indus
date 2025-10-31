@@ -31,22 +31,25 @@ RayIntegrator::RayIntegrator(CameraBase& camera, Sampler& sampler) noexcept : Im
 
 void RayIntegrator::evaluatePixelSample(Point2i pPixel, [[maybe_unused]] Int sampleIndex, const Scene& scene, Sampler& sampler)
 {
-  Point2f uFilm{ sampler.get2D() };
-  Point2f uLens{ sampler.get2D() };
+  const Point2f uPixel{ sampler.getPixel2D() };
+  const Point2f uLens{ sampler.get2D() };
 
-  const FilterSample filterSample{ m_camera.getFilm().getFilter().getFilterSampleAtOffset(uFilm) };
+  auto& film{ m_camera.getFilm() };
+  const auto& filter{ m_camera.getFilm().getFilter() };
 
-  const Point2f pPixelCenter{ static_cast<Float>(pPixel[0]) + Float{ 0.5 }, static_cast<Float>(pPixel[1]) + Float{ 0.5 } };
+  const auto fs{ filter.getFilterSampleAtOffset(uPixel) };
 
-  const Point2f pFilm{ pPixelCenter[0] + filterSample.pOffset[0], pPixelCenter[1] + filterSample.pOffset[1] };
+  const Point2f pFilm{ Float(pPixel[0]) + fs.pOffset[0] + Float{ 0.5 }, Float(pPixel[1]) + fs.pOffset[1] + Float{ 0.5 } };
 
-  CameraSample cs{ Point2f{ static_cast<Float>(pPixel[0]) + uFilm[0], static_cast<Float>(pPixel[1]) + uFilm[1]}, uLens, Float{} };
+  CameraSample cs{ pFilm, uLens, Float{} };
 
   CameraRay renderSpaceRay{ m_camera.generateRay(cs) };
 
   if (isZero(renderSpaceRay.weight)) return;
 
-  ColorRGB L{ Li(renderSpaceRay.ray, scene, sampler) };
+  const ColorRGB L{ Li(renderSpaceRay.ray, scene, sampler) };
 
-  m_camera.getFilm().addSample(cs.pFilm, L, renderSpaceRay.weight * filterSample.weightOverPDF);
+  const auto LEffective{ L * renderSpaceRay.weight * (1 /renderSpaceRay.exposureScale) };
+
+  film.addSample(Point2f{ pPixel }, LEffective, fs.weightOverPDF);
 }

@@ -65,14 +65,11 @@ void StratifiedSampler::startPixelSample(Point2i pPixel, Int sampleIndex, Int st
   m_sampleIndex = sampleIndex;
   m_dimension = startingDimension;
 
-  // Choose a scrambled bijective key representing pixel and sample index, use it as a seed/stream
-  const auto seq{ mixBits(hash(pPixel, m_seed)) };
-  
-  m_rng->setSeedAndStream(seq, seq);
+  const UInt64 seq{ hash(pPixel, m_seed) };
 
-  const auto off{ (static_cast<UInt64>(static_cast<UInt32>(sampleIndex)) << 16) + static_cast<UInt64>(static_cast<UInt32>(m_dimension)) };
+  const UInt64 off{ static_cast<UInt64>(static_cast<UInt32>(sampleIndex)) * 65536ull + static_cast<UInt64>(static_cast<UInt32>(startingDimension)) };
 
-  m_rng->advance(static_cast<Int64>(off));
+  m_rng->setSequence(seq, off);
 }
 
 Float StratifiedSampler::get1D()
@@ -112,6 +109,7 @@ Point2f StratifiedSampler::getPixel2D()
 std::unique_ptr<Sampler> StratifiedSampler::clone() const
 {
   auto s{ std::make_unique<StratifiedSampler>(m_strata, m_jitter, m_seed, m_rng->clone()) };
+
   s->m_spp = m_spp;
   s->m_invNX = m_invNX;
   s->m_invNY = m_invNY;

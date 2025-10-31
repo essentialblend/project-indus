@@ -5,9 +5,9 @@ import sampler;
 import camerabase;
 import scene;
 import types;
-import scanlines;
+import renderprogress;
+import parallel;
 
-// For now, tile = row. Easy to extend later to progressive/Morton tiles.
 // Camera and Sampler are held by reference, assume their lifetimes exceed the integrator (they’re owned by the engine).
 
 export class ImageTileIntegrator : public Integrator 
@@ -29,22 +29,47 @@ ImageTileIntegrator::ImageTileIntegrator(CameraBase& camera, Sampler& sampler) n
 void ImageTileIntegrator::render(const Scene& scene)
 {
   const auto& res{ m_camera.getFilm().getFilmResolution() };
+  const Int samplesPerPixel{ m_samplerPrototype.getSPP() };
+  Int nWaves{};
 
-  ScanlineProgress prog{ static_cast<Int>(res[1]), 40 };
-  prog.begin();
-
-  for (Idx row{}; row < res[1]; ++row)
+  const Bounds2i pixelBounds{ Point2i{}, Point2i{ static_cast<Int>(res[0]), static_cast<Int>(res[1]) } };
+  
+  RenderProgress progress{ parallelTileCount(pixelBounds) * nWaves, 40 };
+  
+  for (Int startingSampleIdx{}, SPPForWave{ 1 }; startingSampleIdx < samplesPerPixel; startingSampleIdx += SPPForWave, SPPForWave = std::min<Int>(64, SPPForWave * 2))
   {
-    for (Idx col{}; col < res[0]; ++col)
-    {
-      const Point2i pPixel{ col, row };
-      
-      for (Idx s{}; s < m_samplerPrototype.getSPP(); ++s)
-      {
-        m_samplerPrototype.startPixelSample(pPixel, static_cast<Int>(s), 0);        
-        evaluatePixelSample(pPixel, static_cast<Int>(s), scene, m_samplerPrototype);
-      }
-    }
-    prog.lineDone(static_cast<Int>(row));
+    ++nWaves;
   }
+
+  progress.begin();
+
+  for (Int waveStartIdx{}, waveSize{ 1 }; waveStartIdx < samplesPerPixel; waveStartIdx = std::min(samplesPerPixel, waveStartIdx + waveSize), waveSize = std::min<Int>(64, waveSize * 2))
+  {
+    const auto renderTile = [&](const Bounds2i& tile)
+    {
+      const auto sampler{ m_samplerPrototype.clone() };
+      
+      const auto& minTileBounds{ tile.getMin() }; 
+      const auto& maxTileBounds{ tile.getMax() };
+
+      for (Int y{ minTileBounds[1] }; y < maxTileBounds[1]; ++y)
+      {
+        for (Int x{ minTileBounds[0] }; x < maxTileBounds[0]; ++x) 
+        {
+          const Point2i p{ x, y };
+
+          for (Int sampleIdx{ waveStartIdx }; sampleIdx < std::min(samplesPerPixel, waveStartIdx + waveSize); ++sampleIdx)
+          {
+            sampler->startPixelSample(p, sampleIdx, 0);
+            evaluatePixelSample(p, sampleIdx, scene, *sampler);
+          }
+        }
+      }
+      progress.tileDone();
+    };
+    
+    parallelFor2D(pixelBounds, renderTile);
+  }
+  progress.done();
 }
+

@@ -6,6 +6,7 @@ import cameraconstructs;
 import samplingconstructs;
 import bounds;
 import transform;
+import threadpool;
 
 export
 {
@@ -40,5 +41,11 @@ export
     CameraConfig camCfg{};
     SamplerConfig samplerCfg{};
     IntegratorConfig integratorCfg{};
+  };
+
+  struct PhysicalUnits final
+  {
+    // 1 Engine Unit = 10 millimeters = 1 centimeter
+    Float unitLengthInMM{ 10 };
   };
 }

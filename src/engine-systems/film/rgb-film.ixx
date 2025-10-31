@@ -22,6 +22,8 @@ export class RGBFilm final : public FilmBase
 public:
   explicit RGBFilm(const Point2i& fullRes, const Bounds2i& crop, Float diagMM, std::unique_ptr<Filter> filmFilter, const PixelSensor& pixelSensor) noexcept;
 
+  //virtual void notifyTileComplete(const Bounds2i& tile) noexcept override;
+
   void addSample(const Point2f& pFilm, const ColorRGB& L, Float64 weight) noexcept override;
 
   void addSplat(const Point2f& pFilm, const ColorRGB& L) noexcept override;
@@ -42,6 +44,10 @@ private:
   
   Float m_maxComponentValue{ infinity<Float> };
   Float m_filterIntegral{};
+
+  std::mutex m_dirtyMutex;
+  std::vector<Bounds2i> m_dirtyRects;
+  std::atomic<UInt64> m_dirtyEpoch{ 0 };
 
   Idx pixelIndex(const Point2i& p) const noexcept;
   [[nodiscard]] bool inFilmBounds(const Point2i& p, const Bounds2i& pixelBounds) const noexcept;
@@ -64,11 +70,36 @@ RGBFilm::RGBFilm(const Point2i& fullRes, const Bounds2i& crop, Float diagMM, std
   if (m_filterIntegral == Float{}) m_filterIntegral = Float{ 1 };
 }
 
+//void RGBFilm::notifyTileComplete(const Bounds2i& tile) noexcept
+//{
+//  const auto& loF{ m_pixelBounds.getMin() };
+//  const auto& hiF{ m_pixelBounds.getMax() };
+//
+//  const auto& loT{ tile.getMin() };
+//  const auto& hiT{ tile.getMax() };
+//
+//  const Bounds2i clamped{
+//    Point2i{ std::max(loT[0], loF[0]), std::max(loT[1], loF[1]) },
+//    Point2i{ std::min(hiT[0], hiF[0]), std::min(hiT[1], hiF[1]) }
+//  };
+//
+//  if (clamped.isEmpty()) return;
+//
+//  // Record the dirty rectangle thread-safely for later UI consumption.
+//  {
+//    std::scoped_lock lock{ m_dirtyMutex };
+//    m_dirtyRects.push_back(clamped);
+//  }
+//
+//  // Bump an epoch so a display thread can poll and repaint incrementally.
+//  m_dirtyEpoch.fetch_add(1, std::memory_order_relaxed);
+//}
+
 void RGBFilm::addSample(const Point2f& pFilm, const ColorRGB& L, Float64 weight) noexcept
 {
   const Point2i p{ static_cast<int>(pFilm[0]), static_cast<int>(pFilm[1]) };
 
-  if(!inFilmBounds(p, getPixelBounds())) return;
+  if (!inFilmBounds(p, getPixelBounds())) return;
 
   const Float m{ std::max({ L[0], L[1], L[2] }) };
   const Float clampScale{ (m > m_maxComponentValue) ? (m_maxComponentValue / m) : Float{ 1 } };
@@ -76,7 +107,7 @@ void RGBFilm::addSample(const Point2f& pFilm, const ColorRGB& L, Float64 weight)
   const Idx idx{ pixelIndex(p) };
 
   Pixel& px{ m_pixels[idx] };
-  
+
   const ColorRGB rgb{ L[0] * clampScale, L[1] * clampScale, L[2] * clampScale };
 
   px.addRadiance(rgb, weight);
@@ -90,34 +121,31 @@ void RGBFilm::addSample(const Point2f& pFilm, const ColorRGB& L, Float64 weight)
 // Pending some deeper understanding. addSplat remains unused as of now
 void RGBFilm::addSplat(const Point2f& pFilm, const ColorRGB& L) noexcept
 {
-  const Bounds2i pixelBounds{ getPixelBounds() };
-  const Vec2f supportRadius{ getFilter().getSupportRadius() };
+  const auto r = m_filter->getSupportRadius();
 
-  const int x0{ std::max(static_cast<int>(std::ceil(pFilm[0] - supportRadius[0] + Float{ 0.5 })), pixelBounds.getMin()[0]) };
+  const Int x0{ static_cast<Int>(std::floor(pFilm[0] - r[0] + 0.5f)) };
+  const Int x1{ static_cast<Int>(std::ceil(pFilm[0] + r[0] + 0.5f)) };
+  const Int y0{ static_cast<Int>(std::floor(pFilm[1] - r[1] + 0.5f)) };
+  const Int y1{ static_cast<Int>(std::ceil(pFilm[1] + r[1] + 0.5f)) };
 
-  const int y0{ std::max(static_cast<int>(std::ceil(pFilm[1] - supportRadius[1] + Float{ 0.5 })), pixelBounds.getMin()[1]) };
-
-  const int x1{ std::min(static_cast<int>(std::floor(pFilm[0] + supportRadius[0] - Float{ 0.5 })) + 1, pixelBounds.getMax()[0]) };
-
-  const int y1{ std::min(static_cast<int>(std::floor(pFilm[1] + supportRadius[1] - Float{ 0.5 })) + 1, pixelBounds.getMax()[1]) };
-
-  for (int y{ y0 }; y < y1; ++y)
+  const auto& pMin{ m_pixelBounds.getMin() };
+  const auto& pMax{ m_pixelBounds.getMax() };
+  
+  for (Int y{ std::max(y0, pMin[1]) }; y < std::min(y1, pMax[1]); ++y)
   {
-    for (int x{ x0 }; x < x1; ++x)
+    for (Int x{ std::max(x0, pMin[0]) }; x < std::min(x1, pMax[0]); ++x)
     {
-      const Point2f d{ pFilm[0] - (static_cast<Float>(x) + static_cast<Float>(0.5)), pFilm[1] - (static_cast<Float>(y) + static_cast<Float>(0.5)) };
+      const Point2i pi{ x, y };
+      const Point2f center{ static_cast<Float>(x) + 0.5f, static_cast<Float>(y) + 0.5f };
+      const Point2f d{ pFilm[0] - center[0], pFilm[1] - center[1] };
       
-      const Float w{ getFilter().getWeightAtOffset(d) };
+      const Float w{ m_filter->getWeightAtOffset(d) };
       
       if (w == Float{}) continue;
-
-      const Idx idx{ pixelIndex(Point2i{ x, y }) };
-
-      Pixel& px{ m_pixels[idx] };
-
-      const ColorRGB wl{ L[0] * w, L[1] * w, L[2] * w };
-
-      px.addSplat(wl);
+      
+      const ColorRGB Lw{ L[0] * w, L[1] * w, L[2] * w };
+      
+      m_pixels[pixelIndex(pi)].addSplat(Lw);
     }
   }
 }
@@ -150,7 +178,7 @@ void RGBFilm::writeImage(const IndusConfig& indusConfig, const RenderTimer& rend
   {
     for (int x{ pixelBounds.getMin()[0] }; x < pixelBounds.getMax()[0]; ++x)
     {
-      const ColorRGB linear{ getPixelColor(Point2i{ x, y }, Float{1 }) };
+      const ColorRGB linear{ getPixelColor(Point2i{ x, y }, Float{ 1 }) };
       const ColorRGB encoded{ encodeColor(encodingTag, linear) };
 
       bytes.push_back(quantizeToU8(encoded[0]));

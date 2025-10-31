@@ -37,6 +37,8 @@ export
   {
     Ray ray{};
     Float weight{};
+    // Needs a principled solution. Currently, a slight wrangle to pick a low hanging fruit from Realistic Camera
+    Float exposureScale{};
   };
 
   struct FilterSample

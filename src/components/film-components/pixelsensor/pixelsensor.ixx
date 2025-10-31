@@ -42,14 +42,13 @@ ColorRGB PixelSensor::toOutputRGB(const ColorRGB& sensorLinearRGB) const noexcep
   const Float s1{ m_imagingRatio * sensorLinearRGB[1] };
   const Float s2{ m_imagingRatio * sensorLinearRGB[2] };
   
-  ColorRGB out{};
+  ColorRGB out
+  { 
+    static_cast<Float>(m_outRGBFromSensorRGB[0, 0] * s0 + m_outRGBFromSensorRGB[0, 1] * s1 + m_outRGBFromSensorRGB[0, 2] * s2),
+     static_cast<Float>(m_outRGBFromSensorRGB[1, 0] * s0 + m_outRGBFromSensorRGB[1, 1] * s1 + m_outRGBFromSensorRGB[1, 2] * s2),
+     static_cast<Float>(m_outRGBFromSensorRGB[2, 0] * s0 + m_outRGBFromSensorRGB[2, 1] * s1 + m_outRGBFromSensorRGB[2, 2] * s2)
+  };
   
-  out[0] = static_cast<Float>(m_outRGBFromSensorRGB[0, 0] * s0 + m_outRGBFromSensorRGB[0, 1] * s1 + m_outRGBFromSensorRGB[0, 2] * s2);
-
-  out[1] = static_cast<Float>(m_outRGBFromSensorRGB[1, 0] * s0 + m_outRGBFromSensorRGB[1, 1] * s1 + m_outRGBFromSensorRGB[1, 2] * s2);
-
-  out[2] = static_cast<Float>(m_outRGBFromSensorRGB[2, 0] * s0 + m_outRGBFromSensorRGB[2, 1] * s1 + m_outRGBFromSensorRGB[2, 2] * s2);
-
   return out;
 }
 
