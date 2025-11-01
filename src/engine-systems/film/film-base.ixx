@@ -30,6 +30,9 @@ public:
 
 
   virtual void writeImage(const IndusConfig& indusConfig, const RenderTimer& renderTimer, const std::string& filename = {}) const = 0;
+
+  [[nodiscard]] virtual std::vector<std::uint8_t> bakeDisplay() const noexcept = 0;
+
   virtual void clear() noexcept = 0;
 
   virtual ~FilmBase() = default;

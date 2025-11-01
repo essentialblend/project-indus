@@ -17,7 +17,7 @@ import filter;
 export class RayIntegrator : public ImageTileIntegrator 
 {
 public:
-  RayIntegrator(CameraBase&, Sampler&) noexcept;
+  RayIntegrator(const RuntimeComponents& renderRuntimeComponents, CameraBase&, Sampler&) noexcept;
 
 protected:
   // Pure virtual radiance function: every concrete integrator defines this.
@@ -27,7 +27,7 @@ protected:
   void evaluatePixelSample(Point2i, [[maybe_unused]] Int, const Scene&, Sampler&) final override;
 };
 
-RayIntegrator::RayIntegrator(CameraBase& camera, Sampler& sampler) noexcept : ImageTileIntegrator{ camera, sampler } {}
+RayIntegrator::RayIntegrator(const RuntimeComponents& renderRuntimeComponents, CameraBase& camera, Sampler& sampler) noexcept : ImageTileIntegrator{ renderRuntimeComponents, camera, sampler } {}
 
 void RayIntegrator::evaluatePixelSample(Point2i pPixel, [[maybe_unused]] Int sampleIndex, const Scene& scene, Sampler& sampler)
 {

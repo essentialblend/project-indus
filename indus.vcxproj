@@ -43,6 +43,8 @@
     <ClCompile Include="src\components\engine-components\primitive\bvh-aggregate.ixx" />
     <ClCompile Include="src\components\utilities\engine-utils\color.ixx" />
     <ClCompile Include="src\components\utilities\engine-utils\parallel.ixx" />
+    <ClCompile Include="src\components\utilities\engine-utils\sinks\display-sink.ixx" />
+    <ClCompile Include="src\components\utilities\engine-utils\sinks\sfml.ixx" />
     <ClCompile Include="src\components\utilities\engine-utils\threadpool\job.ixx" />
     <ClCompile Include="src\components\utilities\engine-utils\threadpool\threadpool.ixx" />
     <ClCompile Include="src\engine-systems\bsdf\bsdf.ixx" />

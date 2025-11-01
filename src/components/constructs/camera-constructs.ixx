@@ -5,6 +5,7 @@ import types;
 import ray;
 import bounds;
 import squarematrix;
+import colorrgb;
 
 export
 {
@@ -63,5 +64,17 @@ export
     Mat3d RGBFromXYZ{};
 
     Vec3d luminanceFromRGB{};
+  };
+
+  //struct FilmFrame
+  //{
+  //  Point2i pixelResolution{};
+  //  std::span<const ColorRGB> pixels{};
+  //};
+
+  struct DisplayFrame
+  {
+    Point2i pixelResolution{};
+    std::span<const std::uint8_t> rgbaPixels{};
   };
 }

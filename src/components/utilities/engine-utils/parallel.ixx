@@ -67,7 +67,7 @@ void parallelFor2D(const Bounds2i& extent, F&& functor)
   const std::size_t threads{ std::max<std::size_t>(1, pool.getSize() + 1) };
 
   const auto spanX{ static_cast<double>(maxExtentBounds[0] - minExtentBounds[0]) };
-  const auto spanY{ static_cast<double>(maxExtentBounds[1] - minExtentBounds[0]) };
+  const auto spanY{ static_cast<double>(maxExtentBounds[1] - minExtentBounds[1]) };
 
   // Decide tile size based on number of threads and image extent. That is, we want to figure N such that we have N * N tiles and N * N >= 8 * threads. Then, poolDimensionalSpan = N = sqrt(A / 8P) where P is number of threads and A is area of the extent
   const auto poolDimensionalSpan{ std::sqrt(spanX * spanY / (8.0 * static_cast<double>(threads))) };

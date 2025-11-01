@@ -16,6 +16,7 @@ import material;
 import samplingutil;
 import mathalgebra;
 import mathconstants;
+import engineconstructs;
 
 import <cassert>;
 
@@ -24,7 +25,7 @@ import <cassert>;
 export class PathIntegrator final : public RayIntegrator 
 {
 public:
-  PathIntegrator(CameraBase&, Sampler&, Idx, bool useRR = true) noexcept;
+  PathIntegrator(const RuntimeComponents& renderRuntimeComponents, CameraBase&, Sampler&, Idx, bool useRR = true) noexcept;
 
 protected:
   ColorRGB Li(const Ray&, const Scene&, /*int depth,*/ Sampler&) override;
@@ -36,7 +37,7 @@ private:
   ColorRGB getBackgroundGradient(const Ray& inputRay);
 };
 
-PathIntegrator::PathIntegrator(CameraBase& camera, Sampler& sampler, Idx maxDepth, bool useRR) noexcept : RayIntegrator{ camera, sampler }, m_maxDepth{ maxDepth }, m_useRR{ useRR } {}
+PathIntegrator::PathIntegrator(const RuntimeComponents& renderRuntimeComponents, CameraBase& camera, Sampler& sampler, Idx maxDepth, bool useRR) noexcept : RayIntegrator{ renderRuntimeComponents, camera, sampler }, m_maxDepth{ maxDepth }, m_useRR{ useRR } {}
 
 ColorRGB PathIntegrator::Li(const Ray& inputRay, const Scene& scene, Sampler& sampler)
 {
@@ -51,7 +52,7 @@ ColorRGB PathIntegrator::Li(const Ray& inputRay, const Scene& scene, Sampler& sa
       L += beta * getBackgroundGradient(ray); 
       break; 
     }
-    
+ 
     const SurfaceInteraction& si{ shapeIntersection->interaction };
 
     auto mat{ si.getMaterial() }; 

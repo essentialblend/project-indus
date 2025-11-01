@@ -7,6 +7,7 @@ import samplingconstructs;
 import bounds;
 import transform;
 import threadpool;
+import displaysink;
 
 export
 {
@@ -47,5 +48,12 @@ export
   {
     // 1 Engine Unit = 10 millimeters = 1 centimeter
     Float unitLengthInMM{ 10 };
+  };
+
+  struct RuntimeComponents
+  {
+    std::shared_ptr<DisplaySink> displaySinkPtr{};
+    std::optional<std::reference_wrapper<std::mutex>> displayMutex{};
+    std::optional<std::reference_wrapper<std::vector<std::uint8_t>>> displayBytesArr{};
   };
 }

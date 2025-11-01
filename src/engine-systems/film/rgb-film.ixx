@@ -31,7 +31,10 @@ public:
   [[nodiscard]] ColorRGB getPixelColor(const Point2i& p, Float splatScale) const noexcept override;
 
   void writeImage(const IndusConfig& indusConfig, const RenderTimer& renderTimer, const std::string& filename = {}) const override;
+  
   void clear() noexcept override;
+
+  [[nodiscard]] std::vector<std::uint8_t> bakeDisplay() const noexcept override;
 
   ~RGBFilm() override = default;
 
@@ -218,6 +221,35 @@ void RGBFilm::clear() noexcept
   {
     px.clear();
   }
+}
+
+std::vector<std::uint8_t> RGBFilm::bakeDisplay() const noexcept
+{
+  const Bounds2i pixelBounds{ getPixelBounds() };
+  const int extentWidth{ m_extent[0] };
+  const int extentHeight{ m_extent[1] };
+
+  std::vector<std::uint8_t> bytes{};
+
+  bytes.resize(static_cast<std::size_t>(extentWidth) * static_cast<std::size_t>(extentHeight) * 4u);
+
+  std::size_t k{};
+  
+  for (int y{ pixelBounds.getMin()[1] }; y < pixelBounds.getMax()[1]; ++y)
+  {
+    for (int x{ pixelBounds.getMin()[0] }; x < pixelBounds.getMax()[0]; ++x) 
+    {
+      const ColorRGB linearRGB{ getPixelColor(Point2i{ x, y }, Float{ 1 }) };
+      const ColorRGB encodedRGB{ encodeColor(ColorEncoding::sRGB, linearRGB) };
+      
+      bytes[k++] = quantizeToU8(encodedRGB[0]);
+      bytes[k++] = quantizeToU8(encodedRGB[1]);
+      bytes[k++] = quantizeToU8(encodedRGB[2]);
+      bytes[k++] = 255;
+    }
+  }
+
+  return bytes;
 }
 
 Idx RGBFilm::pixelIndex(const Point2i& p) const noexcept

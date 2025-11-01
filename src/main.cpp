@@ -25,7 +25,7 @@ int main()
   auto& filmCfg{ engineCfg.filmCfg };
 
 	engineCfg.filmCfg.filename = "test";
-	engineCfg.filmCfg.resolution = { 1920, 1080 };
+	engineCfg.filmCfg.resolution = { 640, 360 };
 	filmCfg.crop = Bounds2i{ Point2i{ 0, 0 }, filmCfg.resolution };
 	filmCfg.diagonalMM = Float{ 43.266615 };
 	filmCfg.filterRadius = Vec2f{ Float{ 0.5 } };

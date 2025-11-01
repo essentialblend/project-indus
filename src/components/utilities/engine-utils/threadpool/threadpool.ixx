@@ -46,14 +46,24 @@ private:
 
 ThreadPool::ThreadPool(std::size_t numThreads)
 {
-  const std::size_t n{ numThreads > 0 ? numThreads : 1 };
+  const std::size_t numThreadsEff{ numThreads > 0 ? numThreads : 1 };
 
-  const std::size_t workers{ n > 0 ? n - 2 : 0 };
+  const std::size_t fivePercentCeil{ (numThreadsEff + 19u) / 20u };
+  const std::size_t atLeastOne{ fivePercentCeil < 1u ? 1u : fivePercentCeil };
+
+  const auto headroom{ atLeastOne > 4u ? 4u : atLeastOne };
+
+  const std::size_t workers{ numThreadsEff > headroom ? numThreadsEff - headroom : 0 };
   
   m_threads.reserve(workers);
   
   for (std::size_t i{}; i < workers; ++i)
-    m_threads.emplace_back([this](std::stop_token stopToken) { worker(stopToken); });
+  {
+    m_threads.emplace_back([this](std::stop_token stopToken) 
+    { 
+      worker(stopToken); 
+    });
+  }
 }
 
 std::size_t ThreadPool::getSize() const noexcept
@@ -226,7 +236,6 @@ void ThreadPool::worker(std::stop_token stopToken)
         
         if (--m_foreachRemaining == 0) m_conditionVariable.notify_all();
         
-        // Start next iteration and continue listening
         continue;
       }
 

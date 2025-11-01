@@ -1,3 +1,6 @@
+module; 
+#include <SFML/Graphics.hpp>
+
 export module indus;
 
 import std;
@@ -23,14 +26,19 @@ import mathconstants;
 import mathfp;
 import threadpool;
 import parallel;
+import sfmlsink;
 
 export class Indus final
 {
 public:
   explicit Indus(const IndusConfig& cfg) noexcept;
 
-  void setup();
+  void setupEngineSystems();
   void run();
+
+  void displaySinkWindow();
+
+  void updateAndPresent(std::vector<uint8_t, std::allocator<sf::Uint8>>& localBytes);
 
 private:
   IndusConfig m_cfg{};
@@ -39,12 +47,16 @@ private:
   std::unique_ptr<CameraBase> m_camera{};
   std::unique_ptr<Sampler> m_sampler{};
   std::unique_ptr<Integrator> m_integrator{};
-
   std::unique_ptr<ThreadPool> m_engineThreadPool{};
+
+  RuntimeComponents m_runtimeComponents{};
   
   std::shared_ptr<Primitive> makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld, const Point2f& matteXZ, const Point2f& glassXZ = {});
 
   std::shared_ptr<Primitive> makeLegacyHeroScene(const Transform4f& renderFromWorld);
+
+  std::mutex m_displayMutex{};
+  std::vector<std::uint8_t> m_displayBytesArr{};
 
   void initializeParallelSystems(std::size_t numThreads) noexcept;
   void shutdownParallelSystems() noexcept;
@@ -52,21 +64,26 @@ private:
 
 Indus::Indus(const IndusConfig& cfg) noexcept : m_cfg{ cfg } {}
 
-void Indus::setup()
+void Indus::setupEngineSystems()
 {
   m_film = makeFilm(m_cfg.filmCfg);
+  
+  m_runtimeComponents.displaySinkPtr = std::make_shared<SFMLDisplaySink>(m_film->getFilmResolution());
+  m_runtimeComponents.displayMutex = m_displayMutex;
+  m_runtimeComponents.displayBytesArr = m_displayBytesArr;
+
   m_camera = makeCamera(m_cfg.camCfg, *m_film);
   m_sampler = makeSampler(m_cfg.samplerCfg);
-  m_integrator = makeIntegrator(m_cfg.integratorCfg, *m_camera, *m_sampler);
+
+  m_integrator = makeIntegrator(m_runtimeComponents, m_cfg.integratorCfg, *m_camera, *m_sampler);
 }
 
 void Indus::run()
 {
-  setup();
+  setupEngineSystems();
   
   initializeParallelSystems(std::max(1u, std::thread::hardware_concurrency()));
 
-  // get renderFromWorld from the camera transform
   const Transform4f renderFromWorld{
     m_camera->getCameraTransform().getRenderFromWorld()
   };
@@ -74,22 +91,54 @@ void Indus::run()
   const Point2f matteBallPosition{ 0.75, -1.25 };
   const Point2f dielectricBallPosition{ 0, 0 };
 
-  // build Shirley scene BVH root (Middle split, 4 prims/node inside)
   std::shared_ptr<Primitive> root{ makeShirleyBook1BVHRoot(renderFromWorld, matteBallPosition, dielectricBallPosition) };
 
-  // wrap in Scene
   Scene scene{ root };
 
-  // render
-  RenderTimer timer{};
-  m_integrator->render(scene);
-  timer.stopTimer();
+  std::jthread renderThread
+  {
+    [this, &scene]
+    {
+      RenderTimer timer{};
 
-  // print BVH stats
-  if (auto bvh = std::dynamic_pointer_cast<BVHAggregate>(scene.getSceneRoot()))
-    bvh->printBVHStats(m_film->getFilmResolution()[0], m_film->getFilmResolution()[1], m_cfg.samplerCfg.samplesPerPixel, static_cast<double>(timer.getMillisec()));
+      m_integrator->render(scene);
 
-  m_film->writeImage(m_cfg, timer);
+      timer.stopTimer();
+
+      if (auto bvh = std::dynamic_pointer_cast<BVHAggregate>(scene.getSceneRoot()))
+      {
+        bvh->printBVHStats(m_film->getFilmResolution()[0], m_film->getFilmResolution()[1], m_cfg.samplerCfg.samplesPerPixel, static_cast<double>(timer.getMillisec()));
+      }
+
+      m_film->writeImage(m_cfg, timer);
+    }
+  };
+
+  displaySinkWindow();
+
+}
+
+void Indus::displaySinkWindow()
+{
+  std::vector<std::uint8_t> localBytes(static_cast<std::size_t>(m_film->getFilmResolution()[0]) * m_film->getFilmResolution()[1] * 4u, 255);
+
+  while (m_runtimeComponents.displaySinkPtr->isSinkOpen())
+  {
+    updateAndPresent(localBytes);
+  }
+}
+
+void Indus::updateAndPresent(std::vector<uint8_t, std::allocator<sf::Uint8>>& localBytes)
+{
+  {
+    std::lock_guard<std::mutex> displayLock(m_displayMutex);
+
+    if (!m_displayBytesArr.empty()) localBytes = m_displayBytesArr;
+  }
+
+  DisplayFrame frame{ m_film->getFilmResolution(), std::span<const std::uint8_t>{ localBytes } };
+
+  m_runtimeComponents.displaySinkPtr->present(frame);
 }
 
 std::shared_ptr<Primitive> Indus::makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld, const Point2f& matteXZ, const Point2f& glassXZ)
@@ -233,21 +282,22 @@ Indus::makeLegacyHeroScene(const Transform4f& renderFromWorld)
   // collision check in x–z plane
   auto collide = [&](const Point3f& c, Float r)
     {
-      for (const auto& pr : placed) {
-        const Float dx = c[0] - pr.first[0], dz = c[2] - pr.first[2];
-        if (std::sqrt(dx * dx + dz * dz) < r + pr.second + Float(0.05)) return true;
+      for (const auto& pr : placed) 
+      {
+        const Float dx{ c[0] - pr.first[0] }, dz{ c[2] - pr.first[2] };
+        if (std::sqrt(dx * dx + dz * dz) < r + pr.second + Float{ 0.05 }) return true;
       }
       return false;
     };
 
   // ring placement around heroes with corridor exclusion
-  for (int i = 0; i < 220; ++i)
+  for (int i{}; i < 220; ++i)
   {
-    const Float rr = Float(0.10) + Float(0.30) * rf();
-    const Float a = -kPi + Float(2) * kPi * rf();
-    const Float rad = Float(2.2) + Float(6.0) * std::sqrt(rf());
-    const Float x = rad * std::sin(a);
-    const Float z = Float(0.8) + rad * std::cos(a);
+    const Float rr{ Float(0.10) + Float(0.30) * rf() };
+    const Float a{ -kPi + Float(2) * kPi * rf() };
+    const Float rad{ Float(2.2) + Float(6.0) * std::sqrt(rf()) };
+    const Float x{ rad * std::sin(a) };
+    const Float z{ Float(0.8) + rad * std::cos(a) };
 
     if (std::abs(x) < Float(0.7) && z > Float(0.2) && z < Float(2.0)) continue;
 
