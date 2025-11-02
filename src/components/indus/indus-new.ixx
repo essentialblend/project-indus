@@ -27,6 +27,7 @@ import mathfp;
 import threadpool;
 import parallel;
 import sfmlsink;
+import dirtylatch;
 
 export class Indus final
 {
@@ -35,10 +36,6 @@ public:
 
   void setupEngineSystems();
   void run();
-
-  void displaySinkWindow();
-
-  void updateAndPresent(std::vector<uint8_t, std::allocator<sf::Uint8>>& localBytes);
 
 private:
   IndusConfig m_cfg{};
@@ -49,6 +46,8 @@ private:
   std::unique_ptr<Integrator> m_integrator{};
   std::unique_ptr<ThreadPool> m_engineThreadPool{};
 
+  DirtyLatch m_dirtyLatch{};
+  RuntimeSharedState m_runtimeSharedState{};
   RuntimeComponents m_runtimeComponents{};
   
   std::shared_ptr<Primitive> makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld, const Point2f& matteXZ, const Point2f& glassXZ = {});
@@ -60,6 +59,10 @@ private:
 
   void initializeParallelSystems(std::size_t numThreads) noexcept;
   void shutdownParallelSystems() noexcept;
+
+  void displaySinkWindow();
+
+  void updateAndPresent(std::vector<uint8_t, std::allocator<sf::Uint8>>& localBytes);
 };
 
 Indus::Indus(const IndusConfig& cfg) noexcept : m_cfg{ cfg } {}
@@ -71,6 +74,8 @@ void Indus::setupEngineSystems()
   m_runtimeComponents.displaySinkPtr = std::make_shared<SFMLDisplaySink>(m_film->getFilmResolution());
   m_runtimeComponents.displayMutex = m_displayMutex;
   m_runtimeComponents.displayBytesArr = m_displayBytesArr;
+  m_runtimeComponents.dirtyLatch = m_dirtyLatch;
+  m_runtimeComponents.runtimeSharedState = m_runtimeSharedState;
 
   m_camera = makeCamera(m_cfg.camCfg, *m_film);
   m_sampler = makeSampler(m_cfg.samplerCfg);
@@ -105,17 +110,11 @@ void Indus::run()
 
       timer.stopTimer();
 
-      if (auto bvh = std::dynamic_pointer_cast<BVHAggregate>(scene.getSceneRoot()))
-      {
-        bvh->printBVHStats(m_film->getFilmResolution()[0], m_film->getFilmResolution()[1], m_cfg.samplerCfg.samplesPerPixel, static_cast<double>(timer.getMillisec()));
-      }
-
       m_film->writeImage(m_cfg, timer);
     }
   };
 
   displaySinkWindow();
-
 }
 
 void Indus::displaySinkWindow()
@@ -130,13 +129,17 @@ void Indus::displaySinkWindow()
 
 void Indus::updateAndPresent(std::vector<uint8_t, std::allocator<sf::Uint8>>& localBytes)
 {
+  const bool doUpload{ m_dirtyLatch.consume() };
+  
   {
     std::lock_guard<std::mutex> displayLock(m_displayMutex);
 
     if (!m_displayBytesArr.empty()) localBytes = m_displayBytesArr;
   }
 
-  DisplayFrame frame{ m_film->getFilmResolution(), std::span<const std::uint8_t>{ localBytes } };
+  const float progress = (m_runtimeComponents.runtimeSharedState) ? m_runtimeComponents.runtimeSharedState->get().progressUnitNormalized.load() : 0.0f;
+
+  DisplayFrame frame{ m_film->getFilmResolution(), std::span<const std::uint8_t>{ localBytes }, doUpload, progress };
 
   m_runtimeComponents.displaySinkPtr->present(frame);
 }
@@ -231,7 +234,6 @@ std::shared_ptr<Primitive> Indus::makeShirleyBook1BVHRoot(const Transform4f& ren
 
   return std::make_shared<BVHAggregate>(std::move(prims), 4, BVHSplitMethod::SAH);
 }
-
 
 std::shared_ptr<Primitive>
 Indus::makeLegacyHeroScene(const Transform4f& renderFromWorld)

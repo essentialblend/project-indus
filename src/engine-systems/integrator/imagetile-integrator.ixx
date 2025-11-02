@@ -10,6 +10,7 @@ import parallel;
 import engineconstructs;
 import cameraconstructs;
 import bounds;
+import dirtylatch;
 
 // Camera and Sampler are held by reference, assume their lifetimes exceed the integrator (they’re owned by the engine).
 
@@ -20,10 +21,6 @@ public:
 
   void render(const Scene&) override;
 
-  void renderSampleWaves(const Scene& scene, RenderProgress& progress, const Bounds2i& pixelBounds, const Int samplesPerPixel);
-
-  void writeToDisplaySink();
-
 protected:
   virtual void evaluatePixelSample(Point2i, Int, const Scene&, Sampler&) = 0;
 
@@ -32,6 +29,10 @@ protected:
 
   std::vector<std::uint8_t> m_displayBytes{};
 
+private:
+  void renderSampleWaves(const Scene& scene, RenderProgress& progress, const Bounds2i& pixelBounds, const Int samplesPerPixel);
+  void writeToDisplaySink();
+  void updateRuntimeSharedState(const Int samplesPerPixel);
 };
 
 ImageTileIntegrator::ImageTileIntegrator(const RuntimeComponents& renderRuntimeComponents, CameraBase& camera, Sampler& sampler) noexcept : Integrator{ renderRuntimeComponents }, m_camera { camera }, m_samplerPrototype{ sampler } {}
@@ -78,6 +79,8 @@ void ImageTileIntegrator::renderSampleWaves(const Scene& scene, RenderProgress& 
             sampler->startPixelSample(p, sampleIdx, 0);
 
             evaluatePixelSample(p, sampleIdx, scene, *sampler);
+
+            updateRuntimeSharedState(samplesPerPixel);
           }
         }
       }
@@ -87,6 +90,19 @@ void ImageTileIntegrator::renderSampleWaves(const Scene& scene, RenderProgress& 
     parallelFor2D(pixelBounds, renderTileWave);
 
     writeToDisplaySink();
+  }
+}
+
+void ImageTileIntegrator::updateRuntimeSharedState(const Int samplesPerPixel)
+{
+  auto& runtimeSharedState{ m_runtimeComponents.runtimeSharedState->get() };
+
+  const std::uint64_t samplesCompleted{ runtimeSharedState.samplesCompleted.fetch_add(1, std::memory_order_relaxed) };
+  const std::uint64_t totalSamples{ std::uint64_t(m_camera.getFilm().getFilmResolution()[0]) * m_camera.getFilm().getFilmResolution()[1] * samplesPerPixel };
+
+  if ((samplesCompleted & 0xFFFF) == 0)
+  {
+    runtimeSharedState.progressUnitNormalized.store(static_cast<float>(samplesCompleted) / static_cast<float>(totalSamples), std::memory_order_relaxed);
   }
 }
 
@@ -103,6 +119,8 @@ void ImageTileIntegrator::writeToDisplaySink()
       std::lock_guard<std::mutex> lock(displayMutex);
       displayBytes = std::move(rgba);
     }
+
+    if (m_runtimeComponents.dirtyLatch) m_runtimeComponents.dirtyLatch->get().publish();
   }
 }
 

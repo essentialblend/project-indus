@@ -26,8 +26,6 @@ public:
 
   [[nodiscard]] bool intersectP(const Ray&) const override;
 
-  void printBVHStats(int W, int H, int spp, double msTotal) const noexcept;
-
 private:
   std::unique_ptr<BVHNode> m_root{};
   std::vector<std::shared_ptr<Primitive>> m_primitives{};
@@ -479,36 +477,4 @@ std::unique_ptr<BVHNode> BVHAggregate::splitByEqualCounts(int begin, const int t
   node->rightChild = buildRecursive(buildPrimitives, mid, end);
 
   return node;
-}
-
-void BVHAggregate::printBVHStats(int resWidth, int resHeight, int spp, double msTotal) const noexcept
-{
-  const double totalRays{ static_cast<double>(resWidth) * resHeight * spp };
-  const double npr{ totalRays ? m_BVHFrameStats.nodesVisited / totalRays : 0.0 };
-  const double bpr{ totalRays ? m_BVHFrameStats.boxTests / totalRays : 0.0 };
-  const double lpr{ totalRays ? m_BVHFrameStats.leavesVisited / totalRays : 0.0 };
-  const double ppr{ totalRays ? m_BVHFrameStats.primitiveTests / totalRays : 0.0 };
-  const double mrps{ (msTotal > 0.0) ? (totalRays / (msTotal * 1e3)) : 0.0 };
-
-  const double sec = msTotal * 1e-3;
-  const int hh = static_cast<int>(sec / 3600.0);
-  const int mm = static_cast<int>((sec - hh * 3600.0) / 60.0);
-  const double ss = sec - hh * 3600.0 - mm * 60.0;
-  const auto hms = std::format("{:02d}:{:02d}:{:06.3f}", hh, mm, ss);
-
-  std::println();
-  std::println("\n+------------------------+----------------+");
-  std::println("| {:<22} | {:>14} |", "resolution", std::format("{}x{}", resWidth, resHeight));
-  std::println("| {:<22} | {:>14} |", "spp", spp);
-  std::println("| {:<22} | {:>14.0f} |", "rays", totalRays);
-  std::println("| {:<22} | {:>14.3f} |", "time_ms", msTotal);
-  std::println("| {:<22} | {:>14.3f} |", "time_s", sec);
-  std::println("| {:<22} | {:>14} |", "time_hms", hms);
-  std::println("| {:<22} | {:>14.3f} |", "Mray_per_s", mrps);
-  std::println("+------------------------+----------------+");
-  std::println("| {:<22} | {:>14.3f} |", "nodes_per_ray", npr);
-  std::println("| {:<22} | {:>14.3f} |", "aabb_tests_per_ray", bpr);
-  std::println("| {:<22} | {:>14.3f} |", "leaves_per_ray", lpr);
-  std::println("| {:<22} | {:>14.3f} |", "prim_tests_per_ray", ppr);
-  std::println("+------------------------+----------------+\n");
 }

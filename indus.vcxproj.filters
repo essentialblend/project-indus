@@ -240,6 +240,9 @@
     <ClCompile Include="src\components\utilities\engine-utils\sinks\display-sink.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\components\utilities\engine-utils\dirty-latch.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dep\stb_image_write.h">

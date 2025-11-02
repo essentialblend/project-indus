@@ -66,15 +66,11 @@ export
     Vec3d luminanceFromRGB{};
   };
 
-  //struct FilmFrame
-  //{
-  //  Point2i pixelResolution{};
-  //  std::span<const ColorRGB> pixels{};
-  //};
-
   struct DisplayFrame
   {
     Point2i pixelResolution{};
     std::span<const std::uint8_t> rgbaPixels{};
+    bool doUpload{};
+    float progressUnitNormalized{ 0 };
   };
 }

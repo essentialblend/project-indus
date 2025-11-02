@@ -90,16 +90,34 @@ export
   {
     if (n <= 1) return 0;
 
-    UInt64 h{ mixBits(seed ^ UInt64(n) * 0x9E3779B97F4A7C15ull) };
-    Int a{ static_cast<Int>((h | 1ull) % static_cast<UInt64>(n)) };
-    
-    if (a == 0) a = 1;
-    
-    while (std::gcd(a, n) != 1) a = (a + 1) % n;
-    
-    Int b{ static_cast<Int>(mixBits(h + 0xD1B54A32D192ED03ull) % static_cast<UInt64>(n)) };
-    
-    return static_cast<Int>((static_cast<Int64>(a) * i + b) % n);
+    auto nextPow2 = [](UInt32 value)
+      {
+        value--;
+        value |= value >> 1;
+        value |= value >> 2;
+        value |= value >> 4;
+        value |= value >> 8;
+        value |= value >> 16;
+
+        return value + 1;
+      };
+
+    const UInt32 stratumCount{ static_cast<UInt32>(n) };
+    const UInt32 powerOfTwoCeil{ nextPow2(stratumCount) };
+    const UInt32 indexMask{ powerOfTwoCeil - 1u };
+
+    UInt32 indexState{ static_cast<UInt32>(i) };
+    UInt64 streamSeed{ static_cast<UInt64>(seed) };
+
+    for (;;)
+    {
+      const UInt32 permutedCandidate{ static_cast<UInt32>(mixBits(static_cast<UInt64>(indexState) ^ streamSeed)) & indexMask };
+
+      if (permutedCandidate < stratumCount) return static_cast<Int>(permutedCandidate);
+
+      indexState = permutedCandidate;
+      streamSeed += 0x9E3779B97F4A7C15ull;
+    }
   }
 
   [[nodiscard]] std::optional<RefractResult> refractLocal(const Vec3f& unitW_oLocal, const Float eta) noexcept

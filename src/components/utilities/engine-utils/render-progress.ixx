@@ -13,6 +13,8 @@ public:
   void tileDone() noexcept;
   void done() noexcept;
 
+  float getNormalizedProgress() const noexcept;
+
 private:
   Int m_total{};
   std::atomic<Int> m_done{ 0 };
@@ -55,6 +57,11 @@ void RenderProgress::done() noexcept
   printLine(100);
   
   std::println();
+}
+
+float RenderProgress::getNormalizedProgress() const noexcept
+{
+  return static_cast<float>(m_done) / static_cast<float>(m_total);
 }
 
 void RenderProgress::printLine(Int pct) noexcept 
