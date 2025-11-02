@@ -10,17 +10,19 @@ public:
   virtual ~Integrator() = default;
   virtual void render(const Scene&) = 0;
 
-protected:
-  explicit Integrator(const RuntimeComponents& renderRuntimeComponents) noexcept;
+  void setDisplayConsumer(DisplayConsumer displayConsumerFnctr) noexcept;
 
-protected:
+protected: 
   Integrator() noexcept = default;
   Integrator(const Integrator&) = delete;
   Integrator& operator=(const Integrator&) = delete;
   Integrator(Integrator&&) = delete;
   Integrator& operator=(Integrator&&) = delete;
 
-  const RuntimeComponents& m_runtimeComponents{};
+  DisplayConsumer m_displayConsumer{ nullptr };
 };
 
-Integrator::Integrator(const RuntimeComponents& renderRuntimeComponents) noexcept : m_runtimeComponents{ renderRuntimeComponents } {}
+void Integrator::setDisplayConsumer(DisplayConsumer displayConsumerFnctr) noexcept
+{
+  m_displayConsumer = std::move(displayConsumerFnctr);
+}

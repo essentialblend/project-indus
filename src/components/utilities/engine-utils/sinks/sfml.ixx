@@ -5,13 +5,16 @@ import <SFML/Graphics.hpp>;
 import std;
 import displaysink;
 import types;
+import engineconstructs;
+import image;
 
 export class SFMLDisplaySink final : public DisplaySink
 {
 public:
   explicit SFMLDisplaySink(Point2i pixelResolution);
-
-  virtual void present(const DisplayFrame& frame) override;
+  
+  virtual void update(const FrameSnapshot& frame) override;
+  virtual void present() override;
 
   virtual bool isSinkOpen() const noexcept override;
 
@@ -22,7 +25,7 @@ private:
 
   sf::View m_HUDView{};
 
-  void drawHUD(const DisplayFrame& frame);
+  //void drawHUD(const DisplayFrame& frame);
 };
 
 SFMLDisplaySink::SFMLDisplaySink(Point2i pixelResolution) : m_mainWindow{ sf::VideoMode{ unsigned(pixelResolution[0]), unsigned(pixelResolution[1]) }, "indus-preview" }
@@ -48,63 +51,40 @@ SFMLDisplaySink::SFMLDisplaySink(Point2i pixelResolution) : m_mainWindow{ sf::Vi
   m_HUDView = m_mainWindow.getDefaultView();
 }
 
-void SFMLDisplaySink::present(const DisplayFrame& frame)
+void SFMLDisplaySink::update(const FrameSnapshot& frameSnapshot) 
 {
-  sf::Event event{};
+  const Image& img{ frameSnapshot.image };
+  const auto res{ img.getImagePixelResolution() };
 
-  while (m_mainWindow.pollEvent(event))
+  if (m_texture.getSize().x != unsigned(res[0]) || m_texture.getSize().y != unsigned(res[1])) {
+    m_texture.create(unsigned(res[0]), unsigned(res[1]));
+    m_textureSprite.setTexture(m_texture, true);
+  }
+  if (img.getPixelFormat() == PixelFormat::U8 && img.getNumChannels() == 4) 
   {
-    if (event.type == sf::Event::Closed) m_mainWindow.close();
+    m_texture.update(img.getP8().data());
+  }
+}
 
-    if (event.type == sf::Event::Resized)
-    {
-      m_HUDView.reset(sf::FloatRect(0.0f, 0.0f, static_cast<float>(event.size.width), static_cast<float>(event.size.height)));
-    }
+void SFMLDisplaySink::present()
+{
+  sf::Event e{};
+
+  while (m_mainWindow.pollEvent(e)) 
+  {
+    if (e.type == sf::Event::Closed) m_mainWindow.close();
+
+    if (e.type == sf::Event::Resized) m_HUDView.reset(sf::FloatRect(0.f, 0.f, float(e.size.width), float(e.size.height)));
   }
 
-  if(frame.doUpload)
-  {
-    m_texture.update(frame.rgbaPixels.data());
-  }
-  else if (!m_textureSprite.getTexture())
-  {
-    std::vector<sf::Uint8> blank(frame.rgbaPixels.size(), 32);
-    m_texture.update(blank.data());
-  }
-  
   m_mainWindow.clear(sf::Color::Black);
   m_mainWindow.setView(m_mainWindow.getDefaultView());
   m_mainWindow.draw(m_textureSprite);
   
-  m_mainWindow.setView(m_HUDView);
-  drawHUD(frame);
-
   m_mainWindow.display();
 }
 
 bool SFMLDisplaySink::isSinkOpen() const noexcept
 {
   return m_mainWindow.isOpen();
-}
-
-void SFMLDisplaySink::drawHUD(const DisplayFrame& frame)
-{
-  const auto ws{ m_mainWindow.getSize() };
-
-  const float pad{ 12 };
-  
-  const float w{ std::max(0.f, float(ws.x) - 2.f * pad) };
-  const float h{ 8.0 };
-  const float f{ std::clamp(frame.progressUnitNormalized, 0.0f, 1.0f) };
-
-  sf::RectangleShape back({ w, h });
-  back.setPosition(pad, pad);
-  back.setFillColor(sf::Color(0, 0, 0, 140));
-
-  sf::RectangleShape fill({ w * f, h });
-  fill.setPosition(pad, pad);
-  fill.setFillColor(sf::Color(255, 255, 255, 220));
-
-  m_mainWindow.draw(back);
-  m_mainWindow.draw(fill);
 }

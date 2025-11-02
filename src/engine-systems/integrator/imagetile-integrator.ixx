@@ -10,16 +10,17 @@ import parallel;
 import engineconstructs;
 import cameraconstructs;
 import bounds;
-import dirtylatch;
 
 // Camera and Sampler are held by reference, assume their lifetimes exceed the integrator (they’re owned by the engine).
 
 export class ImageTileIntegrator : public Integrator 
 {
 public:
-  ImageTileIntegrator(const RuntimeComponents& renderRuntimeComponents, CameraBase&, Sampler&) noexcept;
+  ImageTileIntegrator(CameraBase&, Sampler&) noexcept;
 
   void render(const Scene&) override;
+  float getCurrentProgress() const noexcept;
+  void publishSnapshot();
 
 protected:
   virtual void evaluatePixelSample(Point2i, Int, const Scene&, Sampler&) = 0;
@@ -27,15 +28,14 @@ protected:
   CameraBase& m_camera;
   Sampler& m_samplerPrototype;
 
-  std::vector<std::uint8_t> m_displayBytes{};
+  std::uint64_t m_snapshotSeq{ 0 };
+
 
 private:
   void renderSampleWaves(const Scene& scene, RenderProgress& progress, const Bounds2i& pixelBounds, const Int samplesPerPixel);
-  void writeToDisplaySink();
-  void updateRuntimeSharedState(const Int samplesPerPixel);
 };
 
-ImageTileIntegrator::ImageTileIntegrator(const RuntimeComponents& renderRuntimeComponents, CameraBase& camera, Sampler& sampler) noexcept : Integrator{ renderRuntimeComponents }, m_camera { camera }, m_samplerPrototype{ sampler } {}
+ImageTileIntegrator::ImageTileIntegrator(CameraBase& camera, Sampler& sampler) noexcept : m_camera { camera }, m_samplerPrototype{ sampler } {}
 
 void ImageTileIntegrator::render(const Scene& scene)
 {
@@ -57,11 +57,25 @@ void ImageTileIntegrator::render(const Scene& scene)
   progress.done();
 }
 
+float ImageTileIntegrator::getCurrentProgress() const noexcept
+{
+  return 0.0f;
+}
+
+void ImageTileIntegrator::publishSnapshot()
+{
+  const auto img{ m_camera.getFilm().toImageU8(ColorEncoding::sRGB, Float{ 1 }) };
+
+  FrameSnapshot snap{ std::move(img), getCurrentProgress(), ++m_snapshotSeq };
+
+  if (m_displayConsumer) m_displayConsumer(std::move(snap));
+}
+
 void ImageTileIntegrator::renderSampleWaves(const Scene& scene, RenderProgress& progress, const Bounds2i& pixelBounds, const Int samplesPerPixel)
 {
   for (Int waveStartIdx{}, waveSize{ 1 }; waveStartIdx < samplesPerPixel; waveStartIdx = std::min(samplesPerPixel, waveStartIdx + waveSize), waveSize = std::min<Int>(64, waveSize * 2))
   {
-    const auto renderTileWave = [&](const Bounds2i& tile)
+    const auto renderTile = [&](const Bounds2i& tile)
     {
       const auto sampler{ m_samplerPrototype.clone() };
 
@@ -79,48 +93,14 @@ void ImageTileIntegrator::renderSampleWaves(const Scene& scene, RenderProgress& 
             sampler->startPixelSample(p, sampleIdx, 0);
 
             evaluatePixelSample(p, sampleIdx, scene, *sampler);
-
-            updateRuntimeSharedState(samplesPerPixel);
           }
         }
       }
       progress.tileDone();
     };
 
-    parallelFor2D(pixelBounds, renderTileWave);
-
-    writeToDisplaySink();
-  }
-}
-
-void ImageTileIntegrator::updateRuntimeSharedState(const Int samplesPerPixel)
-{
-  auto& runtimeSharedState{ m_runtimeComponents.runtimeSharedState->get() };
-
-  const std::uint64_t samplesCompleted{ runtimeSharedState.samplesCompleted.fetch_add(1, std::memory_order_relaxed) };
-  const std::uint64_t totalSamples{ std::uint64_t(m_camera.getFilm().getFilmResolution()[0]) * m_camera.getFilm().getFilmResolution()[1] * samplesPerPixel };
-
-  if ((samplesCompleted & 0xFFFF) == 0)
-  {
-    runtimeSharedState.progressUnitNormalized.store(static_cast<float>(samplesCompleted) / static_cast<float>(totalSamples), std::memory_order_relaxed);
-  }
-}
-
-void ImageTileIntegrator::writeToDisplaySink()
-{
-  if (m_runtimeComponents.displayBytesArr && m_runtimeComponents.displayMutex)
-  {
-    const auto& rgba{ m_camera.getFilm().bakeDisplay() };
-
-    auto& displayBytes{ m_runtimeComponents.displayBytesArr->get() };
-
-    auto& displayMutex{ m_runtimeComponents.displayMutex->get() };
-    {
-      std::lock_guard<std::mutex> lock(displayMutex);
-      displayBytes = std::move(rgba);
-    }
-
-    if (m_runtimeComponents.dirtyLatch) m_runtimeComponents.dirtyLatch->get().publish();
+    parallelFor2D(pixelBounds, renderTile);
+    publishSnapshot();
   }
 }
 

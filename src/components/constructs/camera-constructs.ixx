@@ -66,11 +66,13 @@ export
     Vec3d luminanceFromRGB{};
   };
 
-  struct DisplayFrame
+  enum class PixelFormat { U8, F16, F32 };
+
+  struct ImageMetadata 
   {
-    Point2i pixelResolution{};
-    std::span<const std::uint8_t> rgbaPixels{};
-    bool doUpload{};
-    float progressUnitNormalized{ 0 };
+    std::optional<float> renderTimeSeconds{};
+    std::optional<int> samplesPerPixel{};
+    std::optional<Point2i> fullResolution{};
+    std::optional<Bounds2i> pixelBounds{};
   };
 }

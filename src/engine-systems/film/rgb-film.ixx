@@ -16,13 +16,12 @@ import rendertimer;
 import colorutils;
 import mathfp;
 import pixelsensor;
+import image;
 
 export class RGBFilm final : public FilmBase
 {
 public:
   explicit RGBFilm(const Point2i& fullRes, const Bounds2i& crop, Float diagMM, std::unique_ptr<Filter> filmFilter, const PixelSensor& pixelSensor) noexcept;
-
-  //virtual void notifyTileComplete(const Bounds2i& tile) noexcept override;
 
   void addSample(const Point2f& pFilm, const ColorRGB& L, Float64 weight) noexcept override;
 
@@ -31,10 +30,11 @@ public:
   [[nodiscard]] ColorRGB getPixelColor(const Point2i& p, Float splatScale) const noexcept override;
 
   void writeImage(const IndusConfig& indusConfig, const RenderTimer& renderTimer, const std::string& filename = {}) const override;
-  
-  void clear() noexcept override;
 
-  [[nodiscard]] std::vector<std::uint8_t> bakeDisplay() const noexcept override;
+  virtual Image toImageU8(ColorEncoding colorEncoding, Float splatScale = 1) const noexcept override;
+  virtual Image toImageF32() const noexcept override;
+  
+  void clear() noexcept override; 
 
   ~RGBFilm() override = default;
 
@@ -48,12 +48,9 @@ private:
   Float m_maxComponentValue{ infinity<Float> };
   Float m_filterIntegral{};
 
-  std::mutex m_dirtyMutex;
-  std::vector<Bounds2i> m_dirtyRects;
-  std::atomic<UInt64> m_dirtyEpoch{ 0 };
-
   Idx pixelIndex(const Point2i& p) const noexcept;
   [[nodiscard]] bool inFilmBounds(const Point2i& p, const Bounds2i& pixelBounds) const noexcept;
+  [[nodiscard]] std::vector<std::uint8_t> packEncodedBytes(ColorEncoding colorEncoding, Float splatScale, Bounds2i bounds, bool withAlpha = false) const noexcept;
 };
 
 RGBFilm::RGBFilm(const Point2i& fullRes, const Bounds2i& crop, Float diagMM, std::unique_ptr<Filter> filmFilter, const PixelSensor& sensor) noexcept : FilmBase(fullRes, crop, diagMM, std::move(filmFilter), sensor)
@@ -72,31 +69,6 @@ RGBFilm::RGBFilm(const Point2i& fullRes, const Bounds2i& crop, Float diagMM, std
 
   if (m_filterIntegral == Float{}) m_filterIntegral = Float{ 1 };
 }
-
-//void RGBFilm::notifyTileComplete(const Bounds2i& tile) noexcept
-//{
-//  const auto& loF{ m_pixelBounds.getMin() };
-//  const auto& hiF{ m_pixelBounds.getMax() };
-//
-//  const auto& loT{ tile.getMin() };
-//  const auto& hiT{ tile.getMax() };
-//
-//  const Bounds2i clamped{
-//    Point2i{ std::max(loT[0], loF[0]), std::max(loT[1], loF[1]) },
-//    Point2i{ std::min(hiT[0], hiF[0]), std::min(hiT[1], hiF[1]) }
-//  };
-//
-//  if (clamped.isEmpty()) return;
-//
-//  // Record the dirty rectangle thread-safely for later UI consumption.
-//  {
-//    std::scoped_lock lock{ m_dirtyMutex };
-//    m_dirtyRects.push_back(clamped);
-//  }
-//
-//  // Bump an epoch so a display thread can poll and repaint incrementally.
-//  m_dirtyEpoch.fetch_add(1, std::memory_order_relaxed);
-//}
 
 void RGBFilm::addSample(const Point2f& pFilm, const ColorRGB& L, Float64 weight) noexcept
 {
@@ -119,6 +91,33 @@ void RGBFilm::addSample(const Point2f& pFilm, const ColorRGB& L, Float64 weight)
 [[nodiscard]] bool RGBFilm::inFilmBounds(const Point2i& p, const Bounds2i& pixelBounds) const noexcept
 {
   return !(p[0] < pixelBounds.getMin()[0] || p[0] >= pixelBounds.getMax()[0] || p[1] < pixelBounds.getMin()[1] || p[1] >= pixelBounds.getMax()[1]);
+}
+
+std::vector<std::uint8_t> RGBFilm::packEncodedBytes(ColorEncoding colorEncoding, Float splatScale, Bounds2i bounds, bool withAlpha) const noexcept
+{
+  const int xMin{ bounds.getMin()[0] };
+  const int yMin{ bounds.getMin()[1] };
+  const int xMax{ bounds.getMax()[0] };
+  const int yMax{ bounds.getMax()[1] };
+
+  const std::size_t chans{ withAlpha ? 4u : 3u };
+
+  std::vector<std::uint8_t> out{};
+
+  out.reserve(static_cast<std::size_t>(xMax - xMin) * static_cast<std::size_t>(yMax - yMin) * chans);
+
+  for (int y = yMin; y < yMax; ++y) for (int x = xMin; x < xMax; ++x) 
+  {
+    const ColorRGB rgb{ encodeColor(colorEncoding, getPixelColor(Point2i{ x, y }, splatScale)) };
+
+    out.push_back(quantizeToU8(rgb[0]));
+    out.push_back(quantizeToU8(rgb[1]));
+    out.push_back(quantizeToU8(rgb[2]));
+    
+    if (withAlpha) out.push_back(255u);
+  }
+  
+  return out;
 }
 
 // Pending some deeper understanding. addSplat remains unused as of now
@@ -168,27 +167,12 @@ ColorRGB RGBFilm::getPixelColor(const Point2i& p, Float splatScale) const noexce
 
 void RGBFilm::writeImage(const IndusConfig& indusConfig, const RenderTimer& renderTimer, const std::string& filename) const
 {
-  const Bounds2i pixelBounds{ getPixelBounds() };
-  const int width{ m_extent[0] };
-  const int height{ m_extent[1] };
+  const Bounds2i bounds{ getPixelBounds() };
 
-  std::vector<std::uint8_t> bytes;
-  bytes.reserve(static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 3);
-
-  constexpr ColorEncoding encodingTag{ ColorEncoding::sRGB };
-
-  for (int y{ pixelBounds.getMin()[1] }; y < pixelBounds.getMax()[1]; ++y)
-  {
-    for (int x{ pixelBounds.getMin()[0] }; x < pixelBounds.getMax()[0]; ++x)
-    {
-      const ColorRGB linear{ getPixelColor(Point2i{ x, y }, Float{ 1 }) };
-      const ColorRGB encoded{ encodeColor(encodingTag, linear) };
-
-      bytes.push_back(quantizeToU8(encoded[0]));
-      bytes.push_back(quantizeToU8(encoded[1]));
-      bytes.push_back(quantizeToU8(encoded[2]));
-    }
-  }
+  const auto bytes{ packEncodedBytes(ColorEncoding::sRGB, Float{ 1 }, bounds) };
+  
+  const int width{ bounds.getMax()[0] - bounds.getMin()[0] };
+  const int height{ bounds.getMax()[1] - bounds.getMin()[1] };
     
   std::filesystem::create_directories("renders");
 
@@ -215,41 +199,46 @@ void RGBFilm::writeImage(const IndusConfig& indusConfig, const RenderTimer& rend
   stbi_write_png(outPath.c_str(), width, height, 3, bytes.data(), width * 3);
 }
 
+Image RGBFilm::toImageU8(ColorEncoding colorEncoding, Float splatScale) const noexcept
+{
+  const Bounds2i bounds{ getPixelBounds() };
+  auto bytes{ packEncodedBytes(colorEncoding, splatScale, bounds, true) };
+  
+  return Image(std::move(bytes), getFilmResolution(), std::vector<std::string>{"R", "G", "B", "A"}, colorEncoding);
+}
+
+Image RGBFilm::toImageF32() const noexcept
+{
+  const auto res{ getFilmResolution() };
+
+  const int W{ res[0] }; const int H{ res[1] };
+  
+  std::vector<float> p; 
+  p.resize(static_cast<std::size_t>(W) * H * 3u);
+  
+  std::size_t i{};
+  
+  for (int y{}; y < H; ++y)
+  {
+    for (int x{}; x < W; ++x) 
+    {
+      const ColorRGB c{ getPixelColor(Point2i{ x, y }, Float{ 1 }) };
+
+      p[i++] = c[0]; 
+      p[i++] = c[1]; 
+      p[i++] = c[2];
+    }
+  }
+    
+  return Image(std::move(p), res, std::vector<std::string>{"R", "G", "B"}, ColorEncoding::Linear);
+}
+
 void RGBFilm::clear() noexcept
 {
   for (auto& px : m_pixels) 
   {
     px.clear();
   }
-}
-
-std::vector<std::uint8_t> RGBFilm::bakeDisplay() const noexcept
-{
-  const Bounds2i pixelBounds{ getPixelBounds() };
-  const int extentWidth{ m_extent[0] };
-  const int extentHeight{ m_extent[1] };
-
-  std::vector<std::uint8_t> bytes{};
-
-  bytes.resize(static_cast<std::size_t>(extentWidth) * static_cast<std::size_t>(extentHeight) * 4u);
-
-  std::size_t k{};
-  
-  for (int y{ pixelBounds.getMin()[1] }; y < pixelBounds.getMax()[1]; ++y)
-  {
-    for (int x{ pixelBounds.getMin()[0] }; x < pixelBounds.getMax()[0]; ++x) 
-    {
-      const ColorRGB linearRGB{ getPixelColor(Point2i{ x, y }, Float{ 1 }) };
-      const ColorRGB encodedRGB{ encodeColor(ColorEncoding::sRGB, linearRGB) };
-      
-      bytes[k++] = quantizeToU8(encodedRGB[0]);
-      bytes[k++] = quantizeToU8(encodedRGB[1]);
-      bytes[k++] = quantizeToU8(encodedRGB[2]);
-      bytes[k++] = 255;
-    }
-  }
-
-  return bytes;
 }
 
 Idx RGBFilm::pixelIndex(const Point2i& p) const noexcept

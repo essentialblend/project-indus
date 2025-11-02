@@ -26,16 +26,19 @@ import mathconstants;
 import mathfp;
 import threadpool;
 import parallel;
+import displaysink;
 import sfmlsink;
-import dirtylatch;
+import framemailbox;
 
 export class Indus final
 {
 public:
   explicit Indus(const IndusConfig& cfg) noexcept;
 
-  void setupEngineSystems();
-  void run();
+  void runEngine();
+  void runDisplayLoop(DisplaySink& displaySink);
+
+  DisplayConsumer createDisplayConsumer() noexcept;
 
 private:
   IndusConfig m_cfg{};
@@ -46,52 +49,38 @@ private:
   std::unique_ptr<Integrator> m_integrator{};
   std::unique_ptr<ThreadPool> m_engineThreadPool{};
 
-  DirtyLatch m_dirtyLatch{};
-  RuntimeSharedState m_runtimeSharedState{};
-  RuntimeComponents m_runtimeComponents{};
+  FrameMailbox m_frameMailbox{};
   
   std::shared_ptr<Primitive> makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld, const Point2f& matteXZ, const Point2f& glassXZ = {});
 
   std::shared_ptr<Primitive> makeLegacyHeroScene(const Transform4f& renderFromWorld);
 
-  std::mutex m_displayMutex{};
-  std::vector<std::uint8_t> m_displayBytesArr{};
-
   void initializeParallelSystems(std::size_t numThreads) noexcept;
+  void setupEngine();
   void shutdownParallelSystems() noexcept;
-
-  void displaySinkWindow();
-
-  void updateAndPresent(std::vector<uint8_t, std::allocator<sf::Uint8>>& localBytes);
 };
 
 Indus::Indus(const IndusConfig& cfg) noexcept : m_cfg{ cfg } {}
 
-void Indus::setupEngineSystems()
+void Indus::setupEngine()
 {
   m_film = makeFilm(m_cfg.filmCfg);
-  
-  m_runtimeComponents.displaySinkPtr = std::make_shared<SFMLDisplaySink>(m_film->getFilmResolution());
-  m_runtimeComponents.displayMutex = m_displayMutex;
-  m_runtimeComponents.displayBytesArr = m_displayBytesArr;
-  m_runtimeComponents.dirtyLatch = m_dirtyLatch;
-  m_runtimeComponents.runtimeSharedState = m_runtimeSharedState;
-
   m_camera = makeCamera(m_cfg.camCfg, *m_film);
   m_sampler = makeSampler(m_cfg.samplerCfg);
 
-  m_integrator = makeIntegrator(m_runtimeComponents, m_cfg.integratorCfg, *m_camera, *m_sampler);
+  m_integrator = makeIntegrator(m_cfg.integratorCfg, *m_camera, *m_sampler);
+  m_integrator->setDisplayConsumer(createDisplayConsumer());
 }
 
-void Indus::run()
+void Indus::runEngine()
 {
-  setupEngineSystems();
+  setupEngine();
   
+  SFMLDisplaySink displaySink(m_film->getFilmResolution());
+
   initializeParallelSystems(std::max(1u, std::thread::hardware_concurrency()));
 
-  const Transform4f renderFromWorld{
-    m_camera->getCameraTransform().getRenderFromWorld()
-  };
+  const Transform4f renderFromWorld{ m_camera->getCameraTransform().getRenderFromWorld() };
 
   const Point2f matteBallPosition{ 0.75, -1.25 };
   const Point2f dielectricBallPosition{ 0, 0 };
@@ -100,48 +89,44 @@ void Indus::run()
 
   Scene scene{ root };
 
-  std::jthread renderThread
+  std::jthread mainRenderThread{ [this, &scene] 
   {
-    [this, &scene]
+    RenderTimer timer{};
+    m_integrator->render(scene);
+    timer.stopTimer();
+
+    m_film->writeImage(m_cfg, timer);
+  } };
+
+  runDisplayLoop(displaySink);
+}
+
+void Indus::runDisplayLoop(DisplaySink& displaySink)
+{
+  FrameSnapshot last{};
+  std::uint64_t lastVersion{ 0 };
+
+  while (displaySink.isSinkOpen())
+  {
+    if (auto snap{ m_frameMailbox.tryConsume() }) 
     {
-      RenderTimer timer{};
-
-      m_integrator->render(scene);
-
-      timer.stopTimer();
-
-      m_film->writeImage(m_cfg, timer);
+      if (snap->frameVersion > lastVersion) 
+      {
+        displaySink.update(*snap);
+        last = *snap;
+        lastVersion = snap->frameVersion;
+      }
     }
+    displaySink.present();
+  }
+}
+
+DisplayConsumer Indus::createDisplayConsumer() noexcept
+{
+  return [this](FrameSnapshot frameSnapshot) 
+  {
+    m_frameMailbox.publishFrameSnapshot(std::move(frameSnapshot));
   };
-
-  displaySinkWindow();
-}
-
-void Indus::displaySinkWindow()
-{
-  std::vector<std::uint8_t> localBytes(static_cast<std::size_t>(m_film->getFilmResolution()[0]) * m_film->getFilmResolution()[1] * 4u, 255);
-
-  while (m_runtimeComponents.displaySinkPtr->isSinkOpen())
-  {
-    updateAndPresent(localBytes);
-  }
-}
-
-void Indus::updateAndPresent(std::vector<uint8_t, std::allocator<sf::Uint8>>& localBytes)
-{
-  const bool doUpload{ m_dirtyLatch.consume() };
-  
-  {
-    std::lock_guard<std::mutex> displayLock(m_displayMutex);
-
-    if (!m_displayBytesArr.empty()) localBytes = m_displayBytesArr;
-  }
-
-  const float progress = (m_runtimeComponents.runtimeSharedState) ? m_runtimeComponents.runtimeSharedState->get().progressUnitNormalized.load() : 0.0f;
-
-  DisplayFrame frame{ m_film->getFilmResolution(), std::span<const std::uint8_t>{ localBytes }, doUpload, progress };
-
-  m_runtimeComponents.displaySinkPtr->present(frame);
 }
 
 std::shared_ptr<Primitive> Indus::makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld, const Point2f& matteXZ, const Point2f& glassXZ)

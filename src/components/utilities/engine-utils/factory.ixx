@@ -58,7 +58,7 @@ export std::unique_ptr<Sampler> makeSampler(const SamplerConfig& cfg, Int seed =
   return std::make_unique<IndependentSampler>(spp, static_cast<UInt64>(seed), std::move(rng));
 }
 
-export std::unique_ptr<Integrator> makeIntegrator(RuntimeComponents& runtimeComponents, const IntegratorConfig& cfg, CameraBase& camera, Sampler& sampler)
+export std::unique_ptr<Integrator> makeIntegrator(const IntegratorConfig& cfg, CameraBase& camera, Sampler& sampler)
 {
-  return std::make_unique<PathIntegrator>(runtimeComponents, camera, sampler, cfg.maxDepth, cfg.useRR);
+  return std::make_unique<PathIntegrator>(camera, sampler, cfg.maxDepth, cfg.useRR);
 }

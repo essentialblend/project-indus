@@ -22,7 +22,7 @@ export
     return ColorRGB{ encodeScalar(colorEncodingTag, c[0]), encodeScalar(colorEncodingTag, c[1]), encodeScalar(colorEncodingTag, c[2]) };
   }
 
-  inline std::uint8_t quantizeToU8(Float v) noexcept 
+  std::uint8_t quantizeToU8(Float v) noexcept 
   {
     if (!isFinite(v)) v = Float{};
 

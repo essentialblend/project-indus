@@ -7,8 +7,7 @@ import samplingconstructs;
 import bounds;
 import transform;
 import threadpool;
-import displaysink;
-import dirtylatch;
+import image;
 
 export
 {
@@ -51,22 +50,13 @@ export
     Float unitLengthInMM{ 10 };
   };
 
-  // A struct to handle shared mutables between the integrator and the sink
-  struct RuntimeSharedState final
+  struct FrameSnapshot final
   {
-    std::atomic<float> progressUnitNormalized{};
-    std::atomic<std::uint64_t> samplesCompleted{};
+    Image image{};
+    float progressUnitNormalized{};
+    std::uint64_t frameVersion{};
   };
 
-  struct RuntimeComponents final
-  {
-    std::shared_ptr<DisplaySink> displaySinkPtr{};
-
-    std::optional<std::reference_wrapper<std::mutex>> displayMutex{};
-    std::optional<std::reference_wrapper<std::vector<std::uint8_t>>> displayBytesArr{};
-    std::optional<std::reference_wrapper<DirtyLatch>> dirtyLatch{};
-
-    std::optional<std::reference_wrapper<RuntimeSharedState>> runtimeSharedState{};
-  };
-
+  using DisplayConsumer = std::function<void(FrameSnapshot)>;
+ 
 }

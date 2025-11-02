@@ -7,6 +7,8 @@ import filter;
 import engineconstructs;
 import rendertimer;
 import pixelsensor;
+import image;
+import cameraconstructs;
 
 export class FilmBase
 {
@@ -19,19 +21,16 @@ public:
   [[nodiscard]] virtual Bounds2f getSampleBounds() const noexcept;
   [[nodiscard]] virtual const Filter& getFilter() const noexcept;
   [[nodiscard]] virtual const PixelSensor& getPixelSensor() const noexcept;
+  virtual Image toImageU8(ColorEncoding colorEncoding, Float splatScale = 1) const noexcept = 0;
+  virtual Image toImageF32() const noexcept = 0;
 
   virtual void addSample(const Point2f& pFilm, const ColorRGB& L, Float64 weight) noexcept = 0;
-
-  //virtual void notifyTileComplete(const Bounds2i& tile) noexcept = 0;
 
   virtual void addSplat(const Point2f& pFilm, const ColorRGB& L) noexcept = 0;
 
   [[nodiscard]] virtual ColorRGB getPixelColor(const Point2i& p, Float splatScale) const noexcept = 0;
 
-
   virtual void writeImage(const IndusConfig& indusConfig, const RenderTimer& renderTimer, const std::string& filename = {}) const = 0;
-
-  [[nodiscard]] virtual std::vector<std::uint8_t> bakeDisplay() const noexcept = 0;
 
   virtual void clear() noexcept = 0;
 
