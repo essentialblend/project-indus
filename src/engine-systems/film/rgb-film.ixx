@@ -12,8 +12,8 @@ import types;
 import cameraconstructs;
 import mathconstants;
 import engineconstructs;
-import rendertimer;
-import colorutils;
+import basictimer;
+import colorutil;
 import mathfp;
 import pixelsensor;
 import image;
@@ -29,12 +29,14 @@ public:
 
   [[nodiscard]] ColorRGB getPixelColor(const Point2i& p, Float splatScale) const noexcept override;
 
-  void writeImage(const IndusConfig& indusConfig, const RenderTimer& renderTimer, const std::string& filename = {}) const override;
+  void writeImage(const IndusConfig& indusConfig, const BasicTimer& renderTimer, const std::string& filename = {}) const override;
 
   virtual Image toImageU8(ColorEncoding colorEncoding, Float splatScale = 1) const noexcept override;
   virtual Image toImageF32() const noexcept override;
   
   void clear() noexcept override; 
+
+  [[nodiscard]] std::string toString() const override;
 
   ~RGBFilm() override = default;
 
@@ -106,15 +108,18 @@ std::vector<std::uint8_t> RGBFilm::packEncodedBytes(ColorEncoding colorEncoding,
 
   out.reserve(static_cast<std::size_t>(xMax - xMin) * static_cast<std::size_t>(yMax - yMin) * chans);
 
-  for (int y = yMin; y < yMax; ++y) for (int x = xMin; x < xMax; ++x) 
+  for (int y{ yMin }; y < yMax; ++y)
   {
-    const ColorRGB rgb{ encodeColor(colorEncoding, getPixelColor(Point2i{ x, y }, splatScale)) };
+    for (int x{ xMin }; x < xMax; ++x)
+    {
+      const ColorRGB rgb{ encodeColor(colorEncoding, getPixelColor(Point2i{ x, y }, splatScale)) };
 
-    out.push_back(quantizeToU8(rgb[0]));
-    out.push_back(quantizeToU8(rgb[1]));
-    out.push_back(quantizeToU8(rgb[2]));
-    
-    if (withAlpha) out.push_back(255u);
+      out.push_back(quantizeToU8(rgb[0]));
+      out.push_back(quantizeToU8(rgb[1]));
+      out.push_back(quantizeToU8(rgb[2]));
+
+      if (withAlpha) out.push_back(255u);
+    }
   }
   
   return out;
@@ -165,14 +170,36 @@ ColorRGB RGBFilm::getPixelColor(const Point2i& p, Float splatScale) const noexce
   return getPixelSensor().toOutputRGB(sensor);
 }
 
-void RGBFilm::writeImage(const IndusConfig& indusConfig, const RenderTimer& renderTimer, const std::string& filename) const
+void RGBFilm::writeImage(const IndusConfig& indusConfig, const BasicTimer& renderTimer, const std::string& filename) const
 {
-  const Bounds2i bounds{ getPixelBounds() };
+  const Image img{ toImageF32() };
 
-  const auto bytes{ packEncodedBytes(ColorEncoding::sRGB, Float{ 1 }, bounds) };
+  const Point2i res{ img.getImagePixelResolution() };
   
-  const int width{ bounds.getMax()[0] - bounds.getMin()[0] };
-  const int height{ bounds.getMax()[1] - bounds.getMin()[1] };
+  const int width{ res[0] };
+  const int height{ res[1] };
+  
+  const std::vector<float>& P32{ img.getP32() };
+
+  // Convert linear F32 to sRGB-encoded 8-bit
+  std::vector<std::uint8_t> bytes{};
+  bytes.reserve(static_cast<std::size_t>(width) * height * 3u);
+
+  for (int y{}; y < height; ++y)
+  {
+    for (int x{}; x < width; ++x)
+    {
+      const std::size_t i{ static_cast<std::size_t>((y * width + x) * 3) };
+
+      const ColorRGB linear{ P32[i + 0], P32[i + 1], P32[i + 2] };
+
+      const ColorRGB enc{ encodeColor(ColorEncoding::sRGB, linear) };
+
+      bytes.push_back(quantizeToU8(enc[0]));
+      bytes.push_back(quantizeToU8(enc[1]));
+      bytes.push_back(quantizeToU8(enc[2]));
+    }
+  }
     
   std::filesystem::create_directories("renders");
 
@@ -239,6 +266,11 @@ void RGBFilm::clear() noexcept
   {
     px.clear();
   }
+}
+
+std::string RGBFilm::toString() const
+{
+  return "RGBFilm";
 }
 
 Idx RGBFilm::pixelIndex(const Point2i& p) const noexcept

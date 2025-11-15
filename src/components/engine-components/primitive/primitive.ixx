@@ -19,6 +19,8 @@ public:
   virtual bool intersectP(const Ray&) const = 0;
 
   virtual Bounds3f getBounds() const noexcept = 0;
+
+  [[nodiscard]] virtual std::string toString() const noexcept = 0;
 };
 
 export class GeometricPrimitive final : public Primitive
@@ -30,6 +32,8 @@ public:
   bool intersectP(const Ray&) const override;
 
   [[nodiscard]] virtual Bounds3f getBounds() const noexcept override;
+
+  [[nodiscard]] virtual std::string toString() const noexcept override;
 
 private:
   std::shared_ptr<Shape> m_shape{};
@@ -58,4 +62,9 @@ bool GeometricPrimitive::intersectP(const Ray& ray) const
 Bounds3f GeometricPrimitive::getBounds() const noexcept
 {
   return m_shape->getBounds();
+}
+
+std::string GeometricPrimitive::toString() const noexcept
+{
+  return "GeometricPrimitive";
 }

@@ -1,7 +1,5 @@
 export module lcg;
 
-import <cassert>;
-
 import std;
 import rng;
 import miscconstructs;
@@ -23,6 +21,8 @@ public:
   void setMultiplier(UInt64 multiplier) noexcept;
   void setIncrement(UInt64 increment) noexcept;
   void setStartingState(UInt64 startState) noexcept;
+
+  [[nodiscard]] virtual std::string toString() const override;
 
   std::unique_ptr<RNG> clone() const override;
 
@@ -95,6 +95,11 @@ void LCG::setIncrement(UInt64 increment) noexcept
 void LCG::setStartingState(UInt64 startState) noexcept
 {
   m_currentState = startState;
+}
+
+std::string LCG::toString() const
+{
+  return "LCG";
 }
 
 std::unique_ptr<RNG> LCG::clone() const 

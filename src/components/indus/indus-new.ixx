@@ -6,7 +6,7 @@ export module indus;
 import std;
 import spherenew;
 import colorrgb;
-import factory;
+import enginefactory;
 import filmbase;
 import camerabase;
 import sampler;
@@ -25,10 +25,12 @@ import mathalgebra;
 import mathconstants;
 import mathfp;
 import threadpool;
-import parallel;
-import displaysink;
+import parallelutil;
+import displaysinkbase;
 import sfmlsink;
 import framemailbox;
+import basictimer;
+
 
 export class Indus final
 {
@@ -36,7 +38,6 @@ public:
   explicit Indus(const IndusConfig& cfg) noexcept;
 
   void runEngine();
-  void runDisplayLoop(DisplaySink& displaySink);
 
   DisplayConsumer createDisplayConsumer() noexcept;
 
@@ -48,9 +49,16 @@ private:
   std::unique_ptr<Sampler> m_sampler{};
   std::unique_ptr<Integrator> m_integrator{};
   std::unique_ptr<ThreadPool> m_engineThreadPool{};
+  std::unique_ptr<DisplaySinkBase> m_displaySink{};
+  std::unique_ptr<Scene> m_renderScene{};
+
+  std::jthread m_renderThread{};
 
   FrameMailbox m_frameMailbox{};
-  
+  static inline EngineBuildInformation m_engineBuildInfo;
+
+  BasicTimer m_HUDTimer{};
+
   std::shared_ptr<Primitive> makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld, const Point2f& matteXZ, const Point2f& glassXZ = {});
 
   std::shared_ptr<Primitive> makeLegacyHeroScene(const Transform4f& renderFromWorld);
@@ -58,66 +66,79 @@ private:
   void initializeParallelSystems(std::size_t numThreads) noexcept;
   void setupEngine();
   void shutdownParallelSystems() noexcept;
+  void renderScene();
+  void runGUI();
 };
 
 Indus::Indus(const IndusConfig& cfg) noexcept : m_cfg{ cfg } {}
 
 void Indus::setupEngine()
 {
-  m_film = makeFilm(m_cfg.filmCfg);
-  m_camera = makeCamera(m_cfg.camCfg, *m_film);
-  m_sampler = makeSampler(m_cfg.samplerCfg);
+  auto& engineSystemsFactory{ EngineSystemsFactory::getInstance() };
+  const auto& hardwareThreads{ std::thread::hardware_concurrency() };
 
-  m_integrator = makeIntegrator(m_cfg.integratorCfg, *m_camera, *m_sampler);
+  m_film = engineSystemsFactory.makeFilm(m_cfg.filmCfg);
+  m_camera = engineSystemsFactory.makeCamera(m_cfg.camCfg, *m_film);
+  m_sampler = engineSystemsFactory.makeSampler(m_cfg.samplerCfg);
+
+  m_integrator = engineSystemsFactory.makeIntegrator(m_cfg.integratorCfg, *m_camera, *m_sampler);
+
   m_integrator->setDisplayConsumer(createDisplayConsumer());
-}
-
-void Indus::runEngine()
-{
-  setupEngine();
-  
-  SFMLDisplaySink displaySink(m_film->getFilmResolution());
-
-  initializeParallelSystems(std::max(1u, std::thread::hardware_concurrency()));
-
-  const Transform4f renderFromWorld{ m_camera->getCameraTransform().getRenderFromWorld() };
 
   const Point2f matteBallPosition{ 0.75, -1.25 };
   const Point2f dielectricBallPosition{ 0, 0 };
 
-  std::shared_ptr<Primitive> root{ makeShirleyBook1BVHRoot(renderFromWorld, matteBallPosition, dielectricBallPosition) };
+  std::shared_ptr<Primitive> sceneRootAggregate{ makeShirleyBook1BVHRoot(m_camera->getCameraTransform().getRenderFromWorld(), matteBallPosition, dielectricBallPosition) };
 
-  Scene scene{ root };
+  m_renderScene = std::make_unique<Scene>(sceneRootAggregate);
 
-  std::jthread mainRenderThread{ [this, &scene] 
-  {
-    RenderTimer timer{};
-    m_integrator->render(scene);
-    timer.stopTimer();
+  m_engineBuildInfo = engineSystemsFactory.makeDefaultEngineBuildInformation();
+  m_engineBuildInfo.runtimeThreads = hardwareThreads != 0u ? hardwareThreads : 1u;
 
-    m_film->writeImage(m_cfg, timer);
-  } };
+  ImmutableEngineSystems immutables{ *m_film, *m_camera, *m_sampler, *m_integrator, *m_renderScene };
 
-  runDisplayLoop(displaySink);
+  m_displaySink = engineSystemsFactory.makeDisplaySink(immutables, m_cfg.displaySinkCfg, m_HUDTimer, m_engineBuildInfo, m_cfg.filmCfg);
 }
 
-void Indus::runDisplayLoop(DisplaySink& displaySink)
+void Indus::runEngine()
+{
+  initializeParallelSystems(std::max(1u, std::thread::hardware_concurrency()));
+  setupEngine();
+
+  renderScene();
+  runGUI();
+}
+
+void Indus::renderScene()
+{
+  m_renderThread = std::jthread([this]
+  {
+    m_HUDTimer.startTimer();
+    m_integrator->render(*m_renderScene);
+    m_HUDTimer.stopTimer();
+
+    m_film->writeImage(m_cfg, m_HUDTimer);
+  });
+}
+
+void Indus::runGUI()
 {
   FrameSnapshot last{};
   std::uint64_t lastVersion{ 0 };
 
-  while (displaySink.isSinkOpen())
+  while (m_displaySink->isSinkOpen())
   {
-    if (auto snap{ m_frameMailbox.tryConsume() }) 
+    if (std::optional<FrameSnapshot> snap{ m_frameMailbox.tryConsume() })
     {
-      if (snap->frameVersion > lastVersion) 
+      if (snap->frameVersion > lastVersion)
       {
-        displaySink.update(*snap);
+        m_displaySink->update(*snap);
         last = *snap;
         lastVersion = snap->frameVersion;
       }
     }
-    displaySink.present();
+
+    m_displaySink->present();
   }
 }
 

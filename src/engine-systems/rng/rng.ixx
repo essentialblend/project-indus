@@ -23,6 +23,8 @@ public:
   template<IntegralArithmetic T>
   T uniform(T bound);
 
+  [[nodiscard]] virtual std::string toString() const = 0;
+
   virtual ~RNG() = default;
 
 protected:

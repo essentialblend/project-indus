@@ -19,6 +19,9 @@ public:
 
   std::unique_ptr<Sampler> clone() const override;
 
+  [[nodiscard]] std::string toString() const override;
+  virtual const RNG& getRNG() const noexcept override;
+
   Float get1D() override;
   Point2f get2D() override;
   Point2f getPixel2D() override;
@@ -60,6 +63,16 @@ std::unique_ptr<Sampler> IndependentSampler::clone() const
   cloned->m_sampleIndex = m_sampleIndex;
 
   return cloned;
+}
+
+std::string IndependentSampler::toString() const
+{
+  return "independent";
+}
+
+const RNG& IndependentSampler::getRNG() const noexcept
+{
+  return *m_rng;
 }
 
 Float IndependentSampler::get1D()

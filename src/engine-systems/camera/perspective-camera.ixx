@@ -21,6 +21,8 @@ public:
 
   CameraRay generateRay(const CameraSample&) const override;
 
+  [[nodiscard]] std::string toString() const override;
+
 private:
   Vec3f m_dxCamera{};
   Vec3f m_dyCamera{};
@@ -96,4 +98,9 @@ CameraRay PerspectiveCamera::generateRay(const CameraSample& cs) const
   const Float camWeight{ sqr(sqr(cosineTheta)) * m_exposureScale };
 
   return CameraRay{ renderSpaceRay, camWeight, m_exposureScale };
+}
+
+std::string PerspectiveCamera::toString() const
+{
+  return "perspective";
 }

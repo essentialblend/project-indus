@@ -3,6 +3,7 @@ export module sampler;
 import std;
 import types;
 import point;
+import rng;
 
 export class Sampler 
 {
@@ -14,8 +15,11 @@ public:
   virtual Float get1D() = 0;
   virtual Point2f get2D() = 0;
   virtual Int getSPP() const noexcept = 0;
+  virtual const RNG& getRNG() const noexcept = 0;
 
   virtual Point2f getPixel2D() = 0;
 
   virtual std::unique_ptr<Sampler> clone() const = 0;
+
+  [[nodiscard]] virtual std::string toString() const = 0;
 };

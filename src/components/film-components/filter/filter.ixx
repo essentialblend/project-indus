@@ -17,6 +17,8 @@ public:
   [[nodiscard]] virtual Float getSamplingDensityAtOffset(const Point2f& pixelOffset) const noexcept = 0;
   [[nodiscard]] virtual FilterSample getFilterSampleAtOffset(const Point2f& unitSquarePoint) const noexcept = 0;
 
+  [[nodiscard]] virtual std::string toString() const = 0;
+
   virtual ~Filter() = default;
 
 protected:
@@ -40,6 +42,8 @@ public:
   [[nodiscard]] Float getIntegral() const noexcept override;
   [[nodiscard]] Float getSamplingDensityAtOffset(const Point2f& pixelOffset) const noexcept override;
   [[nodiscard]] FilterSample getFilterSampleAtOffset(const Point2f& unitSquarePoint) const noexcept override;
+
+  [[nodiscard]] std::string toString() const override;
 
   ~BoxFilter() override = default;
 };
@@ -86,4 +90,9 @@ FilterSample BoxFilter::getFilterSampleAtOffset(const Point2f& unitSquarePoint) 
 
   // The weightOverPDF remains 1 as the terms cancel out because the weight in this case is constant
   return FilterSample{ Point2f{ px, py }, Float{ 1 } };
+}
+
+std::string BoxFilter::toString() const
+{
+  return "box";
 }

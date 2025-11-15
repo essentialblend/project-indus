@@ -8,6 +8,7 @@ import bounds;
 import transform;
 import threadpool;
 import image;
+import statconstructs;
 
 export
 {
@@ -30,10 +31,21 @@ export
     bool isJitter{ true };
   };
 
+  enum class SinkType
+  {
+    SFML
+  };
+
   struct IntegratorConfig final
   {
     Idx maxDepth{};
     bool useRR{ true };
+  };
+
+  struct DisplaySinkConfig final
+  {
+    SinkType sinkType{};
+    Point2i windowResolution{};
   };
 
   struct IndusConfig final
@@ -42,6 +54,7 @@ export
     CameraConfig camCfg{};
     SamplerConfig samplerCfg{};
     IntegratorConfig integratorCfg{};
+    DisplaySinkConfig displaySinkCfg{};
   };
 
   struct PhysicalUnits final
@@ -55,8 +68,35 @@ export
     Image image{};
     float progressUnitNormalized{};
     std::uint64_t frameVersion{};
+    std::optional<RenderStats> renderStats{};
   };
 
   using DisplayConsumer = std::function<void(FrameSnapshot)>;
  
+  enum class HUDMode{ Hidden, Strip, Detailed };
+
+  struct EngineBuildInformation
+  {
+    std::string_view engineName;
+    std::string_view engineVersion;
+    std::string_view buildConfig;
+    std::string_view gitHash;
+    std::string_view buildTimestamp;
+    std::string_view author;
+    std::uint32_t runtimeThreads{ 0 };
+  };
+
+  struct RenderSystemStrings
+  {
+    std::string scheduler{};
+    std::string sampler{};
+    std::string rng{};
+    std::string transport{};
+    std::string accelerator{};
+    std::string camera{};
+    std::string film{};
+    std::string filter{};
+    std::string display{};
+  };
+
 }

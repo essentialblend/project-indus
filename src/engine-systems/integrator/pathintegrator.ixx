@@ -27,6 +27,8 @@ export class PathIntegrator final : public RayIntegrator
 public:
   PathIntegrator(CameraBase&, Sampler&, Idx, bool useRR = true) noexcept;
 
+  [[nodiscard]] virtual std::string toString() const override;
+
 protected:
   ColorRGB Li(const Ray&, const Scene&, /*int depth,*/ Sampler&) override;
 
@@ -38,6 +40,11 @@ private:
 };
 
 PathIntegrator::PathIntegrator(CameraBase& camera, Sampler& sampler, Idx maxDepth, bool useRR) noexcept : RayIntegrator{ camera, sampler }, m_maxDepth{ maxDepth }, m_useRR{ useRR } {}
+
+std::string PathIntegrator::toString() const
+{
+  return "path";
+}
 
 ColorRGB PathIntegrator::Li(const Ray& inputRay, const Scene& scene, Sampler& sampler)
 {

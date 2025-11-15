@@ -5,7 +5,7 @@ import bounds;
 import colorrgb;
 import filter;
 import engineconstructs;
-import rendertimer;
+import basictimer;
 import pixelsensor;
 import image;
 import cameraconstructs;
@@ -30,9 +30,11 @@ public:
 
   [[nodiscard]] virtual ColorRGB getPixelColor(const Point2i& p, Float splatScale) const noexcept = 0;
 
-  virtual void writeImage(const IndusConfig& indusConfig, const RenderTimer& renderTimer, const std::string& filename = {}) const = 0;
+  virtual void writeImage(const IndusConfig& indusConfig, const BasicTimer& renderTimer, const std::string& filename = {}) const = 0;
 
   virtual void clear() noexcept = 0;
+
+  [[nodiscard]] virtual std::string toString() const = 0;
 
   virtual ~FilmBase() = default;
 

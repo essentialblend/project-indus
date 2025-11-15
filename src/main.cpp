@@ -1,4 +1,6 @@
 ﻿
+import <SFML/Graphics.hpp>;
+
 import indus;
 import vector;
 import std;
@@ -17,7 +19,8 @@ import mathfp;
 import mathconstants;
 import mathtrig;
 import mathalgebra;
-
+import enginesigil;
+import enginelogo;
 
 int main()
 {
@@ -25,7 +28,7 @@ int main()
   auto& filmCfg{ engineCfg.filmCfg };
 
 	engineCfg.filmCfg.filename = "test";
-	engineCfg.filmCfg.resolution = { 640, 360 };
+	engineCfg.filmCfg.resolution = { 1280, 720 };
 	filmCfg.crop = Bounds2i{ Point2i{ 0, 0 }, filmCfg.resolution };
 	filmCfg.diagonalMM = Float{ 43.266615 };
 	filmCfg.filterRadius = Vec2f{ Float{ 0.5 } };
@@ -36,17 +39,20 @@ int main()
 
 	engineCfg.camCfg.focalDistance = Float{ 4.225 };
 	engineCfg.camCfg.fovDegrees = Float{ 45 };
-	engineCfg.camCfg.lensRadius = Float{ 0.066 };
+	engineCfg.camCfg.lensRadius = Float{ 0.055 };
 	engineCfg.camCfg.screenWindow = Bounds2f{ { -filmCfg.aspect(), -1 }, { filmCfg.aspect(), 1 } };
   engineCfg.camCfg.renderingSpace = RenderingSpace::World;
 
-	engineCfg.samplerCfg.strata = Strata2D{ 5 };
+	engineCfg.samplerCfg.strata = Strata2D{ 3 };
 	engineCfg.samplerCfg.samplesPerPixel = static_cast<Int>(engineCfg.samplerCfg.strata.getTotal());
 	engineCfg.samplerCfg.isStratified = true;
 	engineCfg.samplerCfg.isJitter = true;
 	
 	engineCfg.integratorCfg.maxDepth = 50;
   engineCfg.integratorCfg.useRR = true;
+
+	engineCfg.displaySinkCfg.sinkType = SinkType::SFML;
+	engineCfg.displaySinkCfg.windowResolution = { 1280, 720 };
 
 	Indus engine{ engineCfg };
 

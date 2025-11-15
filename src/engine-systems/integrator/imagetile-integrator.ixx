@@ -5,8 +5,7 @@ import sampler;
 import camerabase;
 import scene;
 import types;
-import renderprogress;
-import parallel;
+import parallelutil;
 import engineconstructs;
 import cameraconstructs;
 import bounds;
@@ -22,6 +21,8 @@ public:
   float getCurrentProgress() const noexcept;
   void publishSnapshot();
 
+  [[nodiscard]] std::string getSchedulerString() const override;
+
 protected:
   virtual void evaluatePixelSample(Point2i, Int, const Scene&, Sampler&) = 0;
 
@@ -32,14 +33,20 @@ protected:
 
 
 private:
-  void renderSampleWaves(const Scene& scene, RenderProgress& progress, const Bounds2i& pixelBounds, const Int samplesPerPixel);
+  std::atomic<std::uint64_t> m_samplesDone{};
+  std::uint64_t m_totalSamples{};
+
+  void renderSampleWaves(const Scene& scene, const Bounds2i& pixelBounds, const Int samplesPerPixel);
+  void notifySampleDone();
 };
 
-ImageTileIntegrator::ImageTileIntegrator(CameraBase& camera, Sampler& sampler) noexcept : m_camera { camera }, m_samplerPrototype{ sampler } {}
+ImageTileIntegrator::ImageTileIntegrator(CameraBase& camera, Sampler& sampler) noexcept : m_camera{ camera }, m_samplerPrototype{ sampler } {}
 
 void ImageTileIntegrator::render(const Scene& scene)
 {
   Int nWaves{};
+  m_renderStats = RenderStats{};
+
   const auto& pixelRes{ m_camera.getFilm().getFilmResolution() };
   const Bounds2i pixelBounds{ Point2i{}, Point2i{ static_cast<Int>(pixelRes[0]), static_cast<Int>(pixelRes[1]) } };
   const Int samplesPerPixel{ m_samplerPrototype.getSPP() };
@@ -48,18 +55,26 @@ void ImageTileIntegrator::render(const Scene& scene)
   {
     ++nWaves;
   }
-
-  RenderProgress progress{ parallelTileCount(pixelBounds) * nWaves, 40 };
-  progress.begin();
   
-  renderSampleWaves(scene, progress, pixelBounds, samplesPerPixel);
+  renderSampleWaves(scene, pixelBounds, samplesPerPixel);
 
-  progress.done();
+  m_samplesDone.store(m_totalSamples, std::memory_order_relaxed);
+  Image img{ m_camera.getFilm().toImageU8(ColorEncoding::sRGB, 1.0f) };
+
+  // Update stats,
+  m_renderStats.spp = samplesPerPixel;
+
+  FrameSnapshot snap{ std::move(img), 1.0f, ++m_snapshotSeq, m_renderStats };
+  
+  if (m_displayConsumer) m_displayConsumer(std::move(snap));
 }
 
 float ImageTileIntegrator::getCurrentProgress() const noexcept
 {
-  return 0.0f;
+  const auto done{ m_samplesDone.load(std::memory_order_relaxed) };
+
+  return m_totalSamples ? static_cast<float>(done) / static_cast<float>(m_totalSamples)
+    : Float{};
 }
 
 void ImageTileIntegrator::publishSnapshot()
@@ -71,8 +86,19 @@ void ImageTileIntegrator::publishSnapshot()
   if (m_displayConsumer) m_displayConsumer(std::move(snap));
 }
 
-void ImageTileIntegrator::renderSampleWaves(const Scene& scene, RenderProgress& progress, const Bounds2i& pixelBounds, const Int samplesPerPixel)
+std::string ImageTileIntegrator::getSchedulerString() const
 {
+  return "image-tile (1, 1, 2, 4, ...)";
+}
+
+void ImageTileIntegrator::renderSampleWaves(const Scene& scene, const Bounds2i& pixelBounds, const Int samplesPerPixel)
+{
+  const auto& res{ m_camera.getFilm().getFilmResolution() };
+
+  m_samplesDone.store(0, std::memory_order_relaxed);
+
+  m_totalSamples = std::uint64_t(res[0]) * std::uint64_t(res[1]) * std::uint64_t(samplesPerPixel);
+
   for (Int waveStartIdx{}, waveSize{ 1 }; waveStartIdx < samplesPerPixel; waveStartIdx = std::min(samplesPerPixel, waveStartIdx + waveSize), waveSize = std::min<Int>(64, waveSize * 2))
   {
     const auto renderTile = [&](const Bounds2i& tile)
@@ -93,14 +119,28 @@ void ImageTileIntegrator::renderSampleWaves(const Scene& scene, RenderProgress& 
             sampler->startPixelSample(p, sampleIdx, 0);
 
             evaluatePixelSample(p, sampleIdx, scene, *sampler);
+            notifySampleDone();
           }
         }
       }
-      progress.tileDone();
     };
 
     parallelFor2D(pixelBounds, renderTile);
     publishSnapshot();
+  }
+}
+
+void ImageTileIntegrator::notifySampleDone()
+{
+  const auto done{ m_samplesDone.fetch_add(1, std::memory_order_relaxed) + 1 };
+
+  if ((done & 0xFFFFu) == 0u) 
+  {
+    const float p{ m_totalSamples ? float(done) / float(m_totalSamples) : 0.f };
+    
+    FrameSnapshot snap{ Image{}, p, ++m_snapshotSeq };
+
+    if (m_displayConsumer) m_displayConsumer(std::move(snap));
   }
 }
 

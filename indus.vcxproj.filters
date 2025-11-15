@@ -60,7 +60,7 @@
     <ClCompile Include="src\engine-systems\camera\perspective-camera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\sampling-util.ixx">
+    <ClCompile Include="src\components\utilities\utils\sampling-util.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\components\engine-components\onb\onb.ixx">
@@ -87,7 +87,7 @@
     <ClCompile Include="src\engine-systems\integrator\pathintegrator.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\engine-utils\factory.ixx">
+    <ClCompile Include="src\components\utilities\components\enginefactory.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\components\indus\indus-new.ixx">
@@ -126,13 +126,10 @@
     <ClCompile Include="src\engine-systems\sampler\stratified-sampler.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\engine-utils\render-progress.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\components\utilities\math-utils\math-util-vi.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\ray-util.ixx">
+    <ClCompile Include="src\components\utilities\utils\ray-util.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\components\engine-components\interval\interval.ixx">
@@ -174,7 +171,7 @@
     <ClCompile Include="src\components\engine-components\shape\sphere-new.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\engine-utils\rendertimer.ixx">
+    <ClCompile Include="src\components\utilities\components\basic-timer.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\components\engine-components\math\transforms\animated-transform.ixx">
@@ -219,31 +216,91 @@
     <ClCompile Include="src\components\constructs\dictionaries.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\engine-utils\color.ixx">
+    <ClCompile Include="src\components\utilities\utils\color-util.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\components\film-components\pixelsensor\pixelsensor.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\engine-utils\parallel.ixx">
+    <ClCompile Include="src\components\utilities\utils\parallel-util.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\engine-utils\threadpool\threadpool.ixx">
+    <ClCompile Include="src\components\engine-components\threadpool\threadpool.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\engine-utils\threadpool\job.ixx">
+    <ClCompile Include="src\components\engine-components\threadpool\job.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\engine-utils\sinks\sfml.ixx">
+    <ClCompile Include="src\components\engine-components\sinks\sfml-sink.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\engine-utils\sinks\display-sink.ixx">
+    <ClCompile Include="src\components\engine-components\sinks\displaysink-base.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\engine-utils\frame-mailbox.ixx">
+    <ClCompile Include="src\components\utilities\components\frame-mailbox.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\engine-utils\image.ixx">
+    <ClCompile Include="src\components\film-components\image\image.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\utilities\utils\misc-util.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\engine-components\hud\sfml-hud.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\constructs\immutable-constructs.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\constructs\hud-constructs.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\utilities\components\engine-branding\engine-logo.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\utilities\components\engine-branding\engine-sigil.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\constructs\stat-constructs.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\engine-components\stats\statsbuilder.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\engine-components\hud\components\hud-component.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\engine-components\hud\components\progressbar-component.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\engine-components\hud\components\timer-component.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\engine-components\hud\systems\hud-system.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\engine-components\hud\components\enginelogo-component.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\engine-components\hud\systems\header-system.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\engine-components\hud\components\text-component.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\engine-components\hud\components\multitextrow-component.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\engine-components\hud\systems\renderconfig-system.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\engine-components\hud\systems\renderstats-system.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\utilities\components\thread-local-storage.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\utilities\utils\thread-util.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

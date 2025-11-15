@@ -17,14 +17,16 @@ struct BVHBuildPrimitive final
 export class BVHAggregate final : public Primitive
 {
 public:
-  BVHAggregate(std::vector<std::shared_ptr<Primitive>>, int maxPrimsInNode, BVHSplitMethod splitMethod) noexcept;
+  BVHAggregate() noexcept = default;
+  explicit BVHAggregate(std::vector<std::shared_ptr<Primitive>>, int maxPrimsInNode, BVHSplitMethod splitMethod) noexcept;
 
   [[nodiscard]] Bounds3f getBounds() const noexcept override;
-  [[nodiscard]] BVHFrameStats getStats() const noexcept;
 
   [[nodiscard]] std::optional<ShapeIntersection> intersect(const Ray&) const override;
 
   [[nodiscard]] bool intersectP(const Ray&) const override;
+
+  [[nodiscard]] std::string toString() const noexcept override;
 
 private:
   std::unique_ptr<BVHNode> m_root{};
@@ -33,7 +35,6 @@ private:
   int m_maxPrimsInNode{};
   BVHSplitMethod m_splitMethod{};
   std::vector<LinearBVHNode> m_linearNodes{};
-  mutable BVHFrameStats m_BVHFrameStats{};
 
   int flattenBVHTree(const BVHNode& node) noexcept;
   std::unique_ptr<BVHNode> buildRecursive(std::vector<BVHBuildPrimitive>& bps, int begin, int end);
@@ -43,7 +44,7 @@ private:
   std::unique_ptr<BVHNode> splitByMiddle(Bounds3f& centroidBounds, const int dim, std::vector<BVHBuildPrimitive>& buildPrimitives, int begin, int end, const int totalPrimitivesInBP, std::unique_ptr<BVHNode> node);
 
   std::unique_ptr<BVHNode> splitByEqualCounts(int begin, const int totalPrimitivesInBP, std::vector<BVHBuildPrimitive>& buildPrimitives, int end, const int dim, std::unique_ptr<BVHNode> node);
-  
+
   template<typename FLeaf>
   bool traverseBVH(const Ray& ray, FLeaf&& leafFunc) const;
 };
@@ -53,14 +54,14 @@ BVHAggregate::BVHAggregate(std::vector<std::shared_ptr<Primitive>> primitives, i
 {
   if (m_primitives.empty()) return;
 
-  std::vector<BVHBuildPrimitive> BVHBuildPrimitives; 
+  std::vector<BVHBuildPrimitive> BVHBuildPrimitives;
   BVHBuildPrimitives.reserve(int(m_primitives.size()));
 
-  for (const auto& primitive : m_primitives) 
-  { 
+  for (const auto& primitive : m_primitives)
+  {
     Bounds3f primitiveBound{ primitive->getBounds() };
 
-    Point3f centroidPoint3f{ (primitiveBound.getMin()[0] + primitiveBound.getMax()[0]) * Float{ 0.5 }, (primitiveBound.getMin()[1] + primitiveBound.getMax()[1]) * Float{ 0.5 }, (primitiveBound.getMin()[2] + primitiveBound.getMax()[2]) * Float{ 0.5 } };
+    Point3f centroidPoint3f{ (primitiveBound.getMin()[0] + primitiveBound.getMax()[0]) * Float { 0.5 }, (primitiveBound.getMin()[1] + primitiveBound.getMax()[1]) * Float { 0.5 }, (primitiveBound.getMin()[2] + primitiveBound.getMax()[2]) * Float { 0.5 } };
 
     BVHBuildPrimitives.push_back({ primitiveBound, centroidPoint3f, primitive });
   }
@@ -71,7 +72,7 @@ BVHAggregate::BVHAggregate(std::vector<std::shared_ptr<Primitive>> primitives, i
 
   m_linearNodes.clear();
   m_linearNodes.reserve(std::size_t{ 2 * m_ordered.size() });
-  
+
   flattenBVHTree(*m_root);
 }
 
@@ -80,7 +81,6 @@ bool BVHAggregate::traverseBVH(const Ray& ray, FLeaf&& leafFunc) const
 {
   if (m_linearNodes.empty())
   {
-    ++m_BVHFrameStats.primaryRays;
     return false;
   }
 
@@ -100,25 +100,18 @@ bool BVHAggregate::traverseBVH(const Ray& ray, FLeaf&& leafFunc) const
     const LinearBVHNode& currLinearNode{ m_linearNodes[static_cast<Idx>(current)] };
     const auto optHit{ currLinearNode.nodeBounds.intersectPRange(rayLocal) };
 
-    ++m_BVHFrameStats.boxTests;
-
     // If we intersect the node's bounds, check whether it's a leaf node or an interior node
     if (optHit)
     {
-      ++m_BVHFrameStats.nodesVisited;
-
       // If it's a leaf node, check its primitives one by one for intersection
       if (currLinearNode.primitiveCount > 0)
       {
-        ++m_BVHFrameStats.leavesVisited;
-
         // If arg-passed leaf function returns true, we have an intersection and can exit
         if (leafFunc(currLinearNode, rayLocal))
         {
-          ++m_BVHFrameStats.primaryRays;
           return true;
         }
-        
+
         if (toVisitOffset == 0) break;
 
         // Pop next node to visit off the stack
@@ -154,37 +147,40 @@ bool BVHAggregate::traverseBVH(const Ray& ray, FLeaf&& leafFunc) const
     }
   }
 
-  ++m_BVHFrameStats.primaryRays;
-
   return false;
 }
 
 Bounds3f BVHAggregate::getBounds() const noexcept
 {
   if (!m_root) return Bounds3f{};
-  
-  return m_root->nodeBounds;
-}
 
-BVHFrameStats BVHAggregate::getStats() const noexcept
-{
-  return m_BVHFrameStats;
+  return m_root->nodeBounds;
 }
 
 bool BVHAggregate::intersectP(const Ray& ray) const
 {
   // The lambda simply checks each primitive and returns true, nothing else
   auto leafTestLambda = [&](const LinearBVHNode& node, const Ray& ray)
-  {
-    for (Idx i{}; i < node.primitiveCount; ++i)
     {
-      ++m_BVHFrameStats.primitiveTests;
-      if (m_ordered[node.firstPrimitiveOffset + i]->intersectP(ray)) return true;
-    }
-    return false;
-  };
+      for (Idx i{}; i < node.primitiveCount; ++i)
+      {
+        if (m_ordered[node.firstPrimitiveOffset + i]->intersectP(ray)) return true;
+      }
+      return false;
+    };
 
   return traverseBVH(ray, leafTestLambda);
+}
+
+std::string BVHAggregate::toString() const noexcept
+{
+  switch (m_splitMethod)
+  {
+  case BVHSplitMethod::SAH:         return "SAH-BVH";
+  case BVHSplitMethod::Middle:      return "Middle-BVH";
+  case BVHSplitMethod::EqualCounts: return "EqualCounts-BVH";
+  default:                          return "Unknown";
+  }
 }
 
 std::optional<ShapeIntersection> BVHAggregate::intersect(const Ray& ray) const
@@ -194,20 +190,18 @@ std::optional<ShapeIntersection> BVHAggregate::intersect(const Ray& ray) const
 
   // The lambda checks each primitive and updates the ray's tMax and the best intersection found so far, if any
   auto leafIntersectLambda = [&](const LinearBVHNode& node, Ray& rayRef)
-  {
-    for (Idx i{}; i < node.primitiveCount; ++i)
     {
-      ++m_BVHFrameStats.primitiveTests;
-
-      const auto& prim{ m_ordered[node.firstPrimitiveOffset + i] };
-      if (auto optShapeIntersect{ prim->intersect(rayRef) })
+      for (Idx i{}; i < node.primitiveCount; ++i)
       {
-        rayRef.setTMax(optShapeIntersect->tHit);
-        best = std::move(optShapeIntersect);
+        const auto& prim{ m_ordered[node.firstPrimitiveOffset + i] };
+        if (auto optShapeIntersect{ prim->intersect(rayRef) })
+        {
+          rayRef.setTMax(optShapeIntersect->tHit);
+          best = std::move(optShapeIntersect);
+        }
       }
-    }
-    return false;
-  };
+      return false;
+    };
 
   traverseBVH(rayLocal, leafIntersectLambda);
 
@@ -262,14 +256,14 @@ BVHAggregate::buildRecursive(std::vector<BVHBuildPrimitive>& buildPrimitives, in
     node->nodeBounds = Bounds3f::getUnion(node->nodeBounds, buildPrimitives[i].bounds);
 
   // If the node has no surface area, create a leaf node and unwind the recursion
-  if (isZero(node->nodeBounds.getSurfaceArea())) 
+  if (isZero(node->nodeBounds.getSurfaceArea()))
   {
     node->firstPrimitiveOffset = static_cast<int>(m_ordered.size());
-    
+
     node->primitiveCount = totalPrimitivesInBP;
-    
+
     for (int i{ begin }; i < end; ++i) m_ordered.push_back(buildPrimitives[i].primitive);
-    
+
     return node;
   }
 
@@ -289,29 +283,29 @@ BVHAggregate::buildRecursive(std::vector<BVHBuildPrimitive>& buildPrimitives, in
   {
     node->firstPrimitiveOffset = static_cast<int>(m_ordered.size());
     node->primitiveCount = totalPrimitivesInBP;
-    
+
     for (int i{ begin }; i < end; ++i) m_ordered.push_back(buildPrimitives[i].primitive);
-    
+
     return node;
   }
 
   // Now split the node based on the selected split method. EqualCounts splits based on primitive count, Middle splits based on the geometric midpoint of the centroids, SAH(Surface Area Heuristic) is a cost-based method (TBD)
-  switch (m_splitMethod) 
+  switch (m_splitMethod)
   {
-    case BVHSplitMethod::EqualCounts: 
-    {
-      return splitByEqualCounts(begin, totalPrimitivesInBP, buildPrimitives, end, dim, std::move(node));
-    }
-    case BVHSplitMethod::Middle: 
-    {
-      return splitByMiddle(centroidBounds, dim, buildPrimitives, begin, end, totalPrimitivesInBP, std::move(node));
-    }
-    // SAH is default, HLBVH pending parallelization
-    case BVHSplitMethod::SAH:
-    default: 
-    {
-      return splitBySAH(std::move(node), centroidBounds, dim, totalPrimitivesInBP, begin, buildPrimitives, end);
-    }
+  case BVHSplitMethod::EqualCounts:
+  {
+    return splitByEqualCounts(begin, totalPrimitivesInBP, buildPrimitives, end, dim, std::move(node));
+  }
+  case BVHSplitMethod::Middle:
+  {
+    return splitByMiddle(centroidBounds, dim, buildPrimitives, begin, end, totalPrimitivesInBP, std::move(node));
+  }
+  // SAH is default, HLBVH pending parallelization
+  case BVHSplitMethod::SAH:
+  default:
+  {
+    return splitBySAH(std::move(node), centroidBounds, dim, totalPrimitivesInBP, begin, buildPrimitives, end);
+  }
   }
 }
 
@@ -428,8 +422,8 @@ std::unique_ptr<BVHNode> BVHAggregate::splitBySAH(std::unique_ptr<BVHNode> node,
   // Now the node is a leaf, it must be at the tail end of the ordered primitives array. Then, return the node after adding all the leaf-primitives, store its size
   node->firstPrimitiveOffset = static_cast<int>(m_ordered.size());
   node->primitiveCount = totalPrimitivesInBP;
-  
-  for (int i{ begin }; i < end; ++i) 
+
+  for (int i{ begin }; i < end; ++i)
     m_ordered.push_back(buildPrimitives[i].primitive);
 
   return node;

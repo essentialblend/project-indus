@@ -15,6 +15,7 @@ public:
   void advance(std::int64_t iDelta) noexcept override;
 
   std::unique_ptr<RNG> clone() const override;
+  [[nodiscard]] virtual std::string toString() const override;
 
 protected:
   std::uint32_t nextU32() noexcept override;
@@ -77,6 +78,11 @@ std::unique_ptr<RNG> PCG32::clone() const
   p->m_increment = m_increment;
   
   return p;
+}
+
+std::string PCG32::toString() const
+{
+  return "PCG32";
 }
 
 std::uint32_t PCG32::nextU32() noexcept

@@ -13,6 +13,7 @@ import cameraconstructs;
 import samplingconstructs;
 import mathfp;
 import filter;
+import threadutil;
 
 export class RayIntegrator : public ImageTileIntegrator 
 {
@@ -44,6 +45,9 @@ void RayIntegrator::evaluatePixelSample(Point2i pPixel, [[maybe_unused]] Int sam
   CameraSample cs{ pFilm, uLens, Float{} };
 
   CameraRay renderSpaceRay{ m_camera.generateRay(cs) };
+
+  ThreadUtil::TLSObj.getRenderStats().raysCamera++;
+  ThreadUtil::TLSObj.getRenderStats().raysTotal++;
 
   if (isZero(renderSpaceRay.weight)) return;
 

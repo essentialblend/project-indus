@@ -23,6 +23,9 @@ public:
 
   Point2f getPixel2D() override;
 
+  [[nodiscard]] virtual std::string toString() const override;
+  virtual const RNG& getRNG() const noexcept override;
+
 private:
   std::unique_ptr<RNG> m_rng{};
   Int m_dimension{};
@@ -57,6 +60,16 @@ StratifiedSampler::StratifiedSampler(Strata2D strata, bool jitter, Int64 seed, s
 Int StratifiedSampler::getSPP() const noexcept
 {
   return m_spp;
+}
+
+std::string StratifiedSampler::toString() const
+{
+  return "stratified";
+}
+
+const RNG& StratifiedSampler::getRNG() const noexcept
+{
+  return *m_rng;
 }
 
 void StratifiedSampler::startPixelSample(Point2i pPixel, Int sampleIndex, Int startingDimension)

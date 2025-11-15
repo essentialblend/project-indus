@@ -23,6 +23,8 @@ public:
   [[nodiscard]] CameraShutter getShutter() const noexcept;
   [[nodiscard]] FilmBase& getFilm() const noexcept;
 
+  [[nodiscard]] virtual std::string toString() const = 0;
+
 protected:
   CameraBase(const CameraTransform&, const Transform4f&, const CameraShutter&, FilmBase&) noexcept;
 
