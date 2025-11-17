@@ -207,10 +207,8 @@ ThreadPool::~ThreadPool()
   m_threads.clear();
 }
 
-void ThreadPool::worker(std::stop_token stopToken, std::size_t threadID) 
+void ThreadPool::worker(std::stop_token stopToken, [[maybe_unused]] std::size_t threadID) 
 {  
-  ThreadUtil::TLSObj.setThreadID(threadID);
-
   // Loop infinitely
   for (;;) 
   {

@@ -1,7 +1,7 @@
 export module material;
 
-import surfaceinteraction;
 import bsdf_new;
+import colorrgb;
 
 export enum class MaterialType
 {
@@ -13,8 +13,6 @@ export class Material
 {
 public:
 	virtual ~Material() = default;
-
-	virtual BSDF getBSDF(const SurfaceInteraction& si) const = 0;
-
 	virtual MaterialType getMaterialType() const noexcept = 0;
+	virtual ColorRGB getReflectance() const noexcept = 0;
 };

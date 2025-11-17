@@ -17,6 +17,7 @@ import colorutil;
 import mathfp;
 import pixelsensor;
 import image;
+import threadutil;
 
 export class RGBFilm final : public FilmBase
 {
@@ -66,6 +67,11 @@ RGBFilm::RGBFilm(const Point2i& fullRes, const Bounds2i& crop, Float diagMM, std
   };
 
   m_pixels = std::vector<Pixel>(static_cast<Idx>(m_extent[0]) * static_cast<Idx>(m_extent[1]));
+
+  {
+    const std::uint64_t pixelCount{ std::uint64_t(m_extent[0]) * std::uint64_t(m_extent[1]) };
+    const std::uint64_t bytes{ pixelCount * sizeof(Pixel) };
+  }
 
   m_filterIntegral = m_filter->getIntegral();
 

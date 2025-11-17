@@ -30,6 +30,8 @@ import displaysinkbase;
 import sfmlsink;
 import framemailbox;
 import basictimer;
+import statsaccumulator;
+import pixel;
 
 
 export class Indus final
@@ -98,6 +100,8 @@ void Indus::setupEngine()
   ImmutableEngineSystems immutables{ *m_film, *m_camera, *m_sampler, *m_integrator, *m_renderScene };
 
   m_displaySink = engineSystemsFactory.makeDisplaySink(immutables, m_cfg.displaySinkCfg, m_HUDTimer, m_engineBuildInfo, m_cfg.filmCfg);
+
+  StatsAccumulator::setFilmBytes(static_cast<std::uint64_t>(m_film->getFilmResolution()[0]) * (m_film->getFilmResolution()[1]) * sizeof(Pixel));
 }
 
 void Indus::runEngine()
@@ -237,6 +241,9 @@ std::shared_ptr<Primitive> Indus::makeShirleyBook1BVHRoot(const Transform4f& ren
     auto s = std::make_shared<Sphere>(rO, oR, false, r, -r, r, Float{ 360 });
     prims.push_back(std::make_shared<GeometricPrimitive>(s, mat));
   }
+
+  // Ad-hoc, needs principled replacement later? More than just spheres as a Primitive type? CAUTION.
+  StatsAccumulator::addGeometryBytes(std::uint64_t(prims.size()) * sizeof(GeometricPrimitive));
 
   return std::make_shared<BVHAggregate>(std::move(prims), 4, BVHSplitMethod::SAH);
 }

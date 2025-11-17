@@ -31,4 +31,11 @@ export
     SurfaceInteraction interaction;
     Float tHit{};
   };
+
+  enum class BVHSplitMethod : std::uint8_t
+  {
+    SAH,
+    Middle,
+    EqualCounts
+  };
 }

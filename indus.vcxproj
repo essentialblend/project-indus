@@ -43,6 +43,7 @@
     <ClCompile Include="src\components\engine-components\hud\systems\hud-system.ixx" />
     <ClCompile Include="src\components\engine-components\hud\systems\renderconfig-system.ixx" />
     <ClCompile Include="src\components\engine-components\hud\systems\renderstats-system.ixx" />
+    <ClCompile Include="src\components\engine-components\stats\statsaccumulator.ixx" />
     <ClCompile Include="src\components\engine-components\stats\statsbuilder.ixx" />
     <ClCompile Include="src\components\film-components\image\image.ixx" />
     <ClCompile Include="src\components\film-components\filter\filter.ixx" />
@@ -51,6 +52,8 @@
     <ClCompile Include="src\components\engine-components\primitive\bvh-aggregate.ixx" />
     <ClCompile Include="src\components\utilities\components\engine-branding\engine-logo.ixx" />
     <ClCompile Include="src\components\utilities\components\engine-branding\engine-sigil.ixx" />
+    <ClCompile Include="src\components\utilities\components\systemstatscollector.ixx" />
+    <ClCompile Include="src\components\utilities\utils\bxdf-util.ixx" />
     <ClCompile Include="src\components\utilities\utils\color-util.ixx" />
     <ClCompile Include="src\components\utilities\components\frame-mailbox.ixx" />
     <ClCompile Include="src\components\utilities\utils\misc-util.ixx" />
@@ -59,7 +62,6 @@
     <ClCompile Include="src\components\engine-components\sinks\sfml-sink.ixx" />
     <ClCompile Include="src\components\engine-components\threadpool\job.ixx" />
     <ClCompile Include="src\components\engine-components\threadpool\threadpool.ixx" />
-    <ClCompile Include="src\components\utilities\components\thread-local-storage.ixx" />
     <ClCompile Include="src\components\utilities\utils\thread-util.ixx" />
     <ClCompile Include="src\engine-systems\bsdf\bsdf.ixx" />
     <ClCompile Include="src\components\engine-components\bxdf\bxdf.ixx" />
@@ -144,46 +146,46 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{7175f1ce-f29b-4c2c-a25f-4c08b9c9b7f0}</ProjectGuid>
     <RootNamespace>indus</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseInteloneTBB>false</UseInteloneTBB>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Engine|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseInteloneTBB>false</UseInteloneTBB>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -330,7 +332,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)dep\SFML\lib;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Pdh.lib;sfml-graphics.lib;sfml-window.lib;sfml-system.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Psapi.lib;sfml-graphics.lib;sfml-window.lib;sfml-system.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

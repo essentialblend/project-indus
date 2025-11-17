@@ -28,7 +28,7 @@ int main()
   auto& filmCfg{ engineCfg.filmCfg };
 
 	engineCfg.filmCfg.filename = "test";
-	engineCfg.filmCfg.resolution = { 1280, 720 };
+	engineCfg.filmCfg.resolution = { 640, 360 };
 	filmCfg.crop = Bounds2i{ Point2i{ 0, 0 }, filmCfg.resolution };
 	filmCfg.diagonalMM = Float{ 43.266615 };
 	filmCfg.filterRadius = Vec2f{ Float{ 0.5 } };
@@ -43,7 +43,7 @@ int main()
 	engineCfg.camCfg.screenWindow = Bounds2f{ { -filmCfg.aspect(), -1 }, { filmCfg.aspect(), 1 } };
   engineCfg.camCfg.renderingSpace = RenderingSpace::World;
 
-	engineCfg.samplerCfg.strata = Strata2D{ 3 };
+	engineCfg.samplerCfg.strata = Strata2D{ 4 };
 	engineCfg.samplerCfg.samplesPerPixel = static_cast<Int>(engineCfg.samplerCfg.strata.getTotal());
 	engineCfg.samplerCfg.isStratified = true;
 	engineCfg.samplerCfg.isJitter = true;

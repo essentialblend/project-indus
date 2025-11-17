@@ -6,8 +6,7 @@ import interaction;
 import onb;
 import mathalgebra;
 import bsdf_new;
-
-export class Material;
+import material;
 
 export class SurfaceInteraction : public Interaction
 {

@@ -17,6 +17,10 @@ import samplingutil;
 import mathalgebra;
 import mathconstants;
 import engineconstructs;
+import threadutil;
+import bxdfutil;
+import bsdf_new;
+import statsaccumulator;
 
 import <cassert>;
 
@@ -50,22 +54,22 @@ ColorRGB PathIntegrator::Li(const Ray& inputRay, const Scene& scene, Sampler& sa
 {
   ColorRGB L{ 0 }, beta{ 1 }; Ray ray{ inputRay };
 
-  for (Idx bounce{}; bounce < m_maxDepth; ++bounce) 
+  for (Idx bounce{}; bounce < m_maxDepth; ++bounce)
   {
     auto shapeIntersection{ scene.intersect(ray) };
 
     if (!shapeIntersection)
-    { 
-      L += beta * getBackgroundGradient(ray); 
-      break; 
+    {
+      L += beta * getBackgroundGradient(ray);
+      break;
     }
- 
+
     const SurfaceInteraction& si{ shapeIntersection->interaction };
 
-    auto mat{ si.getMaterial() }; 
+    auto mat{ si.getMaterial() };
     if (!mat) break;
-    
-    BSDF bsdf{ mat->getBSDF(si) };
+
+    BSDF bsdf{ computeBSDF(*mat, si) };
 
     const Float RRUSample{ sampler.get1D() };
     const Point2f BSDFUSample{ sampler.get2D() };
@@ -77,19 +81,19 @@ ColorRGB PathIntegrator::Li(const Ray& inputRay, const Scene& scene, Sampler& sa
     const Vec3f wi{ *BSDFSample->unitW_iWorld };
     const Float incidentCosineTheta{ absDot(wi, si.getShadingBasis().getNormal()) };
     beta *= BSDFSample->BRDF * (incidentCosineTheta / BSDFSample->PDF);
-    
-    if (m_useRR && bounce >= 5) 
-    { 
+
+    if (m_useRR && bounce >= 5)
+    {
       const Float q{ Float{ std::min(Float{ 0.95 }, std::max({ beta[0], beta[1], beta[2] })) } };
-      
+
       if (RRUSample > q) break;
 
-      beta *= (Float{ 1 } / q); 
+      beta *= (Float{ 1 } / q);
     }
-    
+
     ray = si.spawnRay(wi);
+    StatsAccumulator::recordIndirectRay();
   }
-  
   return L;
 }
 

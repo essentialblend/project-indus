@@ -6,6 +6,8 @@ import intersectionconstructs;
 import miscconstructs;
 import bounds;
 import mathfp;
+import threadutil;
+import statsaccumulator;
 
 struct BVHBuildPrimitive final
 {
@@ -47,6 +49,8 @@ private:
 
   template<typename FLeaf>
   bool traverseBVH(const Ray& ray, FLeaf&& leafFunc) const;
+
+  void publishBVHStats() const noexcept;
 };
 
 BVHAggregate::BVHAggregate(std::vector<std::shared_ptr<Primitive>> primitives, int maxPrimsInNode, BVHSplitMethod splitMethod) noexcept
@@ -74,16 +78,21 @@ BVHAggregate::BVHAggregate(std::vector<std::shared_ptr<Primitive>> primitives, i
   m_linearNodes.reserve(std::size_t{ 2 * m_ordered.size() });
 
   flattenBVHTree(*m_root);
+
+  publishBVHStats();
 }
 
 template<typename FLeaf>
 bool BVHAggregate::traverseBVH(const Ray& ray, FLeaf&& leafFunc) const
 {
+
   if (m_linearNodes.empty())
   {
     return false;
   }
 
+  std::uint64_t statsLocalNodesVisited{};
+  
   // Get ray's cached negative direction flags 
   Ray rayLocal{ ray };
   const auto& dirIsNeg{ rayLocal.getDirIsNeg() };
@@ -98,6 +107,10 @@ bool BVHAggregate::traverseBVH(const Ray& ray, FLeaf&& leafFunc) const
   {
     // Get mutable current node
     const LinearBVHNode& currLinearNode{ m_linearNodes[static_cast<Idx>(current)] };
+
+    // Collect BVH stat
+    statsLocalNodesVisited++;
+
     const auto optHit{ currLinearNode.nodeBounds.intersectPRange(rayLocal) };
 
     // If we intersect the node's bounds, check whether it's a leaf node or an interior node
@@ -112,7 +125,10 @@ bool BVHAggregate::traverseBVH(const Ray& ray, FLeaf&& leafFunc) const
           return true;
         }
 
-        if (toVisitOffset == 0) break;
+        if (toVisitOffset == 0)
+        {
+          break;
+        }
 
         // Pop next node to visit off the stack
         current = nodesToVisit[--toVisitOffset];
@@ -142,11 +158,15 @@ bool BVHAggregate::traverseBVH(const Ray& ray, FLeaf&& leafFunc) const
     // If we don't intersect the node's bounds, pop the next node to visit off the stack
     else
     {
-      if (toVisitOffset == 0) break;
+      if (toVisitOffset == 0)
+      {
+        break;
+      }
       current = nodesToVisit[--toVisitOffset];
     }
   }
 
+  StatsAccumulator::recordBVHNodesVisited(statsLocalNodesVisited);
   return false;
 }
 
@@ -159,17 +179,29 @@ Bounds3f BVHAggregate::getBounds() const noexcept
 
 bool BVHAggregate::intersectP(const Ray& ray) const
 {
+  StatsAccumulator::recordRegularIntersectionTest();
+
   // The lambda simply checks each primitive and returns true, nothing else
   auto leafTestLambda = [&](const LinearBVHNode& node, const Ray& ray)
-    {
-      for (Idx i{}; i < node.primitiveCount; ++i)
-      {
-        if (m_ordered[node.firstPrimitiveOffset + i]->intersectP(ray)) return true;
-      }
-      return false;
-    };
+  {
+    std::uint64_t tests{};
 
-  return traverseBVH(ray, leafTestLambda);
+    for (Idx i{}; i < node.primitiveCount; ++i)
+    {
+      if (m_ordered[node.firstPrimitiveOffset + i]->intersectP(ray))
+      {
+        StatsAccumulator::recordRayPrimitiveTests(tests);
+        return true;
+      }
+    }
+    StatsAccumulator::recordRayPrimitiveTests(tests);
+    return false;
+  };
+
+  const bool hit{ traverseBVH(ray, leafTestLambda) };
+  StatsAccumulator::recordBVHHit(hit);
+
+  return hit;
 }
 
 std::string BVHAggregate::toString() const noexcept
@@ -185,25 +217,32 @@ std::string BVHAggregate::toString() const noexcept
 
 std::optional<ShapeIntersection> BVHAggregate::intersect(const Ray& ray) const
 {
+  StatsAccumulator::recordRegularIntersectionTest();
+
   std::optional<ShapeIntersection> best{};
   Ray rayLocal{ ray };
 
   // The lambda checks each primitive and updates the ray's tMax and the best intersection found so far, if any
   auto leafIntersectLambda = [&](const LinearBVHNode& node, Ray& rayRef)
+  {
+    std::uint64_t tests{};
+    for (Idx i{}; i < node.primitiveCount; ++i)
     {
-      for (Idx i{}; i < node.primitiveCount; ++i)
+      ++tests;
+
+      const auto& prim{ m_ordered[node.firstPrimitiveOffset + i] };
+      if (auto optShapeIntersect{ prim->intersect(rayRef) })
       {
-        const auto& prim{ m_ordered[node.firstPrimitiveOffset + i] };
-        if (auto optShapeIntersect{ prim->intersect(rayRef) })
-        {
-          rayRef.setTMax(optShapeIntersect->tHit);
-          best = std::move(optShapeIntersect);
-        }
+        rayRef.setTMax(optShapeIntersect->tHit);
+        best = std::move(optShapeIntersect);
       }
-      return false;
-    };
+    }
+    StatsAccumulator::recordRayPrimitiveTests(tests);
+    return false;
+  };
 
   traverseBVH(rayLocal, leafIntersectLambda);
+  StatsAccumulator::recordBVHHit(best.has_value());
 
   return best;
 }
@@ -471,4 +510,40 @@ std::unique_ptr<BVHNode> BVHAggregate::splitByEqualCounts(int begin, const int t
   node->rightChild = buildRecursive(buildPrimitives, mid, end);
 
   return node;
+}
+
+void BVHAggregate::publishBVHStats() const noexcept
+{
+  std::uint64_t interiorNodes{};
+  std::uint64_t leafNodes{};
+
+  for (const auto& node : m_linearNodes)
+  {
+    if (node.primitiveCount > 0)
+      ++leafNodes;
+    else
+      ++interiorNodes;
+  }
+
+  StatsAccumulator::setBVHNodeCounts(interiorNodes, leafNodes);
+
+  const std::uint64_t treeNodeCount{ interiorNodes + leafNodes };
+
+  const std::uint64_t bytesTreeNodes{
+    treeNodeCount * sizeof(BVHNode)
+  };
+  const std::uint64_t bytesLinearNodes{
+    static_cast<std::uint64_t>(m_linearNodes.size()) *
+    sizeof(LinearBVHNode)
+  };
+  const std::uint64_t bytesOrderedPrims{
+    static_cast<std::uint64_t>(m_ordered.size()) *
+    sizeof(std::shared_ptr<Primitive>)
+  };
+
+  const std::uint64_t totalBVHBytes{
+    bytesTreeNodes + bytesLinearNodes + bytesOrderedPrims
+  };
+
+  StatsAccumulator::setBVHBytes(totalBVHBytes);
 }

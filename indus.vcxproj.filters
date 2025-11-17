@@ -264,9 +264,6 @@
     <ClCompile Include="src\components\constructs\stat-constructs.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\engine-components\stats\statsbuilder.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\components\engine-components\hud\components\hud-component.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -297,10 +294,19 @@
     <ClCompile Include="src\components\engine-components\hud\systems\renderstats-system.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\components\thread-local-storage.ixx">
+    <ClCompile Include="src\components\utilities\utils\thread-util.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\components\utilities\utils\thread-util.ixx">
+    <ClCompile Include="src\components\utilities\utils\bxdf-util.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\utilities\components\systemstatscollector.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\engine-components\stats\statsbuilder.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\engine-components\stats\statsaccumulator.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

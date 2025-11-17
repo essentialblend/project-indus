@@ -367,3 +367,4 @@ dep/
 src/renderer
 src/window
 src/tests
+renders/

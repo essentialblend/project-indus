@@ -23,11 +23,6 @@ static std::string formatNumber(std::uint64_t x, bool done)
   return (!done && x == 0) ? "--" : std::to_string(x);
 }
 
-//static std::string formatFloat(double x, bool done)
-//{
-//  return (!done && x == 0.0) ? "--" : std::to_string(x);
-//}
-
 std::vector<SubSection> StatsBuilder::buildSubsections(const RenderStats& stats, bool isRenderComplete)
 {
   std::vector<SubSection> sections{};
@@ -114,16 +109,15 @@ SubSection StatsBuilder::buildMemory(const RenderStats& stats, bool isRenderComp
   SubSection section{};
   section.title = "Memory";
 
-  auto mbString = [isRenderComplete](std::uint64_t bytes)
+  auto mbString{ [isRenderComplete](std::uint64_t bytes)
   {
     if (!isRenderComplete && bytes == 0) return std::string("--");
+    if (bytes == 0) return std::string("0.000 MB");
 
-    const std::uint64_t B{ 1024ull * 1024ull };
-    const double mb{ double(bytes) / double(B) };
-    const int rounded{ int(mb + 0.5) };
-    
-    return std::to_string(rounded) + " MB";
-  };
+    const double mb{ static_cast<double>(bytes) / (1024.0 * 1024.0) };
+
+    return std::format("{:.3f} MB", mb);
+  }};
 
   section.rows.push_back({ "BVH", mbString(stats.bytesBVH) });
   section.rows.push_back({ "Geometry", mbString(stats.bytesGeometry) });

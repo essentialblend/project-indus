@@ -9,6 +9,8 @@ import parallelutil;
 import engineconstructs;
 import cameraconstructs;
 import bounds;
+import systemstatscollector;
+import statsaccumulator;
 
 // Camera and Sampler are held by reference, assume their lifetimes exceed the integrator (they’re owned by the engine).
 
@@ -44,26 +46,29 @@ ImageTileIntegrator::ImageTileIntegrator(CameraBase& camera, Sampler& sampler) n
 
 void ImageTileIntegrator::render(const Scene& scene)
 {
-  Int nWaves{};
-  m_renderStats = RenderStats{};
-
-  const auto& pixelRes{ m_camera.getFilm().getFilmResolution() };
-  const Bounds2i pixelBounds{ Point2i{}, Point2i{ static_cast<Int>(pixelRes[0]), static_cast<Int>(pixelRes[1]) } };
   const Int samplesPerPixel{ m_samplerPrototype.getSPP() };
   
-  for (Int startingSampleIdx{}, SPPForWave{ 1 }; startingSampleIdx < samplesPerPixel; startingSampleIdx += SPPForWave, SPPForWave = std::min<Int>(64, SPPForWave * 2))
-  {
-    ++nWaves;
-  }
-  
-  renderSampleWaves(scene, pixelBounds, samplesPerPixel);
+  StatsAccumulator::reset(ParallelSystems::getEngineThreadPool().getSize() + 1);
 
+  Int nWaves{};
+
+  {
+    SystemStatsCollector _statsCollector{};
+    const auto& pixelRes{ m_camera.getFilm().getFilmResolution() };
+    const Bounds2i pixelBounds{ Point2i{}, Point2i{ static_cast<Int>(pixelRes[0]), static_cast<Int>(pixelRes[1]) } };
+
+    for (Int startingSampleIdx{}, SPPForWave{ 1 }; startingSampleIdx < samplesPerPixel; startingSampleIdx += SPPForWave, SPPForWave = std::min<Int>(64, SPPForWave * 2))
+    {
+      ++nWaves;
+    }
+
+    renderSampleWaves(scene, pixelBounds, samplesPerPixel);
+  }
   m_samplesDone.store(m_totalSamples, std::memory_order_relaxed);
   Image img{ m_camera.getFilm().toImageU8(ColorEncoding::sRGB, 1.0f) };
-
-  // Update stats,
-  m_renderStats.spp = samplesPerPixel;
-
+  
+  m_renderStats = StatsAccumulator::finalize();
+  m_renderStats.spp = static_cast<std::uint64_t>(samplesPerPixel);
   FrameSnapshot snap{ std::move(img), 1.0f, ++m_snapshotSeq, m_renderStats };
   
   if (m_displayConsumer) m_displayConsumer(std::move(snap));

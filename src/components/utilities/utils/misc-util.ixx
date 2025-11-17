@@ -1,5 +1,9 @@
 export module miscutil;
 
+#define WIN32_LEAN_AND_MEAN
+import <Windows.h>;
+
+
 import std;
 import types;
 
@@ -14,5 +18,29 @@ export
     const auto secs{ total % 60 };
 
     return std::format("{:02}:{:02}:{:02}", hours, minutes, secs);
+  }
+
+  std::uint64_t getProcessCPUTimeMicros() noexcept 
+  {
+    FILETIME creation{};
+    FILETIME exit{};
+
+    FILETIME kernel{};
+    FILETIME user{};
+    
+    if (!::GetProcessTimes(::GetCurrentProcess(), &creation, &exit, &kernel, &user)) 
+    {
+      return 0;
+    }
+
+    ULARGE_INTEGER kernelFull{}, userFull{};
+    
+    kernelFull.LowPart = kernel.dwLowDateTime;
+    kernelFull.HighPart = kernel.dwHighDateTime;
+    userFull.LowPart = user.dwLowDateTime;
+    userFull.HighPart = user.dwHighDateTime;
+
+    // FILETIME is in 100-nanosecond units
+    return (kernelFull.QuadPart + userFull.QuadPart) / 10;
   }
 }

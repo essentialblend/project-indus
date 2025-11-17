@@ -29,8 +29,8 @@ export
   {
     std::uint64_t count{};
     std::uint64_t sum{};
-    std::int64_t min{};
-    std::int64_t max{};
+    std::uint64_t min{ std::numeric_limits<std::uint64_t>::max() };
+    std::uint64_t max{ std::numeric_limits<std::uint64_t>::min() };
   };
 
   struct RenderStats
