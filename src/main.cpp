@@ -1,26 +1,5 @@
 ﻿
-import <SFML/Graphics.hpp>;
-
-import indus;
-import vector;
-import std;
-import point;
-import independentsampler;
-import onb;
-import types;
-import lcg;
-import cameratransform;
-import bounds;
-import engineconstructs;
-import vector; 
-import squarematrix;
-import transform;
-import mathfp;
-import mathconstants;
-import mathtrig;
-import mathalgebra;
-import enginesigil;
-import enginelogo;
+import indus.engine;
 
 int main()
 {
@@ -55,7 +34,6 @@ int main()
 	engineCfg.displaySinkCfg.windowResolution = { 1280, 720 };
 
 	Indus engine{ engineCfg };
-
 	engine.runEngine();
 }
 
