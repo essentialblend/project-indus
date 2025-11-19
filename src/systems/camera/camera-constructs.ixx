@@ -10,6 +10,8 @@ import indus.core.colorrgb;
 
 export
 {
+  enum class FilterType { Box, Gaussian };
+
   struct PhysicalUnits final
   {
     // 1 Engine Unit = 10 millimeters = 1 centimeter
@@ -34,6 +36,7 @@ export
     Vec2f filterRadius{ Float{ 0.5 }, Float{ 0.5 } };
     Float imagingRatio{ Float{ 1 } };
     std::string filename{};
+    FilterType filterType{ FilterType::Gaussian };
 
     constexpr Float aspect() const noexcept
     {

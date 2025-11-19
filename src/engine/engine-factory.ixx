@@ -18,6 +18,8 @@ import indus.film.base;
 import indus.film.rgb;
 import indus.film.pixelsensor;
 import indus.film.filter;
+import indus.film.box_filter;
+import indus.film.gaussian_filter;
 
 import indus.sampler.base;
 import indus.sampler.independent;
@@ -75,8 +77,16 @@ std::unique_ptr<CameraBase> EngineSystemsFactory::makeCamera(const CameraConfig&
 std::unique_ptr<FilmBase> EngineSystemsFactory::makeFilm(const FilmConfig& cfg) const
 {
   const RGBColorSpace& colorSpace{ ColorRegistry::sRGB() };
+  std::unique_ptr<Filter> filter{};
 
-  std::unique_ptr<Filter> filter{ std::make_unique<BoxFilter>(cfg.filterRadius) };
+  if (cfg.filterType == FilterType::Box)
+  {
+    filter = std::make_unique<BoxFilter>(cfg.filterRadius);
+  }
+  else if (cfg.filterType == FilterType::Gaussian)
+  {
+    filter = std::make_unique<GaussianFilter>(cfg.filterRadius);
+  }
 
   const PixelSensor sensor{ colorSpace.XYZFromRGB, colorSpace, cfg.imagingRatio };
 

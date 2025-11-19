@@ -201,7 +201,7 @@
     <ClCompile Include="src\core\geom\squarematrix.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\systems\film\filter.ixx">
+    <ClCompile Include="src\systems\film\filters\filter.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\core\color\colorspace.ixx">
@@ -301,6 +301,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\systems\integrator\integrator-constructs.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\film\filters\box.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\film\filters\gaussian.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

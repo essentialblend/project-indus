@@ -29,6 +29,8 @@
   <ItemGroup>
     <ClCompile Include="src\core\color\colorspace.ixx" />
     <ClCompile Include="src\engine\engine-systems.ixx" />
+    <ClCompile Include="src\systems\film\filters\box.ixx" />
+    <ClCompile Include="src\systems\film\filters\gaussian.ixx" />
     <ClCompile Include="src\systems\integrator\integrator-constructs.ixx" />
     <ClCompile Include="src\ui\hud-constructs.ixx" />
     <ClCompile Include="src\sampling\sampling-constructs.ixx" />
@@ -47,7 +49,7 @@
     <ClCompile Include="src\stats\accumulator.ixx" />
     <ClCompile Include="src\stats\builder.ixx" />
     <ClCompile Include="src\systems\film\image.ixx" />
-    <ClCompile Include="src\systems\film\filter.ixx" />
+    <ClCompile Include="src\systems\film\filters\filter.ixx" />
     <ClCompile Include="src\core\geom\squarematrix.ixx" />
     <ClCompile Include="src\systems\film\pixelsensor.ixx" />
     <ClCompile Include="src\geom\bvh-aggregate.ixx" />
@@ -312,7 +314,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);INDUS_VERSION_STRING="0.0.4+local";INDUS_BUILD_CONFIG="$(Configuration)";INDUS_GIT_HASH="--";INDUS_BUILD_TIMESTAMP=__DATE__ " " __TIME__;INDUS_ENGINE_AUTHOR="Siddharth Nair";</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);INDUS_VERSION_STRING="0.0.1-dev.1";INDUS_BUILD_CONFIG="$(Configuration)";INDUS_GIT_HASH="--";INDUS_BUILD_TIMESTAMP=__DATE__ " " __TIME__;INDUS_ENGINE_AUTHOR="Siddharth Nair";</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnableModules>false</EnableModules>

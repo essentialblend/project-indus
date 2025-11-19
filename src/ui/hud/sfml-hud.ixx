@@ -27,7 +27,6 @@ import indus.ui.enginelogo_component;
 import indus.stats.constructs;
 import indus.stats.builder;
 
-
 export class SFMLHUD final
 {
 public:
