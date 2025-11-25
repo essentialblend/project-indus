@@ -78,14 +78,16 @@ std::unique_ptr<FilmBase> EngineSystemsFactory::makeFilm(const FilmConfig& cfg) 
 {
   const RGBColorSpace& colorSpace{ ColorRegistry::sRGB() };
   std::unique_ptr<Filter> filter{};
-
+  
+  FilterConfig filterCfg{ cfg.filterType, cfg.filterPreset };
+  
   if (cfg.filterType == FilterType::Box)
   {
-    filter = std::make_unique<BoxFilter>(cfg.filterRadius);
+    filter = std::make_unique<BoxFilter>(filterCfg.supportRadius);
   }
   else if (cfg.filterType == FilterType::Gaussian)
   {
-    filter = std::make_unique<GaussianFilter>(cfg.filterRadius);
+    filter = std::make_unique<GaussianFilter>(filterCfg.supportRadius, filterCfg.gaussianKernelSigma);
   }
 
   const PixelSensor sensor{ colorSpace.XYZFromRGB, colorSpace, cfg.imagingRatio };

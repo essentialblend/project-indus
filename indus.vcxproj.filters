@@ -309,6 +309,15 @@
     <ClCompile Include="src\systems\film\filters\gaussian.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\systems\film\filters\filtersampler.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sampling\piecewiseconstant1D.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sampling\piecewiseconstant2D.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dep\stb_image_write.h">

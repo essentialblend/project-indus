@@ -5,6 +5,7 @@ import std;
 import indus.core.types;
 
 import indus.film.filter;
+import indus.film.filtersampler;
 
 // Rare/stray forward decl, restr.
 [[nodiscard]] static inline Float gaussian1D(Float x, Float mu, Float sigma) noexcept;
@@ -13,7 +14,7 @@ import indus.film.filter;
 export class GaussianFilter final : public Filter
 {
 public:
-  explicit GaussianFilter(const Vec2f& supportRadius, Float sigma = Float{ 0.5f }) noexcept;
+  explicit GaussianFilter(const Vec2f& supportRadius, Float sigma = Float{ 0.5 }, Int SPPUnitExtent = 32) noexcept;
   
   [[nodiscard]] Float getWeightAtOffset(const Point2f& pixelOffset) const noexcept override;
   [[nodiscard]] Float getIntegral() const noexcept override;
@@ -28,10 +29,11 @@ private:
   Float m_sigma{};
   Float m_xExp{};
   Float m_yExp{};
+  FilterSampler m_filterSampler;
 };
 
-GaussianFilter::GaussianFilter(const Vec2f& supportRadius, Float sigma) noexcept : Filter(supportRadius), m_sigma{ sigma }, m_xExp{ gaussian1D(supportRadius[0], Float{}, sigma) }
-, m_yExp{ gaussian1D(supportRadius[1], Float{}, sigma) } {}
+GaussianFilter::GaussianFilter(const Vec2f& supportRadius, Float sigma, Int SPPUnitExtent) noexcept : Filter(supportRadius), m_sigma{ sigma }, m_xExp{ gaussian1D(supportRadius[0], Float{}, sigma) }
+, m_yExp{ gaussian1D(supportRadius[1], Float{}, sigma) }, m_filterSampler{ *this, SPPUnitExtent } {}
 
 Float GaussianFilter::getWeightAtOffset(const Point2f& pixelOffset) const noexcept
 {
@@ -59,42 +61,19 @@ Float GaussianFilter::getIntegral() const noexcept
 
 Float GaussianFilter::evaluateSamplingPDF(const Point2f& pixelOffset) const noexcept
 {
-  const Float r_x{ m_supportRadius[0] };
-  const Float r_y{ m_supportRadius[1] };
-
-  const bool xIn{ (pixelOffset[0] >= -r_x) && (pixelOffset[0] <= r_x) };
-  const bool yIn{ (pixelOffset[1] >= -r_y) && (pixelOffset[1] <= r_y) };
-  
-  if (!(xIn && yIn)) return Float{};
-
-  const Float area{ Float{ 4 } * r_x * r_y };
-  
-  return (area > Float{}) ? (Float{ 1 } / area) : Float{};
+  return m_filterSampler.evaluateSamplingPDF(pixelOffset);
 }
 
 FilterSample GaussianFilter::getFilterSampleAtOffset(const Point2f& unitSquarePoint) const noexcept
 {
-  const Float r_x{ m_supportRadius[0] };
-  const Float r_y{ m_supportRadius[1] };
-
-  const Float p_x{ -r_x + (Float{ 2 } * r_x * unitSquarePoint[0]) };
-  const Float p_y{ -r_y + (Float{ 2 } * r_y * unitSquarePoint[1]) };
-  const Point2f pOffset{ p_x, p_y };
-
-  const Float pdf{ evaluateSamplingPDF(pOffset) };
-  const Float f{ getWeightAtOffset(pOffset) };
-
-  const Float weightOverPDF{ (pdf > Float{} && f > Float{}) ? (f / pdf) : Float{} };
-
-  return FilterSample{ pOffset, weightOverPDF };
+  return m_filterSampler.sampleFromFilter(unitSquarePoint);
 }
 
 std::string GaussianFilter::toString() const
 {
   std::ostringstream oss{};
 
-  oss << "gaussian [r=(" << m_supportRadius[0] << "," << m_supportRadius[1]
-    << "),sigma=" << m_sigma << "]";
+  oss << "gaussian [r=(" << m_supportRadius[0] << "," << m_supportRadius[1] << "),sigma=" << m_sigma << "]";
   
   return oss.str();
 }

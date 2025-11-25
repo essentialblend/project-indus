@@ -29,7 +29,10 @@
   <ItemGroup>
     <ClCompile Include="src\core\color\colorspace.ixx" />
     <ClCompile Include="src\engine\engine-systems.ixx" />
+    <ClCompile Include="src\sampling\piecewiseconstant1D.ixx" />
+    <ClCompile Include="src\sampling\piecewiseconstant2D.ixx" />
     <ClCompile Include="src\systems\film\filters\box.ixx" />
+    <ClCompile Include="src\systems\film\filters\filtersampler.ixx" />
     <ClCompile Include="src\systems\film\filters\gaussian.ixx" />
     <ClCompile Include="src\systems\integrator\integrator-constructs.ixx" />
     <ClCompile Include="src\ui\hud-constructs.ixx" />

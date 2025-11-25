@@ -51,4 +51,18 @@ export
     Vec3f unitW_iLocal{};
     Float etaPrime{};
   };
+
+  struct PiecewiseConstant1DSample
+  {
+    Idx sampleIdx{};
+    Float coordinate{};
+    Float probDensity{};
+  };
+
+  struct PiecewiseConstant2DSample
+  {
+    Point2i sampleIdx{};
+    Point2f coordinate{};
+    Float probDensity{};
+  };
 }

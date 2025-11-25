@@ -9,12 +9,12 @@ int main()
   auto& filmCfg{ engineCfg.filmCfg };
 
 	filmCfg.filename = "test";
-	filmCfg.resolution = { 1920, 1080 };
-	filmCfg.crop = Bounds2i{ Point2i{ 0, 0 }, filmCfg.resolution };
+	filmCfg.resolution = { 1280, 720 };
+	filmCfg.crop = Bounds2i{ Point2i{}, filmCfg.resolution };
 	filmCfg.diagonalMM = Float{ 43.266615 };
-	filmCfg.filterRadius = Vec2f{ Float{ 0.5 } };
 	filmCfg.imagingRatio = Float{ 1 };
-	filmCfg.filterType = FilterType::Gaussian;
+	filmCfg.filterType = FilterType::Box;
+	filmCfg.filterPreset = FilterPreset::Heavy;
 
 	// Parameterize the Camera
 	engineCfg.camCfg.cameraShutter = { 0.0, 1.0 };
@@ -25,21 +25,21 @@ int main()
 	engineCfg.camCfg.screenWindow = Bounds2f{ { -filmCfg.aspect(), -1 }, { filmCfg.aspect(), 1 } };
   engineCfg.camCfg.renderingSpace = RenderingSpace::World;
 
-	// ... the sampler
-	engineCfg.samplerCfg.strata = Strata2D{ 15 };
+	// ... the Sampler
+	engineCfg.samplerCfg.strata = Strata2D{ 12 };
 	engineCfg.samplerCfg.samplesPerPixel = static_cast<Int>(engineCfg.samplerCfg.strata.getTotal());
 	engineCfg.samplerCfg.isStratified = true;
 	engineCfg.samplerCfg.isJitter = true;
 	
-	// ... the integrator
+	// ... the Integrator
 	engineCfg.integratorCfg.maxDepth = 50;
   engineCfg.integratorCfg.useRR = true;
 
-	// ... and finally, the display sink
+	// ... and finally, the DisplaySink
 	engineCfg.displaySinkCfg.sinkType = SinkType::SFML;
-	engineCfg.displaySinkCfg.windowResolution = { 1920, 1080 };
+	engineCfg.displaySinkCfg.windowResolution = { 1280, 720 };
 
-	// initialize and run engine. Scene selection is currently hard-coded
+	// Run Indus. Currently, immediately one-shot renders a hard-coded scene
 	Indus engine{ engineCfg };
 
 	engine.runEngine();

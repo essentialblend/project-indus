@@ -11,6 +11,7 @@ import indus.core.colorrgb;
 export
 {
   enum class FilterType { Box, Gaussian };
+  enum class FilterPreset { Light, Balanced, Heavy };
 
   struct PhysicalUnits final
   {
@@ -30,18 +31,63 @@ export
 
   struct FilmConfig final
   {
+    FilterType filterType{ FilterType::Gaussian };
+    FilterPreset filterPreset{ FilterPreset::Balanced };
     Point2i resolution{};
     Bounds2i crop{};
     float diagonalMM{};
-    Vec2f filterRadius{ Float{ 0.5 }, Float{ 0.5 } };
     Float imagingRatio{ Float{ 1 } };
     std::string filename{};
-    FilterType filterType{ FilterType::Gaussian };
 
     constexpr Float aspect() const noexcept
     {
       return static_cast<Float>(resolution[0]) / std::max(1, resolution[1]);
     }
+  };
+
+  struct FilterConfig
+  {
+    FilterConfig(const FilterType& filterType, const FilterPreset& filterPreset)
+    {
+      switch (filterType)
+      {
+      case FilterType::Box:
+        switch(filterPreset)
+        {
+        case FilterPreset::Light:
+          supportRadius = Vec2f{ 0.75 };
+          break;
+        case FilterPreset::Balanced:
+          supportRadius = Vec2f{ 1.5 };
+          break;
+        case FilterPreset::Heavy:
+          supportRadius = Vec2f{ 2.5 };
+          break;
+        }
+        break;
+      case FilterType::Gaussian:
+        switch (filterPreset)
+        {
+        case FilterPreset::Light:
+          supportRadius = Vec2f{ 0.75 };
+          gaussianKernelSigma = Float{ 0.35 };
+          break;
+        case FilterPreset::Balanced:
+          supportRadius = Vec2f{ 1.5 };
+          gaussianKernelSigma = Float{ 0.5 };
+
+          break;
+        case FilterPreset::Heavy:
+          supportRadius = Vec2f{ 2.5 };
+          gaussianKernelSigma = Float{ 0.9 };
+          break;
+        }
+        break;
+      }
+    }
+
+    Vec2f supportRadius{};
+    Float gaussianKernelSigma{};
   };
 
   struct CameraRay final
