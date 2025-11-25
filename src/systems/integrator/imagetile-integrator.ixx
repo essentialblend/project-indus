@@ -22,7 +22,7 @@ export class ImageTileIntegrator : public Integrator
 public:
   ImageTileIntegrator(CameraBase&, Sampler&) noexcept;
 
-  void render(const Scene&) override;
+  void render(const Scene&, std::stop_token) override;
   float getCurrentProgress() const noexcept;
   void publishSnapshot();
 
@@ -41,14 +41,16 @@ private:
   std::atomic<std::uint64_t> m_samplesDone{};
   std::uint64_t m_totalSamples{};
 
-  void renderSampleWaves(const Scene& scene, const Bounds2i& pixelBounds, const Int samplesPerPixel);
+  void renderSampleWaves(const Scene& scene, const Bounds2i& pixelBounds, const Int samplesPerPixel, std::stop_token stopToken);
   void notifySampleDone();
 };
 
 ImageTileIntegrator::ImageTileIntegrator(CameraBase& camera, Sampler& sampler) noexcept : m_camera{ camera }, m_samplerPrototype{ sampler } {}
 
-void ImageTileIntegrator::render(const Scene& scene)
+void ImageTileIntegrator::render(const Scene& scene, std::stop_token stopToken)
 {
+  if (stopToken.stop_requested()) return;
+
   const Int samplesPerPixel{ m_samplerPrototype.getSPP() };
   
   StatsAccumulator::reset(ParallelSystems::getEngineThreadPool().getSize() + 1);
@@ -65,7 +67,7 @@ void ImageTileIntegrator::render(const Scene& scene)
       ++nWaves;
     }
 
-    renderSampleWaves(scene, pixelBounds, samplesPerPixel);
+    renderSampleWaves(scene, pixelBounds, samplesPerPixel, stopToken);
   }
   m_samplesDone.store(m_totalSamples, std::memory_order_relaxed);
   Image img{ m_camera.getFilm().toImageU8(ColorEncoding::sRGB, 1.0f) };
@@ -99,7 +101,7 @@ std::string ImageTileIntegrator::getSchedulerString() const
   return "image-tile (1, 1, 2, 4, ...)";
 }
 
-void ImageTileIntegrator::renderSampleWaves(const Scene& scene, const Bounds2i& pixelBounds, const Int samplesPerPixel)
+void ImageTileIntegrator::renderSampleWaves(const Scene& scene, const Bounds2i& pixelBounds, const Int samplesPerPixel, std::stop_token stopToken)
 {
   const auto& res{ m_camera.getFilm().getFilmResolution() };
 
@@ -111,14 +113,15 @@ void ImageTileIntegrator::renderSampleWaves(const Scene& scene, const Bounds2i& 
   {
     const auto renderTile = [&](const Bounds2i& tile)
     {
+      if (stopToken.stop_requested()) return;
       const auto sampler{ m_samplerPrototype.clone() };
 
       const auto& minTileBounds{ tile.getMin() };
       const auto& maxTileBounds{ tile.getMax() };
 
-      for (Int y{ minTileBounds[1] }; y < maxTileBounds[1]; ++y)
+      for (Int y{ minTileBounds[1] }; y < maxTileBounds[1] && !stopToken.stop_requested(); ++y)
       {
-        for (Int x{ minTileBounds[0] }; x < maxTileBounds[0]; ++x)
+        for (Int x{ minTileBounds[0] }; x < maxTileBounds[0] && !stopToken.stop_requested(); ++x)
         {
           const Point2i p{ x, y };
 

@@ -1,5 +1,7 @@
 export module indus.integrator.base;
 
+import std;
+
 import indus.stats.constructs;
 
 import indus.integrator.constructs;
@@ -10,7 +12,7 @@ export class Integrator
 {
 public:
   virtual ~Integrator() = default;
-  virtual void render(const Scene&) = 0;
+  virtual void render(const Scene&, std::stop_token) = 0;
 
   void setDisplayConsumer(DisplayConsumer displayConsumerFnctr) noexcept;
 

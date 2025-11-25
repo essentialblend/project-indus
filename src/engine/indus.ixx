@@ -119,13 +119,14 @@ void Indus::runEngine()
 
 void Indus::renderScene()
 {
-  m_renderThread = std::jthread([this]
+  m_renderThread = std::jthread([this](std::stop_token stopToken)
   {
     m_HUDTimer.startTimer();
-    m_integrator->render(*m_renderScene);
+    m_integrator->render(*m_renderScene, stopToken);
     m_HUDTimer.stopTimer();
 
-    m_film->writeImage(m_cfg.samplerCfg.samplesPerPixel, m_HUDTimer);
+    if (!stopToken.stop_requested())
+      m_film->writeImage(m_cfg.samplerCfg.samplesPerPixel, m_HUDTimer);
   });
 }
 
@@ -147,6 +148,12 @@ void Indus::runGUI()
     }
 
     m_displaySink->present();
+  }
+
+  if (m_renderThread.joinable())
+  {
+    m_renderThread.request_stop();
+    m_renderThread.join();
   }
 }
 
