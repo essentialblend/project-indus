@@ -11,7 +11,7 @@ import indus.core.colorrgb;
 export
 {
   enum class FilterType { Box, Gaussian };
-  enum class FilterPreset { Light, Balanced, Heavy };
+  enum class FilterPreset { Low, Balanced, High };
 
   struct PhysicalUnits final
   {
@@ -54,13 +54,13 @@ export
       case FilterType::Box:
         switch(filterPreset)
         {
-        case FilterPreset::Light:
+        case FilterPreset::Low:
           supportRadius = Vec2f{ 0.75 };
           break;
         case FilterPreset::Balanced:
           supportRadius = Vec2f{ 1.5 };
           break;
-        case FilterPreset::Heavy:
+        case FilterPreset::High:
           supportRadius = Vec2f{ 2.5 };
           break;
         }
@@ -68,7 +68,7 @@ export
       case FilterType::Gaussian:
         switch (filterPreset)
         {
-        case FilterPreset::Light:
+        case FilterPreset::Low:
           supportRadius = Vec2f{ 0.75 };
           gaussianKernelSigma = Float{ 0.35 };
           break;
@@ -77,7 +77,7 @@ export
           gaussianKernelSigma = Float{ 0.5 };
 
           break;
-        case FilterPreset::Heavy:
+        case FilterPreset::High:
           supportRadius = Vec2f{ 2.5 };
           gaussianKernelSigma = Float{ 0.9 };
           break;

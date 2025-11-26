@@ -5,6 +5,7 @@ import std;
 import indus.core.types;
 import indus.core.math.constants.i;
 import indus.core.math.fp.ii;
+import indus.core.math.trig.iii;
 import indus.core.math.algebra.iv;
 
 import indus.sampling.constructs;
@@ -142,4 +143,84 @@ export
     return RefractResult{ unitW_iLocal, eta };
   }
 
+  [[nodiscard]] Float trowbridgeReitz_D(const Vec3f& unitW_hLocal, Float alpha) noexcept 
+  {
+    if (!isFinite(unitW_hLocal)) return Float{};
+    
+    const Float cosTheta{ absCosineThetaLocal(unitW_hLocal) };
+    
+    if (cosTheta <= Float{}) return Float{};
+
+    const Float a{ std::max(alpha, Float{ 1e-3f }) };
+    const Float aSq{ a * a };
+    const Float cosSq{ cosTheta * cosTheta };
+    const Float tanSq{ (Float{ 1 } - cosSq) / cosSq };
+
+    const Float denom{ kPi * cosSq * cosSq * sqr(aSq + tanSq) };
+
+    if (denom <= Float{}) return Float{};
+
+    return aSq / denom;
+  }
+
+  [[nodiscard]] Float microfacetAlphaFromRoughness(Float r) noexcept 
+  {
+    const Float rClamped{ clamp(r, Float{ 1e-3f }, Float{ 1 }) };
+    return rClamped * rClamped;
+  }
+
+  [[nodiscard]] Float smithLambdaGGX(Float cosTheta, Float alpha) noexcept 
+  {
+    const Float absCosineTheta{ (cosTheta >= Float{} ? cosTheta : -cosTheta) };
+    
+    if (absCosineTheta <= Float{}) return Float{};
+
+    const Float a{ (alpha < Float{ 1e-3f }) ? Float{ 1e-3f } : alpha };
+    const Float cosSq{ absCosineTheta * absCosineTheta };
+    const Float sinSq{ Float{ 1 } - cosSq };
+    
+    if (sinSq <= Float{}) return Float{};
+
+    const Float tanSq{ sinSq / cosSq };
+    const Float aSq{ a * a };
+    const Float aSqTanSq{ aSq * tanSq };
+    const Float root{ safeSqrt(Float{ 1 } + aSqTanSq) };
+
+    return (root - Float{ 1 }) * Float { 0.5f };
+  }
+
+  [[nodiscard]] Float smithG1GGX(Float cosTheta, Float alpha) noexcept 
+  {
+    const Float lambda{ smithLambdaGGX(cosTheta, alpha) };
+
+    return Float{ 1 } / (Float{ 1 } + lambda);
+  }
+
+  [[nodiscard]] Float smithGGX_G(const Vec3f& unitW_oLocal, const Vec3f& unitW_iLocal, Float alpha) noexcept 
+  {
+    const Float cosOut{ absCosineThetaLocal(unitW_oLocal) };
+    const Float cosInc{ absCosineThetaLocal(unitW_iLocal) };
+
+    return smithG1GGX(cosOut, alpha) * smithG1GGX(cosInc, alpha);
+  }
+
+  [[nodiscard]] Vec3f sampleGGXHalfVector(const Point2f& u, Float alpha) noexcept 
+  {
+    const Float a{ (alpha < Float{ 1e-3f }) ? Float{ 1e-3f } : alpha };
+    const Float aSq{ a * a };
+
+    const Float u1{ std::clamp(u[0], Float{ 1e-6f }, Float{ 1 } - Float{ 1e-6f }) };
+    const Float u2{ u[1] };
+
+    const Float tanSqTheta{ (aSq * u1) / (Float{ 1 } - u1) };
+    const Float cosTheta{ Float{ 1 } / safeSqrt(Float{ 1 } + tanSqTheta) };
+    const Float sinSqTheta{ std::max(Float{}, Float{ 1 } - cosTheta * cosTheta) };
+    const Float sinTheta{ safeSqrt(sinSqTheta) };
+
+    const Float phi{ Float{ 2 } * kPi * u2 };
+    const Float cosPhi{ std::cos(phi) };
+    const Float sinPhi{ std::sin(phi) };
+
+    return Vec3f{ sinTheta * cosPhi, sinTheta * sinPhi, cosTheta };
+  }
 }

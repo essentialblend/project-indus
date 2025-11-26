@@ -31,6 +31,8 @@
     <ClCompile Include="src\engine\engine-systems.ixx" />
     <ClCompile Include="src\sampling\piecewiseconstant1D.ixx" />
     <ClCompile Include="src\sampling\piecewiseconstant2D.ixx" />
+    <ClCompile Include="src\shading\bxdf\coateddiffuse-bxdf.ixx" />
+    <ClCompile Include="src\shading\materials\coated-diffuse.ixx" />
     <ClCompile Include="src\systems\film\filters\box.ixx" />
     <ClCompile Include="src\systems\film\filters\filtersampler.ixx" />
     <ClCompile Include="src\systems\film\filters\gaussian.ixx" />

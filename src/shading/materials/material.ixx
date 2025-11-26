@@ -5,7 +5,8 @@ import indus.core.colorrgb;
 export enum class MaterialType
 {
 	Diffuse,
-	Glass
+	Glass,
+	CoatedDiffuse
 };
 
 export class Material

@@ -318,6 +318,12 @@
     <ClCompile Include="src\sampling\piecewiseconstant2D.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\shading\materials\coated-diffuse.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\shading\bxdf\coateddiffuse-bxdf.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dep\stb_image_write.h">
