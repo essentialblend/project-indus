@@ -54,6 +54,8 @@ void HUDSystem::addComponent(std::unique_ptr<HUDComponent> component)
 
 void HUDSystem::clearDynamicComponentsFromIdx(std::size_t index)
 {
+  if (index >= m_components.size()) return;
+
   m_components.erase(m_components.begin() + index, m_components.end());
 }
 

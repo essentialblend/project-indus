@@ -1,8 +1,10 @@
 export module indus.shading.material;
 
+import std;
+
 import indus.core.colorrgb;
 
-export enum class MaterialType
+export enum class MaterialType : std::uint8_t
 {
 	Diffuse,
 	Glass,

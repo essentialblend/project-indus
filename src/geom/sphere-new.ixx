@@ -3,10 +3,10 @@ export module indus.geom.sphere;
 import std;
 
 import indus.core.types;
-import indus.core.math.constants.i;
 import indus.core.math.fp.ii;
 import indus.core.math.trig.iii;
 import indus.core.math.algebra.iv;
+import indus.core.math.float_constants;
 import indus.core.math.interval;
 import indus.core.geom.transform;
 
@@ -50,7 +50,7 @@ Bounds3f Sphere::getBounds() const noexcept
 
   Bounds3f bounds{};
 
-  for (int i{}; i < 8; ++i)
+  for (Int i{}; i < 8; ++i)
   {
     const Point3f pObj
     {
@@ -106,7 +106,7 @@ std::optional<QuadricIntersection> Sphere::basicIntersect(const Ray& ray) const
   auto tShapeHit{ tFrontI };
   bool usingFront{ true };
 
-  if (tShapeHit.getLower() <= 0) 
+  if (tShapeHit.getLower() <= Float{})
   { 
     tShapeHit = tBackI; 
     usingFront = false; 
@@ -118,7 +118,7 @@ std::optional<QuadricIntersection> Sphere::basicIntersect(const Ray& ray) const
   Point3f pHitObj{};
   Float phi{};
 
-  for (int attempt{ 0 }; attempt < 2; ++attempt)
+  for (Int attempt{}; attempt < 2; ++attempt)
   {
     pHitObj = Point3f{ originI } + (Vec3f{ dirI } * tHit);
 

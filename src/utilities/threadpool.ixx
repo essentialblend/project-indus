@@ -55,8 +55,10 @@ ThreadPool::ThreadPool(std::size_t numThreads)
   const std::size_t atLeastOne{ fivePercentCeil < 1u ? 1u : fivePercentCeil };
 
   const auto headroom{ atLeastOne > 4u ? 4u : atLeastOne };
+  
+  const std::size_t workersRaw{ (numThreadsEff > headroom) ? (numThreadsEff - headroom) : numThreadsEff };
 
-  const std::size_t workers{ numThreadsEff > headroom ? numThreadsEff - headroom : 0 };
+  const std::size_t workers{ std::max<std::size_t>(std::size_t{ 1 }, workersRaw) };
   
   m_threadIDs.resize(workers);
   m_threads.reserve(workers);

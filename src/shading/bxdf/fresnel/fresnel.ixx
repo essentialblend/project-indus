@@ -16,6 +16,6 @@ export class FresnelNoOp final : public Fresnel
 public:
   [[nodiscard]] Float evaluate([[maybe_unused]] Float incidentCosineTheta) const noexcept override
   {
-    return 1.0;
+    return Float{ 1.0 };
   }
 };

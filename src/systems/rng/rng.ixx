@@ -2,7 +2,7 @@ export module indus.rng;
 
 import indus.core.types;
 import indus.core.concepts;
-import indus.core.math.constants.i;
+import indus.core.math.float_constants;
 
 export class RNG
 {

@@ -9,12 +9,12 @@ int main()
   auto& filmCfg{ engineCfg.filmCfg };
 
 	filmCfg.filename = "test";
-	filmCfg.resolution = { 1920, 1080 };
+	filmCfg.resolution = { 1280, 720 };
 	filmCfg.crop = Bounds2i{ Point2i{}, filmCfg.resolution };
 	filmCfg.diagonalMM = Float{ 43.266615 };
 	filmCfg.imagingRatio = Float{ 1 };
 	filmCfg.filterType = FilterType::Gaussian;
-	filmCfg.filterPreset = FilterPreset::High;
+	filmCfg.filterPreset = FilterPreset::Low;
 
 	// Parameterize the Camera
 	engineCfg.camCfg.cameraShutter = { 0.0, 1.0 };
@@ -26,7 +26,7 @@ int main()
   engineCfg.camCfg.renderingSpace = RenderingSpace::World;
 
 	// ... the Sampler
-	engineCfg.samplerCfg.strata = Strata2D{ 20 };
+	engineCfg.samplerCfg.strata = Strata2D{ 10 };
 	engineCfg.samplerCfg.samplesPerPixel = static_cast<Int>(engineCfg.samplerCfg.strata.getTotal());
 	engineCfg.samplerCfg.isStratified = true;
 	engineCfg.samplerCfg.isJitter = true;

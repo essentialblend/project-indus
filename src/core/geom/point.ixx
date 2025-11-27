@@ -73,7 +73,6 @@ constexpr Point<T, N>::Point(const Point<U, N>& other) noexcept
   }
 }
 
-
 template<ScalarLike T, std::size_t N> requires Arity234<N>
 template<FloatingArithmetic U> requires IntervalScalarLike<T>
 constexpr Vector<U, N> Point<T, N>::getError() const noexcept

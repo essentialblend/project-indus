@@ -3,7 +3,7 @@ export module indus.core.geom.normal;
 import indus.core.concepts;
 import indus.core.geom.vector;
 
-export template<Arithmetic T>
+export template<FloatingArithmetic T>
 class Normal final 
 {
 public:
@@ -49,43 +49,43 @@ private:
 
 // Impl
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Normal<T>::Normal(const T& v) noexcept : m_elements{ v, v, v } {}
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Normal<T>::Normal(const std::array<T, 3>& arr) noexcept : m_elements{ arr } {}
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Normal<T>::Normal(const T& x, const T& y, const T& z) noexcept : m_elements{ x, y, z } {}
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Normal<T>::Normal(const Vector<T, 3>& v) noexcept : m_elements{ v[0], v[1], v[2] } {}
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr bool Normal<T>::operator==(const Normal& other) const noexcept 
 {
   return m_elements == other.m_elements;
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr const T& Normal<T>::operator[](std::size_t i) const& noexcept 
 { 
   return m_elements[i]; 
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr T& Normal<T>::operator[](std::size_t i) & noexcept
 {
   return const_cast<T&>(std::as_const(*this)[i]);
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Normal<T> Normal<T>::operator-() const noexcept 
 {
   return Normal{ -m_elements[0], -m_elements[1], -m_elements[2] };
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Normal<T> Normal<T>::operator+(const Normal& rhs) const noexcept 
 {
   Normal tmp{ *this };
@@ -93,7 +93,7 @@ constexpr Normal<T> Normal<T>::operator+(const Normal& rhs) const noexcept
   return tmp;
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Normal<T> Normal<T>::operator-(const Normal& rhs) const noexcept 
 {
   Normal tmp{ *this };
@@ -101,7 +101,7 @@ constexpr Normal<T> Normal<T>::operator-(const Normal& rhs) const noexcept
   return tmp;
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Normal<T> Normal<T>::operator*(const T& s) const noexcept 
 {
   Normal tmp{ *this };
@@ -109,7 +109,7 @@ constexpr Normal<T> Normal<T>::operator*(const T& s) const noexcept
   return tmp;
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Normal<T> Normal<T>::operator/(const T& s) const noexcept 
 {
   Normal tmp{ *this };
@@ -117,7 +117,7 @@ constexpr Normal<T> Normal<T>::operator/(const T& s) const noexcept
   return tmp;
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Normal<T>& Normal<T>::operator+=(const Normal& rhs) noexcept 
 {
   m_elements[0] += rhs.m_elements[0];
@@ -126,7 +126,7 @@ constexpr Normal<T>& Normal<T>::operator+=(const Normal& rhs) noexcept
   return *this;
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Normal<T>& Normal<T>::operator-=(const Normal& rhs) noexcept 
 {
   m_elements[0] -= rhs.m_elements[0];
@@ -135,7 +135,7 @@ constexpr Normal<T>& Normal<T>::operator-=(const Normal& rhs) noexcept
   return *this;
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Normal<T>& Normal<T>::operator*=(const T& s) noexcept 
 {
   m_elements[0] *= s;
@@ -144,7 +144,7 @@ constexpr Normal<T>& Normal<T>::operator*=(const T& s) noexcept
   return *this;
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Normal<T>& Normal<T>::operator/=(const T& s) noexcept 
 {
   m_elements[0] /= s;
@@ -153,7 +153,7 @@ constexpr Normal<T>& Normal<T>::operator/=(const T& s) noexcept
   return *this;
 }
 
-export template<Arithmetic T, std::size_t N> requires Arity234<N>
+export template<FloatingArithmetic T, std::size_t N> requires Arity234<N>
 constexpr Vector<T, N> operator+(const Vector<T, N>& v, const Normal<T>& n) noexcept
 {
   return v + Vector<T, N>{ n[0], n[1], n[2] };

@@ -18,7 +18,7 @@ private:
   float m_scale{};
 };
 
-EngineLogoComponent::EngineLogoComponent(const EngineLogo& logo, std::u32string_view glyph, float scale, float componentPadding) : HUDComponent{ componentPadding }, m_logo { logo }, m_glyph{ std::move(glyph) }, m_scale{ scale } {}
+EngineLogoComponent::EngineLogoComponent(const EngineLogo& logo, std::u32string_view glyph, float scale, float componentPadding) : HUDComponent{ componentPadding }, m_logo { logo }, m_glyph{ glyph }, m_scale{ scale } {}
 
 float EngineLogoComponent::draw(sf::RenderTarget& target, const HUDLayoutContext& ctx) const
 {

@@ -207,9 +207,10 @@ bool BVHAggregate::intersectP(const Ray& ray) const
   {
     std::uint64_t tests{};
 
-    for (Idx i{}; i < node.primitiveCount; ++i)
+    for (Int i{}; i < node.primitiveCount; ++i)
     {
-      if (m_ordered[node.firstPrimitiveOffset + i]->intersectP(ray))
+      const auto index{ static_cast<Idx>(node.firstPrimitiveOffset + i) };
+      if (m_ordered[index]->intersectP(ray))
       {
         StatsAccumulator::recordRayPrimitiveTests(tests);
         return true;
@@ -247,11 +248,12 @@ std::optional<ShapeIntersection> BVHAggregate::intersect(const Ray& ray) const
   auto leafIntersectLambda = [&](const LinearBVHNode& node, Ray& rayRef)
   {
     std::uint64_t tests{};
-    for (Idx i{}; i < node.primitiveCount; ++i)
+    for (Int i{}; i < node.primitiveCount; ++i)
     {
       ++tests;
 
-      const auto& prim{ m_ordered[node.firstPrimitiveOffset + i] };
+      const auto index{ static_cast<Idx>(node.firstPrimitiveOffset + i) };
+      const auto& prim{ m_ordered[index] };
       if (auto optShapeIntersect{ prim->intersect(rayRef) })
       {
         rayRef.setTMax(optShapeIntersect->tHit);

@@ -19,7 +19,6 @@ public:
 
 private:
   mutable float m_scrollOffset{};
-  mutable float m_maxScroll{};
 
   float drawTitle(sf::RenderTarget& target, const HUDLayoutContext& ctx, const std::vector<std::unique_ptr<HUDComponent>>& comps) const;
 

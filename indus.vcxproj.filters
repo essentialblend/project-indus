@@ -324,6 +324,9 @@
     <ClCompile Include="src\shading\bxdf\coateddiffuse-bxdf.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\math\math-float-constants.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dep\stb_image_write.h">

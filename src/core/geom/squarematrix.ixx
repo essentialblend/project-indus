@@ -23,7 +23,7 @@ public:
   static constexpr SquareMatrix zero() noexcept;
   static constexpr SquareMatrix identity() noexcept;
   constexpr SquareMatrix transpose() const noexcept;
-  constexpr T determinant() const noexcept;
+  constexpr T determinant() const noexcept requires FloatingArithmetic<T>;
 
 private:
   std::array<T, N * N> m_elements{};
@@ -141,7 +141,7 @@ constexpr SquareMatrix<T, N> SquareMatrix<T, N>::identity() noexcept
 }
 
 template<Arithmetic T, std::size_t N> requires Arity234<N>
-constexpr T SquareMatrix<T, N>::determinant() const noexcept 
+constexpr T SquareMatrix<T, N>::determinant() const noexcept requires FloatingArithmetic<T>
 {
   if constexpr (N == 2) 
   {

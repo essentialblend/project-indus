@@ -4,11 +4,12 @@ import std;
 
 import indus.core.types;
 import indus.core.geom.vector;
-import indus.core.math.constants.i;
 import indus.core.math.fp.ii;
 import indus.core.math.trig.iii;
 import indus.core.math.algebra.iv;
+import indus.core.math.float_constants;
 import indus.core.geom.util;
+
 
 import indus.shading.bxdf;
 import indus.shading.bsdf;

@@ -1,8 +1,8 @@
 export module indus.camera.perspective;
 
-import indus.core.math.constants.i;
 import indus.core.math.fp.ii;
 import indus.core.math.algebra.iv;
+import indus.core.math.float_constants;
 
 import indus.sampling.util;
 

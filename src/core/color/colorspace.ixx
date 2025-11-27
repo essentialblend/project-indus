@@ -101,12 +101,13 @@ public:
 private:
   static Vec3d X_Y1_Z(Vec2f XY)
   {
-    double x{ XY[0] };
-    double y{ XY[1] };
-    return { x / y, 1.0, (1.0 - x - y) / y };
+    Float64 x{ XY[0] };
+    Float64 y{ XY[1] };
+
+    return { x / y, Float64{ 1 }, (Float64{ 1 } - x - y) / y };
   }
 
-  static double computeDeterminant(const Vec3d& a, const Vec3d& b, const Vec3d& c) noexcept
+  static Float64 computeDeterminant(const Vec3d& a, const Vec3d& b, const Vec3d& c) noexcept
   {
     return computeDot(a, computeCross(b, c));
   }

@@ -352,15 +352,13 @@ export
   }
 
   // Unused
-  template<FloatingArithmetic T>
-  [[nodiscard]] int log2Int(T v) noexcept
+  [[nodiscard]] int log2Int(float v) noexcept
   {
-    if (!isFinite(v) || v <= T{}) return 0;
-
-    if (v < T{ 1.0 }) return -log2Int(T{ 1.0 } / v);
+    if (!isFinite(v) || v <= 0.0f) return 0;
+    if (v < 1.0f) return -log2Int(1.0f / v);
 
     constexpr std::uint32_t midSignif{ 0x003504F3u };
-    const std::uint32_t bits{ floatToBits<T>(v) };
+    const std::uint32_t bits{ floatToBits<float>(v) };
     const int e{ exponentBits(bits) };
     const std::uint32_t s{ significandBits(bits) };
 
@@ -368,31 +366,28 @@ export
   }
 
   // Unused 
-  template<FloatingArithmetic T>
-  [[nodiscard]] T fastExp(T x) noexcept
+  [[nodiscard]] float fastExp(float x) noexcept
   {
-    if (!isFinite(x)) return std::signbit(x) ? T{} : infinity<T>;
+    if (!isFinite(x)) return std::signbit(x) ? 0.0f : infinity<float>;
 
-    const T xp{ x * 1.442695041f };
-    const T fxp{ std::floor(xp) };
-
+    const float xp{ x * 1.442695041f };
+    const float fxp{ std::floor(xp) };
     const int i{ static_cast<int>(fxp) };
-    const T f{ xp - fxp };
+    const float f{ xp - fxp };
 
-    constexpr std::array<T, 4> c{ 1.0f, 0.695556856f, 0.226173572f, 0.0781455737f };
-    const T twoToF{ evaluatePolynomial(f, c.begin(), c.end()) };
+    constexpr std::array<float, 4> c{ 1.0f, 0.695556856f, 0.226173572f, 0.0781455737f };
+    const float twoToF{ evaluatePolynomial(f, c.begin(), c.end()) };
 
-    const std::uint32_t tb{ floatToBits<T>(twoToF) };
-
+    const std::uint32_t tb{ floatToBits<float>(twoToF) };
     int exponent{ static_cast<int>((tb >> 23) & 0xFF) - 127 + i };
 
-    if (exponent < -126) return T{};
-    if (exponent > 127)  return infinity<T>;
+    if (exponent < -126) return 0.0f;
+    if (exponent > 127)  return infinity<float>;
 
     std::uint32_t bits{ tb & 0x807FFFFFu };
     bits |= static_cast<std::uint32_t>(exponent + 127) << 23;
 
-    return bitsToFloat<T>(bits);
+    return bitsToFloat<float>(bits);
   }
 
   template<FloatingArithmetic T>

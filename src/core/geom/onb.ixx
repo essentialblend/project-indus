@@ -39,7 +39,12 @@ OrthonormalBasis OrthonormalBasis::fromPBRT(const Normal3f& geometricNormal)
 
   if(n[0] == 0 && n[1] == 0 && n[2] == 0)
   {
-    return OrthonormalBasis{ Normal3f{0,0,1}, Vec3f{1,0,0}, Vec3f{0,1,0} };
+    return OrthonormalBasis
+    { 
+      Normal3f{ Float{}, Float{}, Float{ 1 } }, 
+      Vec3f{ Float{ 1 }, Float{}, Float{} },
+      Vec3f{ Float{}, Float{ 1 }, Float{} }
+    };
   }
 
   Vec3f t{};
@@ -60,28 +65,6 @@ OrthonormalBasis OrthonormalBasis::fromPBRT(const Normal3f& geometricNormal)
 
   return OrthonormalBasis{ n, t, b };
 }
-
-// Pending deeper understanding
-//OrthonormalBasis OrthonormalBasis::fromFrisvad(const Normal3f& normal)
-//{
-//  Vec3f tangent{};
-//  Vec3f bitangent{};
-//
-//  if (normal[2] < -0.9999999f) 
-//  {
-//    tangent = Vec3f{ 0, -1, 0 };
-//    bitangent = Vec3f{ -1, 0, 0 };
-//  }
-//  else 
-//  {
-//    Float a{ Float(1.0) / (Float(1.0) + normal[2]) };
-//    Float bb{ -normal[0] * normal[1] * a };
-//    tangent = Vec3f(1.0f - normal[0] * normal[0] * a, bb, -normal[0]);
-//    bitangent = Vec3f(bb, Float(1.0) - normal[1] * normal[1] * a, -normal[1]);
-//  }
-//
-//  return OrthonormalBasis{ normal, tangent, bitangent};
-//}
 
 constexpr auto OrthonormalBasis::localToWorld(const Vec3f& v) const noexcept
 {
@@ -108,5 +91,26 @@ constexpr Vec3f OrthonormalBasis::getBitangent() const noexcept
   return m_bitangent;
 }
 
+// Pending deeper understanding
+//OrthonormalBasis OrthonormalBasis::fromFrisvad(const Normal3f& normal)
+//{
+//  Vec3f tangent{};
+//  Vec3f bitangent{};
+//
+//  if (normal[2] < -0.9999999f) 
+//  {
+//    tangent = Vec3f{ 0, -1, 0 };
+//    bitangent = Vec3f{ -1, 0, 0 };
+//  }
+//  else 
+//  {
+//    Float a{ Float(1.0) / (Float(1.0) + normal[2]) };
+//    Float bb{ -normal[0] * normal[1] * a };
+//    tangent = Vec3f(1.0f - normal[0] * normal[0] * a, bb, -normal[0]);
+//    bitangent = Vec3f(bb, Float(1.0) - normal[1] * normal[1] * a, -normal[1]);
+//  }
+//
+//  return OrthonormalBasis{ normal, tangent, bitangent};
+//}
 
 

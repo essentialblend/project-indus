@@ -13,14 +13,24 @@ export
   template<class T>
   constexpr T kSafeNormalizeLen{ T{ 32 } * epsilonMachine<T> };
 
-  float  oneMinusEpsFloat{ std::nextafter(float{1.0}, float{0.0}) };
-  double oneMinusEpsDouble{ std::nextafter(1.0, 0.0) };
+  template<FloatingArithmetic T>
+  T oneMinusEps() { return std::nextafter(T{ 1 }, T{ 0 }); }
 
-  constexpr float kPi{ 3.14159265358979323846f };
-  constexpr float kInvPi{ 0.31830988618379067154f };
-  constexpr float kInv2Pi{ 0.15915494309189533577f };
-  constexpr float kInv4Pi{ 0.07957747154594766788f };
-  constexpr float kPiOver2{ 1.57079632679489661923f };
-  constexpr float kPiOver4{ 0.78539816339744830961f };
-  constexpr float kSqrt2{ 1.41421356237309504880f };
+  template<FloatingArithmetic T>
+  constexpr T kPi_v{ static_cast<T>(3.14159265358979323846264338327950288L) };
+
+  template<FloatingArithmetic T>
+  constexpr T kInvPi_v{ T{ 1 } / kPi_v<T> };
+
+  template<FloatingArithmetic T>
+  constexpr T kInv2Pi_v{ T{ 1 } / (T{ 2 } * kPi_v<T>) };
+
+  template<FloatingArithmetic T>
+  constexpr T kInv4Pi_v{ T{ 1 } / (T{ 4 } * kPi_v<T>) };
+
+  template<FloatingArithmetic T>
+  constexpr T kPiOver2_v{ kPi_v<T> * T{ 0.5 } };
+
+  template<FloatingArithmetic T>
+  constexpr T kPiOver4_v{ kPi_v<T> * T{ 0.25 } };
 }

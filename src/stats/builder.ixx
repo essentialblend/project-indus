@@ -2,6 +2,8 @@ export module indus.stats.builder;
 
 import std;
 
+import indus.core.types;
+
 import indus.stats.constructs;
 
 export class StatsBuilder final
@@ -69,7 +71,7 @@ SubSection StatsBuilder::buildBVH(const RenderStats& stats, bool isRenderComplet
     return section;
   }
 
-  const double avg{ double(stats.nodesVisited.sum) / double(stats.nodesVisited.count) };
+  const Float64 avg{ Float64(stats.nodesVisited.sum) / Float64(stats.nodesVisited.count) };
 
   std::string value
   {
@@ -97,8 +99,8 @@ SubSection StatsBuilder::buildIntersections(const RenderStats& stats, bool isRen
     return section;
   }
 
-  const double pct{ stats.hitPercent.valueOr(0.0) * 100.0 };
-  const int rounded{ static_cast<int>(pct + 0.5) };
+  const Float64 pct{ stats.hitPercent.valueOr(Float64{ 0.0 }) * Float64{ 100.0 } };
+  const Int rounded{ static_cast<Int>(pct + 0.5) };
 
   section.rows.push_back({ "Hit percent", std::to_string(rounded) + "%" });
   
@@ -115,7 +117,7 @@ SubSection StatsBuilder::buildMemory(const RenderStats& stats, bool isRenderComp
     if (!isRenderComplete && bytes == 0) return std::string("--");
     if (bytes == 0) return std::string("0.000 MB");
 
-    const double mb{ static_cast<double>(bytes) / (1024.0 * 1024.0) };
+    const Float64 mb{ static_cast<Float64>(bytes) / (Float64(1024.0) * 1024.0) };
 
     return std::format("{:.3f} MB", mb);
   }};

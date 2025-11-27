@@ -14,7 +14,7 @@ import indus.core.math.trig.iii;
 import indus.core.math.algebra.iv;
 import indus.core.math.interval;
 
-export template<Arithmetic T>
+export template<FloatingArithmetic T>
 class Transform final 
 {
 public:
@@ -62,10 +62,10 @@ private:
 export using Transform4f = Transform<Float>;
 
 // Implementation
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Transform<T>::Transform(const SquareMatrix<T, 4>& forward, const SquareMatrix<T, 4>& inverse) noexcept : m_forward{ forward }, m_inverse{ inverse } {}
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Vector<T, 3> Transform<T>::operator()(const Vector<T, 3>& v) const noexcept
 {
   const Vector<T, 4> hv{ v[0], v[1], v[2], T{ 0 } };
@@ -75,7 +75,7 @@ constexpr Vector<T, 3> Transform<T>::operator()(const Vector<T, 3>& v) const noe
 }
 
 // Uses inverse transpose to transform normals
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Normal<T> Transform<T>::operator()(const Normal<T>& n) const noexcept
 {
   const T x{ n[0] }; const T y{ n[1] }; const T z{ n[2] };
@@ -87,7 +87,7 @@ constexpr Normal<T> Transform<T>::operator()(const Normal<T>& n) const noexcept
   return Normal<T>{ nx, ny, nz };
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Point<T, 3> Transform<T>::operator()(const Point<T, 3>& p) const noexcept
 {
   const Vector<T, 4> hp{ p[0], p[1], p[2], T{ 1 } };
@@ -103,7 +103,7 @@ constexpr Point<T, 3> Transform<T>::operator()(const Point<T, 3>& p) const noexc
   return { res[0], res[1], res[2] };
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Ray Transform<T>::operator()(const Ray& r) const noexcept
 {
   Point3fi oI{ (*this)(Point3fi{ r.getOrigin() }) };
@@ -128,7 +128,7 @@ constexpr Ray Transform<T>::operator()(const Ray& r) const noexcept
   return out;
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Point<Interval<T>, 3> Transform<T>::operator()(const Point<Interval<T>, 3>& p) const noexcept
 {
   const Vector<T, 3> Cx{ (*this)(Vector<T, 3>{ 1, 0, 0 }) };
@@ -146,7 +146,7 @@ constexpr Point<Interval<T>, 3> Transform<T>::operator()(const Point<Interval<T>
   return Point<Interval<T>, 3>{ ax(0), ax(1), ax(2) };
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Vector<Interval<T>, 3> Transform<T>::operator()(const Vector<Interval<T>, 3>& v) const noexcept
 {
   const Vector<T, 3> Cx{ (*this)(Vector<T,3>{1, 0, 0}) };
@@ -163,55 +163,55 @@ constexpr Vector<Interval<T>, 3> Transform<T>::operator()(const Vector<Interval<
   return Vector<Interval<T>, 3>{ ax(0), ax(1), ax(2) };
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Point<T, 3> Transform<T>::applyInverse(const Point<T, 3>& p) const noexcept
 {
   return Transform{ m_inverse, m_forward }(p);
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Vector<T, 3> Transform<T>::applyInverse(const Vector<T, 3>& v) const noexcept
 {
   return Transform{ m_inverse, m_forward }(v);
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Normal<T> Transform<T>::applyInverse(const Normal<T>& n) const noexcept
 {
   return Transform{ m_inverse, m_forward }(n);
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Ray Transform<T>::applyInverse(const Ray& r) const noexcept
 {
   return Transform{ m_inverse, m_forward }(r);
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Transform<T> Transform<T>::getInverseTransform() const noexcept
 {
   return Transform{ m_inverse, m_forward };
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr Transform<T> Transform<T>::operator*(const Transform<T>& other) const noexcept
 {
   return Transform<T>{ m_forward * other.m_forward, other.m_inverse * m_inverse };
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr const SquareMatrix<T, 4>& Transform<T>::get() const noexcept
 {
   return m_forward;
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr const SquareMatrix<T, 4>& Transform<T>::getInv() const noexcept
 {
   return m_inverse;
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr bool Transform<T>::swapsHandedness() const noexcept
 {
   const auto& mat{ this->m_forward };
@@ -231,7 +231,7 @@ constexpr bool Transform<T>::swapsHandedness() const noexcept
   return det < T(0);
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 Transform<T> Transform<T>::lookAt(const Point<T, 3>& eye, const Point<T, 3>& target, const Vector<T, 3>& upHint)
 {
   // Decide the camera's forward direction based on the provided target and eye points, then choose a candidate up vector
@@ -271,7 +271,7 @@ Transform<T> Transform<T>::lookAt(const Point<T, 3>& eye, const Point<T, 3>& tar
   return Transform<T>{ camToWorld, worldToCam };
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 Transform<T> Transform<T>::translate(const Vector<T, 3>& v)
 {
   SquareMatrix<T, 4> m{ { Vector<T, 4>{ 1, 0, 0, 0 }, Vector<T, 4>{ 0, 1, 0, 0 }, Vector<T, 4>{ 0, 0, 1, 0 }, Vector<T, 4>{ v[0], v[1], v[2], 1 } } };
@@ -281,7 +281,7 @@ Transform<T> Transform<T>::translate(const Vector<T, 3>& v)
   return { m, mInv };
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 Transform<T> Transform<T>::scale(const Vector<T, 3>& v)
 {
   SquareMatrix<T, 4> m{ { Vector<T, 4>{ v[0], 0, 0, 0 }, Vector<T, 4>{ 0, v[1], 0, 0 }, Vector<T, 4>{ 0, 0, v[2], 0 }, Vector<T, 4>{ 0, 0, 0, 1 } } };
@@ -291,7 +291,7 @@ Transform<T> Transform<T>::scale(const Vector<T, 3>& v)
   return { m, mInv };
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 Transform<T> Transform<T>::perspective(T fovDegrees, T nearPlane, T farPlane)
 {
   const T s{ T{ 1 } / std::tan(degreesToRadians(fovDegrees) / T{ 2 }) };
@@ -317,7 +317,7 @@ Transform<T> Transform<T>::perspective(T fovDegrees, T nearPlane, T farPlane)
   return Transform<T>::scale({ s, s, 1 }) * Transform<T>{ perspectiveMat, invPerspectiveMat };
 }
 
-template<Arithmetic T>
+template<FloatingArithmetic T>
 constexpr bool Transform<T>::hasScale() const noexcept
 {
   const Vector<T, 3> ex{ (*this)(Vector<T, 3>{T{ 1 }, T{ 0 }, T{ 0 }}) };

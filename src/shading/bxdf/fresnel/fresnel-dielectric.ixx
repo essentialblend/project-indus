@@ -8,7 +8,6 @@ import indus.core.math.fp.ii;
 
 import indus.shading.fresnel;
 
-
 export class FresnelDielectric final : public Fresnel
 {
 public:

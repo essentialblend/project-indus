@@ -2,6 +2,8 @@ export module indus.stats.accumulator;
 
 import std;
 
+import indus.core.types;
+
 import indus.stats.constructs;
 
 export class StatsAccumulator final
@@ -12,8 +14,8 @@ public:
 
   static void setBVHNodeCounts(std::uint64_t interior, std::uint64_t leaf) noexcept;
   static void setBVHBytes(std::uint64_t bytes) noexcept;
-  static void setCPUUtilPct(double pct) noexcept;
-  static void setMemoryMB(double mb) noexcept;
+  static void setCPUUtilPct(Float64 pct) noexcept;
+  static void setMemoryMB(Float64 mb) noexcept;
   static void setFilmBytes(std::uint64_t bytes) noexcept;
 
   static void addGeometryBytes(std::uint64_t bytes) noexcept;
@@ -36,8 +38,8 @@ private:
   inline static std::atomic<std::uint64_t> s_bvhLeafNodes{ 0 };
   inline static std::atomic<std::uint64_t> s_bvhBytes{ 0 };
 
-  inline static double s_cpuUtilPct{};
-  inline static double s_memoryMB{};
+  inline static Float64 s_cpuUtilPct{};
+  inline static Float64 s_memoryMB{};
 
   inline static std::atomic<std::uint64_t> s_filmBytes{ 0 };
   inline static std::atomic<std::uint64_t> s_geometryBytes{ 0 };
@@ -53,6 +55,16 @@ void StatsAccumulator::reset(std::size_t maxThreads) noexcept
   if (maxThreads > s_counters.size()) s_counters.resize(maxThreads);
 
   for (auto& c : s_counters) c = RenderStats{};
+
+  s_bvhInteriorNodes.store(0, std::memory_order_relaxed);
+  s_bvhLeafNodes.store(0, std::memory_order_relaxed);
+  s_bvhBytes.store(0, std::memory_order_relaxed);
+  s_filmBytes.store(0, std::memory_order_relaxed);
+  s_geometryBytes.store(0, std::memory_order_relaxed);
+  s_textureBytes.store(0, std::memory_order_relaxed);
+
+  s_cpuUtilPct = Float64{};
+  s_memoryMB = Float64{};
 }
 
 RenderStats StatsAccumulator::finalize() noexcept
@@ -183,12 +195,12 @@ void StatsAccumulator::setBVHBytes(std::uint64_t bytes) noexcept
   s_bvhBytes.store(bytes, std::memory_order_relaxed);
 }
 
-void StatsAccumulator::setCPUUtilPct(double pct) noexcept 
+void StatsAccumulator::setCPUUtilPct(Float64 pct) noexcept 
 { 
   s_cpuUtilPct = pct; 
 }
 
-void StatsAccumulator::setMemoryMB(double mb) noexcept 
+void StatsAccumulator::setMemoryMB(Float64 mb) noexcept 
 { 
   s_memoryMB = mb; 
 }
