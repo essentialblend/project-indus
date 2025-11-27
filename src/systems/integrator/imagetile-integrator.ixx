@@ -23,7 +23,7 @@ public:
   ImageTileIntegrator(CameraBase&, Sampler&) noexcept;
 
   void render(const Scene&, std::stop_token) override;
-  float getCurrentProgress() const noexcept;
+  Float getCurrentProgress() const noexcept;
   void publishSnapshot();
 
   [[nodiscard]] std::string getSchedulerString() const override;
@@ -34,12 +34,12 @@ protected:
   CameraBase& m_camera;
   Sampler& m_samplerPrototype;
 
-  std::uint64_t m_snapshotSeq{ 0 };
+  UInt64 m_snapshotSeq{ 0 };
 
 
 private:
-  std::atomic<std::uint64_t> m_samplesDone{};
-  std::uint64_t m_totalSamples{};
+  std::atomic<UInt64> m_samplesDone{};
+  UInt64 m_totalSamples{};
 
   void renderSampleWaves(const Scene& scene, const Bounds2i& pixelBounds, const Int samplesPerPixel, std::stop_token stopToken);
   void notifySampleDone();
@@ -70,20 +70,20 @@ void ImageTileIntegrator::render(const Scene& scene, std::stop_token stopToken)
     renderSampleWaves(scene, pixelBounds, samplesPerPixel, stopToken);
   }
   m_samplesDone.store(m_totalSamples, std::memory_order_relaxed);
-  Image img{ m_camera.getFilm().toImageU8(ColorEncoding::sRGB, 1.0f) };
+  Image img{ m_camera.getFilm().toImageU8(ColorEncoding::sRGB, Float{ 1 }) };
   
   m_renderStats = StatsAccumulator::finalize();
-  m_renderStats.spp = static_cast<std::uint64_t>(samplesPerPixel);
-  FrameSnapshot snap{ std::move(img), 1.0f, ++m_snapshotSeq, m_renderStats };
+  m_renderStats.spp = static_cast<UInt64>(samplesPerPixel);
+  FrameSnapshot snap{ std::move(img), Float{ 1.0 }, ++m_snapshotSeq, m_renderStats };
   
   if (m_displayConsumer) m_displayConsumer(std::move(snap));
 }
 
-float ImageTileIntegrator::getCurrentProgress() const noexcept
+Float ImageTileIntegrator::getCurrentProgress() const noexcept
 {
   const auto done{ m_samplesDone.load(std::memory_order_relaxed) };
 
-  return m_totalSamples ? static_cast<float>(done) / static_cast<float>(m_totalSamples)
+  return m_totalSamples ? static_cast<Float>(done) / static_cast<Float>(m_totalSamples)
     : Float{};
 }
 
@@ -107,7 +107,7 @@ void ImageTileIntegrator::renderSampleWaves(const Scene& scene, const Bounds2i& 
 
   m_samplesDone.store(0, std::memory_order_relaxed);
 
-  m_totalSamples = std::uint64_t(res[0]) * std::uint64_t(res[1]) * std::uint64_t(samplesPerPixel);
+  m_totalSamples = UInt64(res[0]) * UInt64(res[1]) * UInt64(samplesPerPixel);
 
   for (Int waveStartIdx{}, waveSize{ 1 }; waveStartIdx < samplesPerPixel; waveStartIdx = std::min(samplesPerPixel, waveStartIdx + waveSize), waveSize = std::min<Int>(64, waveSize * 2))
   {
@@ -147,13 +147,10 @@ void ImageTileIntegrator::notifySampleDone()
 
   if ((done & 0xFFFFu) == 0u) 
   {
-    const float p{ m_totalSamples ? float(done) / float(m_totalSamples) : 0.f };
+    const Float p{ m_totalSamples ? static_cast<Float>(done) / static_cast<Float>(m_totalSamples) : Float{ 0 } };
     
     FrameSnapshot snap{ Image{}, p, ++m_snapshotSeq };
 
     if (m_displayConsumer) m_displayConsumer(std::move(snap));
   }
 }
-
-
-

@@ -27,7 +27,7 @@ export
     }
   };
 
-  enum class BxDFType : std::uint8_t
+  enum class BxDFType : UInt8
   {
     Reflection = 1 << 0,
     Transmission = 1 << 1,

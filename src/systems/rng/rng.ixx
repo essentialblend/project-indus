@@ -2,6 +2,7 @@ export module indus.rng;
 
 import indus.core.types;
 import indus.core.concepts;
+import indus.core.math.constants.i;
 import indus.core.math.float_constants;
 
 export class RNG
@@ -91,11 +92,11 @@ Int64 RNG::uniform<Int64>()
 template<>
 float RNG::uniform<float>()
 {
-  return std::min(oneMinusEpsFloat, uniform<UInt32>() * 0x1p-32f);
+  return std::min(oneMinusEps<float>(), uniform<UInt32>() * 0x1p-32f);
 }
 
 template<>
 double RNG::uniform<double>()
 {
-  return std::min(oneMinusEpsDouble, static_cast<double>(uniform<UInt64>()) * 0x1p-64);
+  return std::min(oneMinusEps<double>(), static_cast<double>(uniform<UInt64>()) * 0x1p-64);
 }

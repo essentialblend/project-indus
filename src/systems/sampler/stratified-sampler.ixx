@@ -39,7 +39,7 @@ private:
 };
 
 StratifiedSampler::StratifiedSampler(Strata2D strata, bool jitter, Int64 seed, std::unique_ptr<RNG> rngPrototype) noexcept : m_rng{ std::move(rngPrototype) }, m_currentPixel{}
-  , m_strata{ strata }, m_sampleIndex{ 0 }, m_invNX{ strata.NX ? (1.f / Float(strata.NX)) : 0.f }, m_invNY{ strata.NY ? (1.f / Float(strata.NY)) : 0.f }, m_jitter{ jitter }, m_seed{ seed }, m_dimension{ 0 } 
+  , m_strata{ strata }, m_sampleIndex{ 0 }, m_invNX{ strata.NX ? (Float{ 1.0 } / static_cast<Float>(strata.NX)) : Float{ 0 } }, m_invNY{ strata.NY ? (Float{ 1 } / static_cast<Float>(strata.NY)) : Float{ 0 } }, m_jitter{ jitter }, m_seed{ seed }, m_dimension{ 0 }
 {
   if (m_strata.NX <= 0 || m_strata.NY <= 0) 
   {

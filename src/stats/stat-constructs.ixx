@@ -2,12 +2,14 @@ export module indus.stats.constructs;
 
 import std;
 
+import indus.core.types;
+
 export
 {
   struct Ratio64
   {
-    std::uint64_t numerator{};
-    std::uint64_t denominator{};
+    UInt64 numerator{};
+    UInt64 denominator{};
 
     bool isDefined() const noexcept
     {
@@ -27,40 +29,40 @@ export
 
   struct IntDistribution
   {
-    std::uint64_t count{};
-    std::uint64_t sum{};
-    std::uint64_t min{ std::numeric_limits<std::uint64_t>::max() };
-    std::uint64_t max{ std::numeric_limits<std::uint64_t>::min() };
+    UInt64 count{};
+    UInt64 sum{};
+    UInt64 min{ std::numeric_limits<UInt64>::max() };
+    UInt64 max{ std::numeric_limits<UInt64>::min() };
   };
 
   struct RenderStats
   {
     // Integrator / sampling
-    std::uint64_t spp{};
+    UInt64 spp{};
     double varianceAverage{};
-    std::uint64_t clampedFireflies{};
+    UInt64 clampedFireflies{};
 
     // Rays
-    std::uint64_t raysCamera{};
-    std::uint64_t raysShadow{};
-    std::uint64_t raysIndirect{};
-    std::uint64_t raysTotal{};
+    UInt64 raysCamera{};
+    UInt64 raysShadow{};
+    UInt64 raysIndirect{};
+    UInt64 raysTotal{};
 
     // BVH & traversal quality
     Ratio64 hitPercent{};
     IntDistribution nodesVisited{};
-    std::uint64_t BVHInteriorNodes{};
-    std::uint64_t BVHLeafNodes{};
+    UInt64 BVHInteriorNodes{};
+    UInt64 BVHLeafNodes{};
 
     // Intersections
-    std::uint64_t regularIntersectionTests{};
-    std::uint64_t rayPrimitiveTests{};
+    UInt64 regularIntersectionTests{};
+    UInt64 rayPrimitiveTests{};
 
     // Memory
-    std::uint64_t bytesBVH{};
-    std::uint64_t bytesGeometry{};
-    std::uint64_t bytesTextures{};
-    std::uint64_t bytesFilm{};
+    UInt64 bytesBVH{};
+    UInt64 bytesGeometry{};
+    UInt64 bytesTextures{};
+    UInt64 bytesFilm{};
 
     // System
     double CPUUtilPct{};

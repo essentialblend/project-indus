@@ -25,7 +25,7 @@ struct BVHNode final
   std::unique_ptr<BVHNode> rightChild{};
   int firstPrimitiveOffset{ -1 };
   int primitiveCount{};
-  std::uint8_t splitAxis{};
+  UInt8 splitAxis{};
 };
 
 struct LinearBVHNode final
@@ -34,7 +34,7 @@ struct LinearBVHNode final
   int firstPrimitiveOffset{ -1 };
   int primitiveCount{};
   int secondChildArrIdx{ -1 };
-  std::uint8_t splitAxis{};
+  UInt8 splitAxis{};
 };
 
 export class BVHAggregate final : public Primitive
@@ -112,7 +112,7 @@ bool BVHAggregate::traverseBVH(const Ray& ray, FLeaf&& leafFunc) const
     return false;
   }
 
-  std::uint64_t statsLocalNodesVisited{};
+  UInt64 statsLocalNodesVisited{};
   
   // Get ray's cached negative direction flags 
   Ray rayLocal{ ray };
@@ -205,7 +205,7 @@ bool BVHAggregate::intersectP(const Ray& ray) const
   // The lambda simply checks each primitive and returns true, nothing else
   auto leafTestLambda = [&](const LinearBVHNode& node, const Ray& ray)
   {
-    std::uint64_t tests{};
+    UInt64 tests{};
 
     for (Int i{}; i < node.primitiveCount; ++i)
     {
@@ -247,7 +247,7 @@ std::optional<ShapeIntersection> BVHAggregate::intersect(const Ray& ray) const
   // The lambda checks each primitive and updates the ray's tMax and the best intersection found so far, if any
   auto leafIntersectLambda = [&](const LinearBVHNode& node, Ray& rayRef)
   {
-    std::uint64_t tests{};
+    UInt64 tests{};
     for (Int i{}; i < node.primitiveCount; ++i)
     {
       ++tests;
@@ -338,7 +338,7 @@ BVHAggregate::buildRecursive(std::vector<BVHBuildPrimitive>& buildPrimitives, in
   const int dim{ centroidBounds.getMaxDimension() };
   const bool doCentroidsCoincide{ centroidBounds.getMax()[dim] == centroidBounds.getMin()[dim] };
 
-  node->splitAxis = static_cast<std::uint8_t>(dim);
+  node->splitAxis = static_cast<UInt8>(dim);
 
   // If we have few enough primitives or centroids coincide, create a leaf node and unwind the recursion 
   if (totalPrimitivesInBP <= m_maxPrimsInNode || doCentroidsCoincide)
@@ -436,7 +436,7 @@ std::unique_ptr<BVHNode> BVHAggregate::splitBySAH(std::unique_ptr<BVHNode> node,
   {
     suffixAccumBounds = Bounds3f::getUnion(suffixAccumBounds, bucketsArray[i].bounds);
     totalPrimsInSuffixAccum += bucketsArray[i].count;
-    aggrCosts[std::int64_t{ i - 1 }] += totalPrimsInSuffixAccum * suffixAccumBounds.getSurfaceArea();
+    aggrCosts[Int64{ i - 1 }] += totalPrimsInSuffixAccum * suffixAccumBounds.getSurfaceArea();
   }
 
   // After the two loops, aggrCosts now holds the unnormalized isect work (N_L * A_L) + (NR * AR). Now we simply loop through the buckets and find the best candidate with the lowest trav cost, and cache the bucket index
@@ -537,8 +537,8 @@ std::unique_ptr<BVHNode> BVHAggregate::splitByEqualCounts(int begin, const int t
 
 void BVHAggregate::publishBVHStats() const noexcept
 {
-  std::uint64_t interiorNodes{};
-  std::uint64_t leafNodes{};
+  UInt64 interiorNodes{};
+  UInt64 leafNodes{};
 
   for (const auto& node : m_linearNodes)
   {
@@ -550,21 +550,21 @@ void BVHAggregate::publishBVHStats() const noexcept
 
   StatsAccumulator::setBVHNodeCounts(interiorNodes, leafNodes);
 
-  const std::uint64_t treeNodeCount{ interiorNodes + leafNodes };
+  const UInt64 treeNodeCount{ interiorNodes + leafNodes };
 
-  const std::uint64_t bytesTreeNodes{
+  const UInt64 bytesTreeNodes{
     treeNodeCount * sizeof(BVHNode)
   };
-  const std::uint64_t bytesLinearNodes{
-    static_cast<std::uint64_t>(m_linearNodes.size()) *
+  const UInt64 bytesLinearNodes{
+    static_cast<UInt64>(m_linearNodes.size()) *
     sizeof(LinearBVHNode)
   };
-  const std::uint64_t bytesOrderedPrims{
-    static_cast<std::uint64_t>(m_ordered.size()) *
+  const UInt64 bytesOrderedPrims{
+    static_cast<UInt64>(m_ordered.size()) *
     sizeof(std::shared_ptr<Primitive>)
   };
 
-  const std::uint64_t totalBVHBytes{
+  const UInt64 totalBVHBytes{
     bytesTreeNodes + bytesLinearNodes + bytesOrderedPrims
   };
 

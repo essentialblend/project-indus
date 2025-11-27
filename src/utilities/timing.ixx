@@ -22,7 +22,7 @@ export
     return std::format("{:02}:{:02}:{:02}", hours, minutes, secs);
   }
 
-  std::uint64_t getProcessCPUTimeMicros() noexcept 
+  UInt64 getProcessCPUTimeMicros() noexcept 
   {
     FILETIME creation{};
     FILETIME exit{};

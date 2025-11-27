@@ -20,7 +20,7 @@ public:
   ~SystemStatsCollector();
 
 private:
-  std::uint64_t cpuStart{};
+  UInt64 cpuStart{};
   std::chrono::steady_clock::time_point wallStart{};
 };
 

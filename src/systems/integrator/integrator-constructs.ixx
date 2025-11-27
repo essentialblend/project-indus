@@ -11,8 +11,8 @@ export
   struct FrameSnapshot final
   {
     Image image{};
-    float progressUnitNormalized{};
-    std::uint64_t frameVersion{};
+    Float progressUnitNormalized{};
+    UInt64 frameVersion{};
     std::optional<RenderStats> renderStats{};
   };
 

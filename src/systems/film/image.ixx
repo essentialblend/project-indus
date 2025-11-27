@@ -11,9 +11,9 @@ export class Image
 public:
   Image() noexcept = default;
 
-  explicit Image(std::vector<std::uint8_t> p8, Point2i res, std::vector<std::string> channels, ColorEncoding enc);
+  explicit Image(std::vector<UInt8> p8, Point2i res, std::vector<std::string> channels, ColorEncoding enc);
 
-  explicit Image(std::vector<std::uint16_t> p16, Point2i res, std::vector<std::string> channels);
+  explicit Image(std::vector<UInt16> p16, Point2i res, std::vector<std::string> channels);
 
   explicit Image(std::vector<float> p32, Point2i res, std::vector<std::string> channels, ColorEncoding enc);
 
@@ -29,9 +29,9 @@ public:
 
   ColorEncoding getColorEncoding() const noexcept;
 
-  const std::vector<std::uint8_t>& getP8() const noexcept;
+  const std::vector<UInt8>& getP8() const noexcept;
 
-  const std::vector<std::uint16_t>& getP16() const noexcept;
+  const std::vector<UInt16>& getP16() const noexcept;
 
   const std::vector<float>& getP32() const noexcept;
 
@@ -48,14 +48,14 @@ private:
   ColorEncoding m_encoding{};
   ImageMetadata m_meta{};
 
-  std::vector<std::uint8_t> m_P8{};
-  std::vector<std::uint16_t> m_P16{};
+  std::vector<UInt8> m_P8{};
+  std::vector<UInt16> m_P16{};
   std::vector<float> m_P32{};
 };
 
-Image::Image(std::vector<std::uint8_t> p8, Point2i res, std::vector<std::string> channels, ColorEncoding enc) : m_pixelFormat(PixelFormat::U8), m_resolution(res), m_channels(std::move(channels)), m_encoding(enc), m_P8(std::move(p8)) {}
+Image::Image(std::vector<UInt8> p8, Point2i res, std::vector<std::string> channels, ColorEncoding enc) : m_pixelFormat(PixelFormat::U8), m_resolution(res), m_channels(std::move(channels)), m_encoding(enc), m_P8(std::move(p8)) {}
 
-Image::Image(std::vector<std::uint16_t> p16, Point2i res, std::vector<std::string> channels) : m_pixelFormat(PixelFormat::F16), m_resolution(res), m_channels(std::move(channels)), m_P16(std::move(p16)) {}
+Image::Image(std::vector<UInt16> p16, Point2i res, std::vector<std::string> channels) : m_pixelFormat(PixelFormat::F16), m_resolution(res), m_channels(std::move(channels)), m_P16(std::move(p16)) {}
 
 Image::Image(std::vector<float> p32, Point2i res, std::vector<std::string> channels, ColorEncoding enc) : m_pixelFormat(PixelFormat::F32), m_resolution(res), m_channels(std::move(channels)), m_encoding(enc), m_P32(std::move(p32)) {}
 
@@ -84,12 +84,12 @@ ColorEncoding Image::getColorEncoding() const noexcept
   return m_encoding;
 }
 
-const std::vector<std::uint8_t>& Image::getP8() const noexcept
+const std::vector<UInt8>& Image::getP8() const noexcept
 {
   return m_P8;
 }
 
-const std::vector<std::uint16_t>& Image::getP16() const noexcept
+const std::vector<UInt16>& Image::getP16() const noexcept
 {
   return m_P16;
 }

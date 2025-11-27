@@ -21,7 +21,7 @@ private:
   static SubSection buildSystem(const RenderStats& stats, bool isRenderComplete);
 };
 
-static std::string formatNumber(std::uint64_t x, bool done)
+static std::string formatNumber(UInt64 x, bool done)
 {
   return (!done && x == 0) ? "--" : std::to_string(x);
 }
@@ -112,7 +112,7 @@ SubSection StatsBuilder::buildMemory(const RenderStats& stats, bool isRenderComp
   SubSection section{};
   section.title = "Memory";
 
-  auto mbString{ [isRenderComplete](std::uint64_t bytes)
+  auto mbString{ [isRenderComplete](UInt64 bytes)
   {
     if (!isRenderComplete && bytes == 0) return std::string("--");
     if (bytes == 0) return std::string("0.000 MB");

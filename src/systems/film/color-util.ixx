@@ -22,7 +22,7 @@ export
     return ColorRGB{ encodeScalar(colorEncodingTag, c[0]), encodeScalar(colorEncodingTag, c[1]), encodeScalar(colorEncodingTag, c[2]) };
   }
 
-  std::uint8_t quantizeToU8(Float v) noexcept 
+  UInt8 quantizeToU8(Float v) noexcept 
   {
     if (!isFinite(v)) v = Float{};
 
@@ -31,10 +31,10 @@ export
 
     const auto q{ std::lround(static_cast<double>(v) * 255.0) };
 
-    return static_cast<std::uint8_t>(std::clamp(q, 0L, 255L));
+    return static_cast<UInt8>(std::clamp(q, 0L, 255L));
   }
 
-  std::string toBase36(std::uint64_t v) 
+  std::string toBase36(UInt64 v) 
   {
     std::string s; 
     const char* d{ "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" };

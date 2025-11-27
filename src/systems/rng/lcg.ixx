@@ -9,8 +9,8 @@ import indus.rng;
 struct MMIXLCG final
 {
   static constexpr unsigned modulusBits{ 64 };
-  static constexpr std::uint64_t multiplier{ 0x5851'F42D'4C95'7F2DULL };
-  static constexpr std::uint64_t increment{ 0x1405'7B7E'F767'814FULL };
+  static constexpr UInt64 multiplier{ 0x5851'F42D'4C95'7F2DULL };
+  static constexpr UInt64 increment{ 0x1405'7B7E'F767'814FULL };
 };
 
 export class LCG final : public RNG 

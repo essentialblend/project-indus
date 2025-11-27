@@ -45,7 +45,7 @@ void RayIntegrator::evaluatePixelSample(Point2i pPixel, [[maybe_unused]] Int sam
 
   const ColorRGB L{ Li(renderSpaceRay.ray, scene, sampler) };
 
-  const auto LEffective{ L * renderSpaceRay.weight * (1 /renderSpaceRay.exposureScale) };
+  const auto LEffective{ L * renderSpaceRay.weight * (Float{ 1 } / renderSpaceRay.exposureScale) };
 
   film.addSample(pFilm, LEffective, fs.weightOverPDF);
 }

@@ -35,7 +35,7 @@ export
     FilterPreset filterPreset{ FilterPreset::Balanced };
     Point2i resolution{};
     Bounds2i crop{};
-    float diagonalMM{};
+    Float diagonalMM{};
     Float imagingRatio{ Float{ 1 } };
     std::string filename{};
 
@@ -109,8 +109,8 @@ export
 
   struct ImageMetadata 
   {
-    std::optional<float> renderTimeSeconds{};
-    std::optional<int> samplesPerPixel{};
+    std::optional<Float> renderTimeSeconds{};
+    std::optional<Int> samplesPerPixel{};
     std::optional<Point2i> fullResolution{};
     std::optional<Bounds2i> pixelBounds{};
   };

@@ -7,31 +7,31 @@ export class PCG32 final : public RNG
 public:
   PCG32() = default;
 
-  explicit PCG32(std::uint64_t seed, std::uint64_t stream) noexcept;
+  explicit PCG32(UInt64 seed, UInt64 stream) noexcept;
 
-  void setSeedAndStream(std::uint64_t seed, std::uint64_t stream) noexcept override;
-  void setSequence(std::uint64_t sequence, std::uint64_t offset) noexcept override;
-  void advance(std::int64_t iDelta) noexcept override;
+  void setSeedAndStream(UInt64 seed, UInt64 stream) noexcept override;
+  void setSequence(UInt64 sequence, UInt64 offset) noexcept override;
+  void advance(Int64 iDelta) noexcept override;
 
   std::unique_ptr<RNG> clone() const override;
   [[nodiscard]] virtual std::string toString() const override;
 
 protected:
-  std::uint32_t nextU32() noexcept override;
-  std::uint64_t nextU64() noexcept override;
+  UInt32 nextU32() noexcept override;
+  UInt64 nextU64() noexcept override;
 
 private:
-  static constexpr std::uint64_t m_kMult{ 0x5851F42D4C957F2Dull };
-  std::uint64_t m_state{ 0x853C49E6748FEA9Bull };
-  std::uint64_t m_increment{ 0xDA3E39CB94B95BDBull };
+  static constexpr UInt64 m_kMult{ 0x5851F42D4C957F2Dull };
+  UInt64 m_state{ 0x853C49E6748FEA9Bull };
+  UInt64 m_increment{ 0xDA3E39CB94B95BDBull };
 };
 
-PCG32::PCG32(std::uint64_t seed, std::uint64_t stream) noexcept
+PCG32::PCG32(UInt64 seed, UInt64 stream) noexcept
 {
   setSeedAndStream(seed, stream);
 }
 
-void PCG32::setSeedAndStream(std::uint64_t seed, std::uint64_t stream) noexcept
+void PCG32::setSeedAndStream(UInt64 seed, UInt64 stream) noexcept
 {
   m_state = 0u;
   m_increment = (stream << 1u) | 1u;
@@ -40,19 +40,19 @@ void PCG32::setSeedAndStream(std::uint64_t seed, std::uint64_t stream) noexcept
   nextU32();
 }
 
-void PCG32::setSequence(std::uint64_t sequence, std::uint64_t offset) noexcept
+void PCG32::setSequence(UInt64 sequence, UInt64 offset) noexcept
 {
   setSeedAndStream(sequence, sequence);
-  advance(static_cast<std::int64_t>(offset));
+  advance(static_cast<Int64>(offset));
 }
 
-void PCG32::advance(std::int64_t iDelta) noexcept
+void PCG32::advance(Int64 iDelta) noexcept
 {
-  std::uint64_t curMult{ m_kMult }; 
-  std::uint64_t curPlus{ m_increment };
-  std::uint64_t accMult{ 1u };
-  std::uint64_t accPlus{ 0u };
-  std::uint64_t delta{ static_cast<std::uint64_t>(iDelta) };
+  UInt64 curMult{ m_kMult }; 
+  UInt64 curPlus{ m_increment };
+  UInt64 accMult{ 1u };
+  UInt64 accPlus{ 0u };
+  UInt64 delta{ static_cast<UInt64>(iDelta) };
   
   while (delta) 
   { 
@@ -84,19 +84,19 @@ std::string PCG32::toString() const
   return "PCG32";
 }
 
-std::uint32_t PCG32::nextU32() noexcept
+UInt32 PCG32::nextU32() noexcept
 {
-  const std::uint64_t old{ m_state };
+  const UInt64 old{ m_state };
   
   m_state = old * m_kMult + m_increment;
 
-  const std::uint32_t x{ static_cast<std::uint32_t>(((old >> 18u) ^ old) >> 27u) };
-  const std::uint32_t r{ static_cast<std::uint32_t>(old >> 59u) };
+  const UInt32 x{ static_cast<UInt32>(((old >> 18u) ^ old) >> 27u) };
+  const UInt32 r{ static_cast<UInt32>(old >> 59u) };
   
   return (x >> r) | (x << ((~r + 1u) & 31u));
 }
 
-std::uint64_t PCG32::nextU64() noexcept
+UInt64 PCG32::nextU64() noexcept
 {
-  return ((static_cast<std::uint64_t>(nextU32()) << 32) | static_cast<std::uint64_t>(nextU32()));
+  return ((static_cast<UInt64>(nextU32()) << 32) | static_cast<UInt64>(nextU32()));
 }

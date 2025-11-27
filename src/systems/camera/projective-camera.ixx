@@ -45,13 +45,13 @@ ProjectiveCamera::ProjectiveCamera(const CameraTransform& cameraTransform, const
   // Screen to NDC
   Transform4f NDCFromScreen
   {
-    Transform4f::scale({ Float(1) / (xmax - xmin), Float(1) / (ymax - ymin), Float(1) }) * Transform4f::translate({ -xmin, -ymax, Float{} })
+    Transform4f::scale({ Float{ 1 } / (xmax - xmin), Float{ 1 } / (ymax - ymin), Float{ 1 } }) * Transform4f::translate({ -xmin, -ymax, Float{ 0 } })
   };
 
   // NDC to raster
   Transform4f rasterFromNDC
   {
-    Transform4f::scale({ Float(film.getFilmResolution()[0]), -Float(film.getFilmResolution()[1]), Float(1) })
+    Transform4f::scale({ static_cast<Float>(film.getFilmResolution()[0]), -static_cast<Float>(film.getFilmResolution()[1]), Float{ 1 } })
   };
 
   m_rasterFromScreen = rasterFromNDC * NDCFromScreen;

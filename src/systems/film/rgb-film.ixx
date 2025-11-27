@@ -19,7 +19,7 @@ export class RGBFilm final : public FilmBase
 public:
   explicit RGBFilm(const Point2i& fullRes, const Bounds2i& crop, Float diagMM, std::unique_ptr<Filter> filmFilter, const PixelSensor& pixelSensor) noexcept;
 
-  void addSample(const Point2f& pFilm, const ColorRGB& L, Float64 weight) noexcept override;
+  void addSample(const Point2f& pFilm, const ColorRGB& L, Float weight) noexcept override;
 
   void addSplat(const Point2f& pFilm, const ColorRGB& L) noexcept override;
 
@@ -48,7 +48,7 @@ private:
 
   Idx pixelIndex(const Point2i& p) const noexcept;
   [[nodiscard]] bool inFilmBounds(const Point2i& p, const Bounds2i& pixelBounds) const noexcept;
-  [[nodiscard]] std::vector<std::uint8_t> packEncodedBytes(ColorEncoding colorEncoding, Float splatScale, Bounds2i bounds, bool withAlpha = false) const noexcept;
+  [[nodiscard]] std::vector<UInt8> packEncodedBytes(ColorEncoding colorEncoding, Float splatScale, Bounds2i bounds, bool withAlpha = false) const noexcept;
 };
 
 RGBFilm::RGBFilm(const Point2i& fullRes, const Bounds2i& crop, Float diagMM, std::unique_ptr<Filter> filmFilter, const PixelSensor& sensor) noexcept : FilmBase(fullRes, crop, diagMM, std::move(filmFilter), sensor)
@@ -64,7 +64,7 @@ RGBFilm::RGBFilm(const Point2i& fullRes, const Bounds2i& crop, Float diagMM, std
   if (m_filterIntegral == Float{}) m_filterIntegral = Float{ 1 };
 }
 
-void RGBFilm::addSample(const Point2f& pFilm, const ColorRGB& L, Float64 weight) noexcept
+void RGBFilm::addSample(const Point2f& pFilm, const ColorRGB& L, Float weight) noexcept
 {
   const Point2i p{ static_cast<int>(pFilm[0]), static_cast<int>(pFilm[1]) };
 
@@ -87,7 +87,7 @@ void RGBFilm::addSample(const Point2f& pFilm, const ColorRGB& L, Float64 weight)
   return !(p[0] < pixelBounds.getMin()[0] || p[0] >= pixelBounds.getMax()[0] || p[1] < pixelBounds.getMin()[1] || p[1] >= pixelBounds.getMax()[1]);
 }
 
-std::vector<std::uint8_t> RGBFilm::packEncodedBytes(ColorEncoding colorEncoding, Float splatScale, Bounds2i bounds, bool withAlpha) const noexcept
+std::vector<UInt8> RGBFilm::packEncodedBytes(ColorEncoding colorEncoding, Float splatScale, Bounds2i bounds, bool withAlpha) const noexcept
 {
   const int xMin{ bounds.getMin()[0] };
   const int yMin{ bounds.getMin()[1] };
@@ -96,7 +96,7 @@ std::vector<std::uint8_t> RGBFilm::packEncodedBytes(ColorEncoding colorEncoding,
 
   const std::size_t chans{ withAlpha ? 4u : 3u };
 
-  std::vector<std::uint8_t> out{};
+  std::vector<UInt8> out{};
 
   out.reserve(static_cast<std::size_t>(xMax - xMin) * static_cast<std::size_t>(yMax - yMin) * chans);
 
@@ -174,7 +174,7 @@ void RGBFilm::writeImage(int spp, const BasicTimer& renderTimer, const std::stri
   const std::vector<float>& P32{ img.getP32() };
 
   // Convert linear F32 to sRGB-encoded 8-bit
-  std::vector<std::uint8_t> bytes{};
+  std::vector<UInt8> bytes{};
   bytes.reserve(static_cast<std::size_t>(width) * height * 3u);
 
   for (int y{}; y < height; ++y)
@@ -207,7 +207,7 @@ void RGBFilm::writeImage(int spp, const BasicTimer& renderTimer, const std::stri
 
   const auto now{ std::chrono::system_clock::now().time_since_epoch() };
 
-  const auto secs{ static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::seconds>(now).count()) };
+  const auto secs{ static_cast<UInt64>(std::chrono::duration_cast<std::chrono::seconds>(now).count()) };
 
   const std::string shortId{ toBase36(secs % 2176782336ULL) };
 

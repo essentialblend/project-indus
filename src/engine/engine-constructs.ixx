@@ -73,7 +73,7 @@ export
     std::string_view gitHash;
     std::string_view buildTimestamp;
     std::string_view author;
-    std::uint32_t runtimeThreads{ 0 };
+    UInt32 runtimeThreads{ 0 };
   };
 
   struct RenderSystemStrings

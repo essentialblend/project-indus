@@ -14,12 +14,12 @@ public:
 
 private:
   FrameSnapshot m_frameSnapshotBuffer[2]{};
-  std::atomic<std::uint64_t> version{};
+  std::atomic<UInt64> version{};
 };
 
 void FrameMailbox::publishFrameSnapshot(FrameSnapshot frameSnapshot) noexcept
 {
-  const std::uint64_t next{ version.load(std::memory_order_relaxed) + 1 };
+  const UInt64 next{ version.load(std::memory_order_relaxed) + 1 };
   const std::size_t idx{ static_cast<std::size_t>(next & 1u) };
 
   m_frameSnapshotBuffer[idx] = std::move(frameSnapshot);
@@ -29,7 +29,7 @@ void FrameMailbox::publishFrameSnapshot(FrameSnapshot frameSnapshot) noexcept
 
 std::optional<FrameSnapshot> FrameMailbox::tryConsume() noexcept
 {
-  const std::uint64_t k{ version.load(std::memory_order_acquire) };
+  const UInt64 k{ version.load(std::memory_order_acquire) };
 
   if (k == 0) return std::nullopt;
   

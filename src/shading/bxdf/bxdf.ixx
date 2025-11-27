@@ -9,12 +9,12 @@ import indus.sampling.constructs;
 
 export constexpr auto operator|(BxDFType a, BxDFType b) noexcept -> BxDFType
 {
-  return static_cast<BxDFType>(static_cast<std::uint8_t>(a) | static_cast<std::uint8_t>(b));
+  return static_cast<BxDFType>(static_cast<UInt8>(a) | static_cast<UInt8>(b));
 }
 
 export constexpr auto operator&(BxDFType a, BxDFType b) noexcept -> BxDFType 
 {
-  return static_cast<BxDFType>(static_cast<std::uint8_t>(a) & static_cast<std::uint8_t>(b));
+  return static_cast<BxDFType>(static_cast<UInt8>(a) & static_cast<UInt8>(b));
 }
 
 export constexpr bool isSpecularBxDF(BxDFType type) noexcept

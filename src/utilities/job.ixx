@@ -2,6 +2,7 @@ export module indus.utilities.job;
 
 import std;
 
+import indus.core.types;
 import indus.core.geom.bounds;
 
 export class JobBase
@@ -16,23 +17,23 @@ public:
 export class ParallelJob1D final : public JobBase
 {
 public:
-  using Functor = std::function<void(std::int64_t, std::int64_t)>;
+  using Functor = std::function<void(Int64, Int64)>;
 
-  ParallelJob1D(std::int64_t begin, std::int64_t end, std::int64_t chunkSize, Functor fn) noexcept;
+  ParallelJob1D(Int64 begin, Int64 end, Int64 chunkSize, Functor fn) noexcept;
 
   bool hasWork() const noexcept override;
   void runStep() noexcept override;
 
 private:
-  std::int64_t m_end{};
-  std::int64_t m_chunk{};
+  Int64 m_end{};
+  Int64 m_chunk{};
 
   Functor m_fn;
   
-  std::atomic<std::int64_t> m_next{};
+  std::atomic<Int64> m_next{};
 };
 
-ParallelJob1D::ParallelJob1D(std::int64_t begin, std::int64_t end, std::int64_t chunkSize, Functor fn) noexcept : m_end{ end }, m_chunk{ std::max<std::int64_t>(1, chunkSize) }, m_fn{ std::move(fn) }, m_next{ begin } {}
+ParallelJob1D::ParallelJob1D(Int64 begin, Int64 end, Int64 chunkSize, Functor fn) noexcept : m_end{ end }, m_chunk{ std::max<Int64>(1, chunkSize) }, m_fn{ std::move(fn) }, m_next{ begin } {}
 
 bool ParallelJob1D::hasWork() const noexcept
 {
@@ -45,7 +46,7 @@ void ParallelJob1D::runStep() noexcept
 
   if (start >= m_end) return;
 
-  const auto stop{ std::min<std::int64_t>(start + m_chunk, m_end) };
+  const auto stop{ std::min<Int64>(start + m_chunk, m_end) };
 
   m_fn(start, stop);
 }

@@ -35,7 +35,7 @@ protected:
   FilmBase& m_film;
 };
 
-CameraBase::CameraBase(const CameraTransform& camTransform, const Transform4f& camToWorld, const CameraShutter& shutter, FilmBase& film) noexcept : m_cameraTransform{ camTransform }, m_cameraToWorld{ camToWorld }, m_cameraShutter{ shutter }, m_film{ film } {}
+CameraBase::CameraBase(const CameraTransform& camTransform, const Transform4f& camToWorld, const CameraShutter& shutter, FilmBase& film) noexcept : m_cameraToWorld{ camToWorld }, m_cameraTransform{ camTransform }, m_cameraShutter{ shutter }, m_film{ film } {}
 
 const Transform4f& CameraBase::applyCameraToWorld() const noexcept
 {

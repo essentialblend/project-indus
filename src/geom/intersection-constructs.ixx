@@ -22,7 +22,7 @@ export
     Float tHit{};
   };
 
-  enum class BVHSplitMethod : std::uint8_t
+  enum class BVHSplitMethod : UInt8
   {
     SAH,
     Middle,

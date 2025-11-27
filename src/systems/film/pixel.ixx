@@ -19,7 +19,7 @@ export class Pixel
 public:
   Pixel() noexcept;
 
-  void addRadiance(const ColorRGB& L, Float64 weight) noexcept;
+  void addRadiance(const ColorRGB& L, Float weight) noexcept;
   void addSplat(const ColorRGB& L) noexcept;
 
   [[nodiscard]] ColorRGB normalizedColor(Float splatScale = Float{ 1 }) const noexcept;
@@ -39,7 +39,7 @@ Pixel::Pixel() noexcept : m_rgbSum{ 0.0, 0.0, 0.0 }, m_weightSum{ 0.0 }, m_rgbSp
   }
 }
 
-void Pixel::addRadiance(const ColorRGB& L, Float64 weight) noexcept
+void Pixel::addRadiance(const ColorRGB& L, Float weight) noexcept
 {
   if (!isFinite(weight) || !isFinite(L)) return;
   for (Idx c{}; c < 3; ++c) m_rgbSum[c] = fusedMultiplyAdd(static_cast<double>(L[c]), static_cast<double>(weight), m_rgbSum[c]);

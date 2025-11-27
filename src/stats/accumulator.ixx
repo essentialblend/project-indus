@@ -12,20 +12,20 @@ public:
   static void reset(std::size_t maxThreads) noexcept;
   [[nodiscard]] static RenderStats finalize() noexcept;
 
-  static void setBVHNodeCounts(std::uint64_t interior, std::uint64_t leaf) noexcept;
-  static void setBVHBytes(std::uint64_t bytes) noexcept;
+  static void setBVHNodeCounts(UInt64 interior, UInt64 leaf) noexcept;
+  static void setBVHBytes(UInt64 bytes) noexcept;
   static void setCPUUtilPct(Float64 pct) noexcept;
   static void setMemoryMB(Float64 mb) noexcept;
-  static void setFilmBytes(std::uint64_t bytes) noexcept;
+  static void setFilmBytes(UInt64 bytes) noexcept;
 
-  static void addGeometryBytes(std::uint64_t bytes) noexcept;
-  static void addTextureBytes(std::uint64_t bytes) noexcept;
+  static void addGeometryBytes(UInt64 bytes) noexcept;
+  static void addTextureBytes(UInt64 bytes) noexcept;
 
   static void recordCameraRay() noexcept;
   static void recordIndirectRay() noexcept;
 
-  static void recordBVHNodesVisited(std::uint64_t nodesVisited) noexcept;
-  static void recordRayPrimitiveTests(std::uint64_t nTests) noexcept;
+  static void recordBVHNodesVisited(UInt64 nodesVisited) noexcept;
+  static void recordRayPrimitiveTests(UInt64 nTests) noexcept;
   static void recordBVHHit(bool hit) noexcept;
   static void recordRegularIntersectionTest() noexcept;
 
@@ -34,16 +34,16 @@ private:
   inline static std::atomic<std::size_t> s_nextSlot{ 0 };
   inline static thread_local std::size_t s_threadIndex{ std::numeric_limits<std::size_t>::max() };
 
-  inline static std::atomic<std::uint64_t> s_bvhInteriorNodes{ 0 };
-  inline static std::atomic<std::uint64_t> s_bvhLeafNodes{ 0 };
-  inline static std::atomic<std::uint64_t> s_bvhBytes{ 0 };
+  inline static std::atomic<UInt64> s_bvhInteriorNodes{ 0 };
+  inline static std::atomic<UInt64> s_bvhLeafNodes{ 0 };
+  inline static std::atomic<UInt64> s_bvhBytes{ 0 };
 
   inline static Float64 s_cpuUtilPct{};
   inline static Float64 s_memoryMB{};
 
-  inline static std::atomic<std::uint64_t> s_filmBytes{ 0 };
-  inline static std::atomic<std::uint64_t> s_geometryBytes{ 0 };
-  inline static std::atomic<std::uint64_t> s_textureBytes{ 0 };
+  inline static std::atomic<UInt64> s_filmBytes{ 0 };
+  inline static std::atomic<UInt64> s_geometryBytes{ 0 };
+  inline static std::atomic<UInt64> s_textureBytes{ 0 };
 
   [[nodiscard]] static RenderStats& getMutableCurrentCounter() noexcept;
   [[nodiscard]] static const std::vector<RenderStats>& getAllCounters() noexcept;
@@ -153,7 +153,7 @@ const std::vector<RenderStats>& StatsAccumulator::getAllCounters() noexcept
   return s_counters;
 }
 
-void StatsAccumulator::recordBVHNodesVisited(std::uint64_t nodesVisited) noexcept
+void StatsAccumulator::recordBVHNodesVisited(UInt64 nodesVisited) noexcept
 {
   RenderStats& s{ getMutableCurrentCounter() };
   IntDistribution& d{ s.nodesVisited };
@@ -165,7 +165,7 @@ void StatsAccumulator::recordBVHNodesVisited(std::uint64_t nodesVisited) noexcep
   if (nodesVisited > d.max){ d.max = nodesVisited; }
 }
 
-void StatsAccumulator::recordRayPrimitiveTests(std::uint64_t nTests) noexcept
+void StatsAccumulator::recordRayPrimitiveTests(UInt64 nTests) noexcept
 {
   RenderStats& s{ getMutableCurrentCounter() };
   s.rayPrimitiveTests += nTests;
@@ -184,13 +184,13 @@ void StatsAccumulator::recordRegularIntersectionTest() noexcept
   ++s.regularIntersectionTests;
 }
 
-void StatsAccumulator::setBVHNodeCounts(std::uint64_t interior, std::uint64_t leaf) noexcept
+void StatsAccumulator::setBVHNodeCounts(UInt64 interior, UInt64 leaf) noexcept
 {
   s_bvhInteriorNodes.store(interior, std::memory_order_relaxed);
   s_bvhLeafNodes.store(leaf, std::memory_order_relaxed);
 }
 
-void StatsAccumulator::setBVHBytes(std::uint64_t bytes) noexcept
+void StatsAccumulator::setBVHBytes(UInt64 bytes) noexcept
 {
   s_bvhBytes.store(bytes, std::memory_order_relaxed);
 }
@@ -205,17 +205,17 @@ void StatsAccumulator::setMemoryMB(Float64 mb) noexcept
   s_memoryMB = mb; 
 }
 
-void StatsAccumulator::setFilmBytes(std::uint64_t bytes) noexcept
+void StatsAccumulator::setFilmBytes(UInt64 bytes) noexcept
 {
   s_filmBytes.store(bytes, std::memory_order_relaxed);
 }
 
-void StatsAccumulator::addGeometryBytes(std::uint64_t bytes) noexcept
+void StatsAccumulator::addGeometryBytes(UInt64 bytes) noexcept
 {
   s_geometryBytes.fetch_add(bytes, std::memory_order_relaxed);
 }
 
-void StatsAccumulator::addTextureBytes(std::uint64_t bytes) noexcept
+void StatsAccumulator::addTextureBytes(UInt64 bytes) noexcept
 {
   s_textureBytes.fetch_add(bytes, std::memory_order_relaxed);
 }

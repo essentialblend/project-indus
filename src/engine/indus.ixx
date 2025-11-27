@@ -105,7 +105,7 @@ void Indus::setupEngine()
 
   m_displaySink = engineSystemsFactory.makeDisplaySink(immutables, m_cfg.displaySinkCfg, m_HUDTimer, m_engineBuildInfo, m_cfg.filmCfg);
 
-  StatsAccumulator::setFilmBytes(static_cast<std::uint64_t>(m_film->getFilmResolution()[0]) * (m_film->getFilmResolution()[1]) * sizeof(Pixel));
+  StatsAccumulator::setFilmBytes(static_cast<UInt64>(m_film->getFilmResolution()[0]) * (m_film->getFilmResolution()[1]) * sizeof(Pixel));
 }
 
 void Indus::runEngine()
@@ -133,7 +133,7 @@ void Indus::renderScene()
 void Indus::runGUI()
 {
   FrameSnapshot last{};
-  std::uint64_t lastVersion{ 0 };
+  UInt64 lastVersion{ 0 };
 
   while (m_displaySink->isSinkOpen())
   {
@@ -164,100 +164,6 @@ DisplayConsumer Indus::createDisplayConsumer() noexcept
     m_frameMailbox.publishFrameSnapshot(std::move(frameSnapshot));
   };
 }
-
-//std::shared_ptr<Primitive> Indus::makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld, const Point2f& matteXZ, const Point2f& glassXZ)
-//{
-//  std::vector<std::shared_ptr<Primitive>> prims;
-//
-//  const Point3f gc{ 0, -1000, 0 }; const Float gRGround{ 1000 };
-//  {
-//    const Transform4f wO{ Transform4f::translate(Vec3f{ gc[0], gc[1], gc[2] }) };
-//    const Transform4f rO{ renderFromWorld * wO };
-//    const Transform4f oR{ Transform4f{ rO.getInv(), rO.get() } };
-//    auto s = std::make_shared<Sphere>(rO, oR, false, gRGround, -gRGround, gRGround, Float{ 360 });
-//    auto m = std::make_shared<Diffuse>(ColorRGB{ Float{0.5}, Float{0.5}, Float{0.5} });
-//    prims.push_back(std::make_shared<GeometricPrimitive>(s, m));
-//  }
-//
-//  auto surfaceY = [](Float x, Float z, Float r)->Float {
-//    const Float R{ 1000 }, cy{ -1000 }; const Float t{ R * R - (x * x + z * z) };
-//    const double yg{ static_cast<double>(cy) + std::sqrt(std::max(0.0, static_cast<double>(t))) };
-//    return static_cast<Float>(yg) + r;
-//    };
-//
-//  const Float gR{ 1.0f }, gIOR{ 1.5f };
-//  const Point3f gC{ glassXZ[0], surfaceY(glassXZ[0], glassXZ[1], gR), glassXZ[1] };
-//  {
-//    const Transform4f wO{ Transform4f::translate(Vec3f{ gC[0], gC[1], gC[2] }) };
-//    const Transform4f rO{ renderFromWorld * wO };
-//    const Transform4f oR{ Transform4f{ rO.getInv(), rO.get() } };
-//    auto s = std::make_shared<Sphere>(rO, oR, false, gR, -gR, gR, Float{ 360 });
-//    auto m = std::make_shared<MDielectric>(ColorRGB{ 1, 1, 1 }, ColorRGB{ 1, 1, 1 }, Float{ 1 }, gIOR);
-//    prims.push_back(std::make_shared<GeometricPrimitive>(s, m));
-//  }
-//
-//  const Float mR{ 1.0f };
-//  const Point3f mC{ matteXZ[0], surfaceY(matteXZ[0], matteXZ[1], mR), matteXZ[1] };
-//  {
-//    const Transform4f wO{ Transform4f::translate(Vec3f{ mC[0], mC[1], mC[2] }) };
-//    const Transform4f rO{ renderFromWorld * wO };
-//    const Transform4f oR{ Transform4f{ rO.getInv(), rO.get() } };
-//    auto s{ std::make_shared<Sphere>(rO, oR, false, mR, -mR, mR, Float{ 360 }) };
-//    auto m{ std::make_shared<MCoatedDiffuse>(ColorRGB{ Float{ 0.8 }, Float{ 0.2 }, Float{ 0.2 } }, Float{ 1.5 }, Float{ 0.5 }) };
-//    prims.push_back(std::make_shared<GeometricPrimitive>(s, m));
-//  }
-//
-//  const int N{ 650 }; const Float rmin{ 0.175f }, rmax{ 0.33f }, pad{ 0.025f };
-//  const Float xmin{ -15 }, xmax{ 15 }, zmin{ -10 }, zmax{ 15 };
-//  std::mt19937_64 rng{ 0xC0FFEEull };
-//  std::uniform_real_distribution<Float> ux(xmin, xmax), uz(zmin, zmax), ur(rmin, rmax), u01(0, 1), uc(0.2f, 0.9f);
-//
-//  std::vector<Point3f> centers; centers.reserve(N + 2);
-//  std::vector<Float>   radii;   radii.reserve(N + 2);
-//  centers.push_back(gC); radii.push_back(gR);
-//  centers.push_back(mC); radii.push_back(mR);
-//
-//  int attempts{}; const int maxAttempts{ 10000 };
-//  while (static_cast<int>(centers.size()) - 2 < N && attempts++ < maxAttempts)
-//  {
-//    const Float x{ ux(rng) }, z{ uz(rng) }, r{ ur(rng) };
-//    const Point3f c{ x, surfaceY(x, z, r), z };
-//
-//    bool clash{};
-//    for (size_t i{}; i < centers.size(); ++i) 
-//    {
-//      const Float dist2{ euclideanLengthSq(centers[i] - c) };
-//      const Float rr{ radii[i] + r + pad };
-//      if (dist2 < rr * rr) { clash = true; break; }
-//    }
-//    
-//    if (clash) continue;
-//
-//    centers.push_back(c); radii.push_back(r);
-//
-//    std::shared_ptr<Material> mat;
-//    if (u01(rng) < Float{ 0.75 }) 
-//    {
-//      const ColorRGB a{ uc(rng), uc(rng), uc(rng) }, b{ uc(rng), uc(rng), uc(rng) };
-//      mat = std::make_shared<Diffuse>(ColorRGB{ a[0] * b[0], a[1] * b[1], a[2] * b[2] });
-//    }
-//    else 
-//    {
-//      mat = std::make_shared<MDielectric>(ColorRGB{ 1, 1, 1 }, ColorRGB{ 1, 1, 1 }, Float{ 1 }, Float{ 1.5 });
-//    }
-//
-//    const Transform4f wO{ Transform4f::translate(Vec3f{ c[0], c[1], c[2] }) };
-//    const Transform4f rO{ renderFromWorld * wO };
-//    const Transform4f oR{ Transform4f{ rO.getInv(), rO.get() } };
-//    auto s = std::make_shared<Sphere>(rO, oR, false, r, -r, r, Float{ 360 });
-//    prims.push_back(std::make_shared<GeometricPrimitive>(s, mat));
-//  }
-//
-//  // Ad-hoc, needs principled replacement later? More than just spheres as a Primitive type? CAUTION.
-//  StatsAccumulator::addGeometryBytes(std::uint64_t(prims.size()) * sizeof(GeometricPrimitive));
-//
-//  return std::make_shared<BVHAggregate>(std::move(prims), 4, BVHSplitMethod::SAH);
-//}
 
 std::shared_ptr<Primitive> Indus::makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld, const Point2f& coatedXZ, const Point2f& glassXZ)
 {
@@ -366,11 +272,10 @@ std::shared_ptr<Primitive> Indus::makeShirleyBook1BVHRoot(const Transform4f& ren
     addSphere(c, r, mat);
   }
 
-  StatsAccumulator::addGeometryBytes(std::uint64_t(prims.size()) * sizeof(GeometricPrimitive));
+  StatsAccumulator::addGeometryBytes(UInt64(prims.size()) * sizeof(GeometricPrimitive));
 
   return std::make_shared<BVHAggregate>(std::move(prims), 4, BVHSplitMethod::SAH);
 }
-
 
 void Indus::initializeParallelSystems(std::size_t numThreads) noexcept
 {
