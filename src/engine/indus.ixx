@@ -3,6 +3,7 @@ export module indus.engine;
 import std;
 
 import indus.core.math.constants.i;
+import indus.core.math.fp.ii;
 import indus.core.math.algebra.iv;
 
 import indus.geom.sphere;
@@ -67,7 +68,7 @@ private:
 
   BasicTimer m_HUDTimer{};
 
-  std::shared_ptr<Primitive> makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld, const Point2f& coatedXZ, const Point2f& glassXZ = {});
+  std::shared_ptr<Primitive> makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld, const Point2f& coatedXZ, const Point2f& glassXZ, bool enableMotionBlur);
 
   void initializeParallelSystems(std::size_t numThreads) noexcept;
   void setupEngine();
@@ -93,8 +94,8 @@ void Indus::setupEngine()
 
   const Point2f matteBallPosition{ 0.75, -1.25 };
   const Point2f dielectricBallPosition{ 0, 0 };
-
-  std::shared_ptr<Primitive> sceneRootAggregate{ makeShirleyBook1BVHRoot(m_camera->getCameraTransform().getRenderFromWorld(), matteBallPosition, dielectricBallPosition) };
+  
+  std::shared_ptr<Primitive> sceneRootAggregate{ makeShirleyBook1BVHRoot(m_camera->getCameraTransform().getRenderFromWorld(), matteBallPosition, dielectricBallPosition, true) };
 
   m_renderScene = std::make_unique<Scene>(sceneRootAggregate);
 
@@ -165,116 +166,142 @@ DisplayConsumer Indus::createDisplayConsumer() noexcept
   };
 }
 
-std::shared_ptr<Primitive> Indus::makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld, const Point2f& coatedXZ, const Point2f& glassXZ)
+std::shared_ptr<Primitive> Indus::makeShirleyBook1BVHRoot(const Transform4f& renderFromWorld, const Point2f& coatedXZ, const Point2f& glassXZ,[[maybe_unused]] bool enableMotionBlur)
 {
-  std::vector<std::shared_ptr<Primitive>> prims;
-  prims.reserve(704);
+  const Transform4f identityTransform{ Mat4f::identity(), Mat4f::identity() };
+  std::vector<std::shared_ptr<Primitive>> primitives;
+  primitives.reserve(520);
 
-  auto addSphere = [&](const Point3f& center, Float radius, const std::shared_ptr<Material>& material)
-  {
-    const Transform4f worldFromObject{ Transform4f::translate(Vec3f{ center[0], center[1], center[2] }) };
-    const Transform4f renderFromObject{ renderFromWorld * worldFromObject };
-    const Transform4f objectFromRender{ Transform4f{ renderFromObject.getInv(), renderFromObject.get() } };
+  const CameraShutter shutter{ m_camera->getShutter() };
+  const Float shutterOpen{ shutter.shutterOpen };
+  const Float shutterClose{ shutter.shutterClose };
+  const Float shutterInterval{ shutterClose - shutterOpen };
 
-    auto sphere{ std::make_shared<Sphere>(renderFromObject, objectFromRender, false, radius, -radius, radius, Float{ 360 }) };
-
-    prims.push_back(std::make_shared<GeometricPrimitive>(sphere, material));
-  };
-
-  const Float groundR{ 1000 };
-  const Point3f groundC{ Float{0}, Float{-1000}, Float{0} };
-  addSphere(groundC, groundR, std::make_shared<Diffuse>(ColorRGB{ Float{0.5}, Float{0.5}, Float{0.5} }));
-
-  const auto surfaceY = [](Float x, Float z, Float r) noexcept -> Float
-  {
-    const Float R{ 1000 };
-    const Float cy{ -1000 };
-    const Float t{ R * R - (x * x + z * z) };
-    const double yGeom{ static_cast<double>(cy) + std::sqrt(std::max(0.0, static_cast<double>(t))) };
-    
-    return static_cast<Float>(yGeom) + r;
-  };
-
-  const Float heroR{ 1.0f };
-
-  const Point3f coatedC{ coatedXZ[0], surfaceY(coatedXZ[0], coatedXZ[1], heroR), coatedXZ[1] };
-  
-  addSphere(coatedC, heroR, std::make_shared<MCoatedDiffuse>(ColorRGB{ Float{0.8}, Float{0.2}, Float{0.2} }, Float{ 1.5f }, Float{ 0.1f }));
-
-  const Point3f glassC{ glassXZ[0], surfaceY(glassXZ[0], glassXZ[1], heroR), glassXZ[1] };
-  addSphere(glassC, heroR, std::make_shared<MDielectric>(ColorRGB{ 1, 1, 1 }, ColorRGB{ 1, 1, 1 }, Float{ 1 }, Float{ 1.5 }));
-
-  const int N{ 650 };
-  const Float rmin{ 0.175f }, rmax{ 0.33f }, pad{ 0.025f };
-  const Float xmin{ -15 }, xmax{ 15 }, zmin{ -10 }, zmax{ 15 };
-
-  std::mt19937_64 rng{ 0xC0FFEEull };
-  std::uniform_real_distribution<Float> ux(xmin, xmax);
-  std::uniform_real_distribution<Float> uz(zmin, zmax);
-  std::uniform_real_distribution<Float> ur(rmin, rmax);
-  std::uniform_real_distribution<Float> u01(Float{ 0 }, Float{ 1 });
-  std::uniform_real_distribution<Float> uc(Float{ 0.2f }, Float{ 0.9f });
-
-  std::vector<Point3f> centers;
-  std::vector<Float> radii;
-
-  centers.reserve(N + 2);
-  radii.reserve(N + 2);
-
-  centers.push_back(coatedC); radii.push_back(heroR);
-  centers.push_back(glassC);  radii.push_back(heroR);
-
-  int attempts{};
-  const int maxAttempts{ 10000 };
-
-  while (static_cast<int>(centers.size()) - 2 < N && attempts++ < maxAttempts)
-  {
-    const Float x{ ux(rng) };
-    const Float z{ uz(rng) };
-    const Float r{ ur(rng) };
-
-    const Point3f c{ x, surfaceY(x, z, r), z };
-
-    bool clash{};
-
-    for (std::size_t i{}; i < centers.size(); ++i)
+  auto surfaceCenterY = [](Float worldX, Float worldZ, Float sphereRadius) -> Float
     {
-      const Float dist2{ euclideanLengthSq(centers[i] - c) };
-      const Float rr{ radii[i] + r + pad };
-      if (dist2 < rr * rr) { clash = true; break; }
-    }
-    if (clash) continue;
+      const Float groundRadius{ 1000 };
+      const Float groundCenterY{ -groundRadius };
+      const Float inside{ groundRadius * groundRadius - (worldX * worldX + worldZ * worldZ) };
+      const double surfaceY{ static_cast<double>(groundCenterY) + std::sqrt(std::max(0.0, static_cast<double>(inside))) };
+      return static_cast<Float>(surfaceY) + sphereRadius;
+    };
 
-    centers.push_back(c);
-    radii.push_back(r);
-
-    const ColorRGB a{ uc(rng), uc(rng), uc(rng) };
-    const ColorRGB b{ uc(rng), uc(rng), uc(rng) };
-    const ColorRGB baseReflectance{ a[0] * b[0], a[1] * b[1], a[2] * b[2] };
-
-    const Float uMat{ u01(rng) };
-    Float coatEta{};
-    Float coatRoughness{};
-
-    if (uMat < Float{ 0.3f })
+  auto makeSphere = [&](Float sphereRadius, std::shared_ptr<Material> material) -> std::shared_ptr<Primitive>
     {
-      coatEta = Float{ 1.0f };
-      coatRoughness = Float{ 0.5f } + Float{ 0.4f } * u01(rng);
-    }
-    else
+      auto sphereShape = std::make_shared<Sphere>(identityTransform, identityTransform, false, sphereRadius, -sphereRadius, sphereRadius, Float{ 360 });
+      return std::make_shared<GeometricPrimitive>(std::move(sphereShape), std::move(material));
+    };
+
+  auto addStaticSphere = [&](const Point3f& worldCenter, Float sphereRadius, std::shared_ptr<Material> material)
     {
-      coatEta = Float{ 1.3f } + Float{ 0.4f } * u01(rng);
-      coatRoughness = Float{ 0.02f } + Float{ 0.4f } * u01(rng);
+      auto basePrimitive = makeSphere(sphereRadius, std::move(material));
+      const Transform4f renderFromObject{ renderFromWorld * Transform4f::translate(Vec3f{ worldCenter[0], worldCenter[1], worldCenter[2] }) };
+      primitives.push_back(std::make_shared<TransformedPrimitive>(std::move(basePrimitive), renderFromObject));
+    };
+
+  auto addFallingSphere = [&](const Point3f& restCenter, Float startCenterY, Float sphereRadius, std::shared_ptr<Material> material)
+    {
+      auto basePrimitive = makeSphere(sphereRadius, std::move(material));
+      const Transform4f startRenderFromObject{ renderFromWorld * Transform4f::translate(Vec3f{ restCenter[0], startCenterY, restCenter[2] }) };
+      const Transform4f endRenderFromObject{ renderFromWorld * Transform4f::translate(Vec3f{ restCenter[0], restCenter[1], restCenter[2] }) };
+      const AnimatedTransform renderFromObjectAnimation{ startRenderFromObject, shutterOpen, endRenderFromObject, shutterClose };
+      primitives.push_back(std::make_shared<AnimatedPrimitive>(std::move(basePrimitive), renderFromObjectAnimation));
+    };
+
+  const Float groundRadius{ 1000 };
+  addStaticSphere(Point3f{ Float{ 0 }, -groundRadius, Float{ 0 } }, groundRadius, std::make_shared<Diffuse>(ColorRGB{ Float{ 0.5 }, Float{ 0.5 }, Float{ 0.5 } }));
+
+  const Float heroRadius{ 1 };
+  const Point3f coatedCenter{ coatedXZ[0], surfaceCenterY(coatedXZ[0], coatedXZ[1], heroRadius), coatedXZ[1] };
+  const Point3f glassCenter{ glassXZ[0], surfaceCenterY(glassXZ[0], glassXZ[1], heroRadius), glassXZ[1] };
+
+  addStaticSphere(coatedCenter, heroRadius, std::make_shared<MCoatedDiffuse>(ColorRGB{ Float{ 0.8 }, Float{ 0.2 }, Float{ 0.2 } }, Float{ 1.5 }, Float{ 0.1 }));
+  addStaticSphere(glassCenter, heroRadius, std::make_shared<MDielectric>(ColorRGB{ 1, 1, 1 }, ColorRGB{ 1, 1, 1 }, Float{ 1 }, Float{ 1.5 }));
+
+  std::mt19937_64 rng{ 0xD15EA5Eull };
+  std::uniform_real_distribution<Float> uniform01{ Float{ 0 }, Float{ 1 } };
+  std::uniform_real_distribution<Float> uniformAlbedo{ Float{ 0.15 }, Float{ 0.95 } };
+
+  const Float smallRadiusMin{ Float{ 0.18 } };
+  const Float smallRadiusMax{ Float{ 0.32 } };
+  const Float noSpawnPadding{ Float{ 0.06 } };
+
+  const Float blurRegionCenterX{ (coatedCenter[0] + glassCenter[0]) * Float { 0.5 } };
+  const Float blurRegionCenterZ{ (coatedCenter[2] + glassCenter[2]) * Float { 0.5 } };
+  const Float blurRegionSpan{ Float{ 6 } };
+
+  const Float maxMotionDiameters{ Float{ 1.25 } };
+
+  for (int cellZ{ -11 }; cellZ < 11; ++cellZ)
+  {
+    for (int cellX{ -11 }; cellX < 11; ++cellX)
+    {
+      Float radius{ 0 };
+      Point3f restCenter{ 0, 0, 0 };
+      bool placed{ false };
+
+      for (int attempt{}; attempt < 5 && !placed; ++attempt)
+      {
+        const Float worldX{ static_cast<Float>(cellX) + Float{ 0.9 } * uniform01(rng) };
+        const Float worldZ{ static_cast<Float>(cellZ) + Float{ 0.9 } * uniform01(rng) };
+        radius = lerp(uniform01(rng), smallRadiusMin, smallRadiusMax);
+        restCenter = Point3f{ worldX, surfaceCenterY(worldX, worldZ, radius), worldZ };
+
+        const Float coatedDx{ restCenter[0] - coatedCenter[0] };
+        const Float coatedDz{ restCenter[2] - coatedCenter[2] };
+        const Float glassDx{ restCenter[0] - glassCenter[0] };
+        const Float glassDz{ restCenter[2] - glassCenter[2] };
+        const Float coatedClear{ heroRadius + radius + noSpawnPadding };
+        const Float glassClear{ heroRadius + radius + noSpawnPadding };
+
+        if (coatedDx * coatedDx + coatedDz * coatedDz < coatedClear * coatedClear) continue;
+        if (glassDx * glassDx + glassDz * glassDz < glassClear * glassClear) continue;
+
+        placed = true;
+      }
+
+      if (!placed) continue;
+
+      const Float materialSelector{ uniform01(rng) };
+      const Float r{ uniformAlbedo(rng) };
+      const Float g{ uniformAlbedo(rng) };
+      const Float b{ uniformAlbedo(rng) };
+      const ColorRGB baseColor{ r * r, g * g, b * b };
+
+      std::shared_ptr<Material> material;
+      if (materialSelector < Float{ 0.78 })
+      {
+        material = std::make_shared<Diffuse>(baseColor);
+      }
+      else if (materialSelector < Float{ 0.94 })
+      {
+        const Float coatEta{ lerp(uniform01(rng), Float{ 1.25 }, Float{ 1.6 }) };
+        const Float coatRoughness{ lerp(uniform01(rng), Float{ 0.05 }, Float{ 0.35 }) };
+        material = std::make_shared<MCoatedDiffuse>(baseColor, coatEta, coatRoughness);
+      }
+      else
+      {
+        material = std::make_shared<MDielectric>(ColorRGB{ 1, 1, 1 }, ColorRGB{ 1, 1, 1 }, Float{ 1 }, Float{ 1.5 });
+      }
+
+      const Float regionDx{ restCenter[0] - blurRegionCenterX };
+      const Float regionDz{ restCenter[2] - blurRegionCenterZ };
+      const bool inBlurRegion{ std::abs(regionDx) <= blurRegionSpan && std::abs(regionDz) <= blurRegionSpan };
+      const bool shouldAnimate{ enableMotionBlur && inBlurRegion && (shutterInterval > Float{ 0 }) };
+
+      if (!shouldAnimate)
+      {
+        addStaticSphere(restCenter, radius, std::move(material));
+        continue;
+      }
+
+      const Float motionDiameters{ maxMotionDiameters * uniform01(rng) };
+      const Float deltaY{ motionDiameters * (Float{ 2 } * radius) };
+      addFallingSphere(restCenter, restCenter[1] + deltaY, radius, std::move(material));
     }
-
-    auto mat{ std::make_shared<MCoatedDiffuse>(baseReflectance, coatEta, coatRoughness) };
-
-    addSphere(c, r, mat);
   }
 
-  StatsAccumulator::addGeometryBytes(UInt64(prims.size()) * sizeof(GeometricPrimitive));
-
-  return std::make_shared<BVHAggregate>(std::move(prims), 4, BVHSplitMethod::SAH);
+  return std::make_shared<BVHAggregate>(std::move(primitives), 4, BVHSplitMethod::SAH);
 }
 
 void Indus::initializeParallelSystems(std::size_t numThreads) noexcept

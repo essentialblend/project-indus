@@ -26,6 +26,7 @@ RayIntegrator::RayIntegrator(CameraBase& camera, Sampler& sampler) noexcept : Im
 void RayIntegrator::evaluatePixelSample(Point2i pPixel, [[maybe_unused]] Int sampleIndex, const Scene& scene, Sampler& sampler)
 {
   const Point2f uPixel{ sampler.getPixel2D() };
+  const Float uTime{ sampler.get1D() };
   const Point2f uLens{ sampler.get2D() };
 
   auto& film{ m_camera.getFilm() };
@@ -35,7 +36,7 @@ void RayIntegrator::evaluatePixelSample(Point2i pPixel, [[maybe_unused]] Int sam
 
   const Point2f pFilm{ Float(pPixel[0]) + fs.pOffset[0] + Float{ 0.5 }, Float(pPixel[1]) + fs.pOffset[1] + Float{ 0.5 } };
 
-  CameraSample cs{ pFilm, uLens, Float{} };
+  CameraSample cs{ pFilm, uLens, uTime };
 
   CameraRay renderSpaceRay{ m_camera.generateRay(cs) };
 

@@ -9,7 +9,7 @@ import indus.shading.diffuse;
 import indus.shading.dielectric;
 import indus.shading.coated_diffuse;
 
-import indus.geom.surface_interaction;
+import indus.geom.surfaceinteraction;
 
 export
 {

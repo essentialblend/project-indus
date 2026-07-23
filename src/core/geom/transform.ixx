@@ -13,6 +13,15 @@ import indus.core.math.fp.ii;
 import indus.core.math.trig.iii;
 import indus.core.math.algebra.iv;
 import indus.core.math.interval;
+import indus.core.geom.quaternion;
+import indus.core.geom.bounds;
+
+export struct DecomposedTRS final
+{
+  Vec3f translation{};
+  Quaternion rotation{};
+  Mat3f scale{};
+};
 
 export template<FloatingArithmetic T>
 class Transform final 
@@ -34,11 +43,13 @@ public:
 
   constexpr Vector<Interval<T>, 3> operator()(const Vector<Interval<T>, 3>&) const noexcept;
   constexpr Point<Interval<T>, 3> operator()(const Point<Interval<T>, 3>&) const noexcept;
+  constexpr Bounds<T, 3> operator()(const Bounds<T, 3>& b) const noexcept;
 
   constexpr Vector<T, 3> applyInverse(const Vector<T, 3>&) const noexcept;
   constexpr Normal<T> applyInverse(const Normal<T>&) const noexcept;
   constexpr Point<T, 3> applyInverse(const Point<T, 3>&) const noexcept;
   constexpr Ray applyInverse(const Ray&) const noexcept;
+  constexpr Bounds<T, 3> applyInverse(const Bounds<T, 3>& b) const noexcept;
 
   constexpr Transform getInverseTransform() const noexcept;
   constexpr bool hasScale() const noexcept;
@@ -48,6 +59,8 @@ public:
 
   constexpr const SquareMatrix<T, 4>& get() const noexcept;
   constexpr const SquareMatrix<T, 4>& getInv() const noexcept;
+
+  [[nodiscard]] DecomposedTRS decomposeTRS() const noexcept;
 
   static Transform lookAt(const Point<T, 3>&, const Point<T, 3>&, const Vector<T, 3>&);
   static Transform translate(const Vector<T, 3>&);
@@ -164,6 +177,16 @@ constexpr Vector<Interval<T>, 3> Transform<T>::operator()(const Vector<Interval<
 }
 
 template<FloatingArithmetic T>
+constexpr Bounds<T, 3> Transform<T>::operator()(const Bounds<T, 3>& b) const noexcept
+{
+  Bounds<T, 3> out{};
+
+  for (Int i{}; i < 8; ++i) out = Bounds<T, 3>::getUnion(out, (*this)(b.getCorner(i)));
+
+  return out;
+}
+
+template<FloatingArithmetic T>
 constexpr Point<T, 3> Transform<T>::applyInverse(const Point<T, 3>& p) const noexcept
 {
   return Transform{ m_inverse, m_forward }(p);
@@ -185,6 +208,12 @@ template<FloatingArithmetic T>
 constexpr Ray Transform<T>::applyInverse(const Ray& r) const noexcept
 {
   return Transform{ m_inverse, m_forward }(r);
+}
+
+template<FloatingArithmetic T>
+constexpr Bounds<T, 3> Transform<T>::applyInverse(const Bounds<T, 3>& b) const noexcept
+{
+  return Transform{ m_inverse, m_forward }(b);
 }
 
 template<FloatingArithmetic T>
@@ -330,4 +359,101 @@ constexpr bool Transform<T>::hasScale() const noexcept
   const auto dev = [&](T s) { return std::abs(s - one) > eps; };
   
   return dev(euclideanLengthSq(ex)) || dev(euclideanLengthSq(ey)) || dev(euclideanLengthSq(ez));
+}
+
+template<FloatingArithmetic T>
+DecomposedTRS Transform<T>::decomposeTRS() const noexcept
+{
+  const Mat4f& matrix4x4{ get() };
+
+  const Vec3f translation{
+    matrix4x4[0, 3],
+    matrix4x4[1, 3],
+    matrix4x4[2, 3]
+  };
+
+  const Vec3f linearCol0{ matrix4x4[0, 0], matrix4x4[1, 0], matrix4x4[2, 0] };
+  const Vec3f linearCol1{ matrix4x4[0, 1], matrix4x4[1, 1], matrix4x4[2, 1] };
+  const Vec3f linearCol2{ matrix4x4[0, 2], matrix4x4[1, 2], matrix4x4[2, 2] };
+
+  const Mat3f linear3x3{ { linearCol0, linearCol1, linearCol2 } };
+
+  const Float eps{ kSafeNormalizeLen<Float> };
+
+  Vec3f basisX{ normalizeSafe(linearCol0, eps) };
+  if (isZero(euclideanLengthSq(basisX))) basisX = Vec3f{ Float{1}, Float{0}, Float{0} };
+
+  const Float col1DotX{ computeDot(linearCol1, basisX) };
+  Vec3f col1Orthogonal{ linearCol1 - (basisX * col1DotX) };
+
+  Vec3f basisY{ normalizeSafe(col1Orthogonal, eps) };
+  if (isZero(euclideanLengthSq(basisY))) basisY = Vec3f{ Float{0}, Float{1}, Float{0} };
+
+  Vec3f basisZ{ computeCross(basisX, basisY) };
+  if (isZero(euclideanLengthSq(basisZ))) basisZ = Vec3f{ Float{0}, Float{0}, Float{1} };
+
+  const Mat3f rotation3x3{ { basisX, basisY, basisZ } };
+
+  const Mat3f scale3x3{ rotation3x3.transpose() * linear3x3 };
+
+  const auto quaternionFromRotation3x3 = [&](const Mat3f& rotation) noexcept -> Quaternion
+    {
+      const Float m00{ rotation[0, 0] }, m01{ rotation[0, 1] }, m02{ rotation[0, 2] };
+      const Float m10{ rotation[1, 0] }, m11{ rotation[1, 1] }, m12{ rotation[1, 2] };
+      const Float m20{ rotation[2, 0] }, m21{ rotation[2, 1] }, m22{ rotation[2, 2] };
+
+      const Float trace{ m00 + m11 + m22 };
+
+      Vec3f vectorPart{};
+      Float scalarPart{};
+
+      if (trace > Float{ 0 })
+      {
+        const Float fourW{ Float{2} * safeSqrt(trace + Float{1}) };
+        scalarPart = fourW * Float{ 0.25 };
+
+        const Float invFourW{ (fourW > Float{0}) ? (Float{1} / fourW) : Float{0} };
+        vectorPart = Vec3f{
+          (m21 - m12) * invFourW,
+          (m02 - m20) * invFourW,
+          (m10 - m01) * invFourW
+        };
+      }
+      else if (m00 > m11 && m00 > m22)
+      {
+        const Float fourX{ Float{2} * safeSqrt(Float{1} + m00 - m11 - m22) };
+        vectorPart[0] = fourX * Float{ 0.25 };
+
+        const Float invFourX{ (fourX > Float{0}) ? (Float{1} / fourX) : Float{0} };
+        vectorPart[1] = (m01 + m10) * invFourX;
+        vectorPart[2] = (m02 + m20) * invFourX;
+        scalarPart = (m21 - m12) * invFourX;
+      }
+      else if (m11 > m22)
+      {
+        const Float fourY{ Float{2} * safeSqrt(Float{1} + m11 - m00 - m22) };
+        vectorPart[1] = fourY * Float{ 0.25 };
+
+        const Float invFourY{ (fourY > Float{0}) ? (Float{1} / fourY) : Float{0} };
+        vectorPart[0] = (m01 + m10) * invFourY;
+        vectorPart[2] = (m12 + m21) * invFourY;
+        scalarPart = (m02 - m20) * invFourY;
+      }
+      else
+      {
+        const Float fourZ{ Float{2} * safeSqrt(Float{1} + m22 - m00 - m11) };
+        vectorPart[2] = fourZ * Float{ 0.25 };
+
+        const Float invFourZ{ (fourZ > Float{0}) ? (Float{1} / fourZ) : Float{0} };
+        vectorPart[0] = (m02 + m20) * invFourZ;
+        vectorPart[1] = (m12 + m21) * invFourZ;
+        scalarPart = (m10 - m01) * invFourZ;
+      }
+
+      return normalize(Quaternion{ vectorPart, scalarPart });
+    };
+
+  const Quaternion rotationQuat{ quaternionFromRotation3x3(rotation3x3) };
+
+  return DecomposedTRS{ translation, rotationQuat, scale3x3 };
 }

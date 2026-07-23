@@ -5,7 +5,7 @@ import std;
 import indus.core.types;
 import indus.core.geom.point;
 
-import indus.geom.surface_interaction;
+import indus.geom.surfaceinteraction;
 
 export
 {

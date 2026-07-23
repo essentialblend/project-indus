@@ -12,7 +12,7 @@ import indus.core.geom.transform;
 
 import indus.geom.shape;
 import indus.geom.intersection_constructs;
-import indus.geom.surface_interaction;
+import indus.geom.surfaceinteraction;
 
 export class Sphere final : public Shape
 {

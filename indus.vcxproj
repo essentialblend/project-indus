@@ -28,8 +28,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\core\color\colorspace.ixx" />
+    <ClCompile Include="src\core\geom\quaternion.ixx" />
     <ClCompile Include="src\core\math\math-float-constants.ixx" />
     <ClCompile Include="src\engine\engine-systems.ixx" />
+    <ClCompile Include="src\geom\bridge-transform-interaction.ixx" />
     <ClCompile Include="src\sampling\piecewiseconstant1D.ixx" />
     <ClCompile Include="src\sampling\piecewiseconstant2D.ixx" />
     <ClCompile Include="src\shading\bxdf\coateddiffuse-bxdf.ixx" />

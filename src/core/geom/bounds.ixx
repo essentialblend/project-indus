@@ -57,10 +57,6 @@ public:
   template<FloatingArithmetic U>
   [[nodiscard]] static constexpr Bounds expandBoundsByDelta(const Bounds&, U) noexcept requires FloatScalarLike<T>;
 
-  //[[nodiscard]] constexpr std::optional<RayBoxHit> intersectPRange(const Ray&) const noexcept requires Arity3<N> && FloatScalarLike<T>;
-
-  //[[nodiscard]] constexpr SphereBounds getBoundingSphere() const noexcept requires Arity3<N>;
-
 private:
   Point<T, N> m_min{};
   Point<T, N> m_max{};

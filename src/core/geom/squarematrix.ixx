@@ -2,32 +2,41 @@ export module indus.core.geom.squarematrix;
 
 import indus.core.concepts;
 import indus.core.types;
-
+import indus.core.math.fp.ii;
 import indus.core.geom.vector;
 
 export template<Arithmetic T, std::size_t N> requires Arity234<N>
-class SquareMatrix final 
+class SquareMatrix final
 {
 public:
   constexpr SquareMatrix() noexcept;
-  constexpr SquareMatrix(const std::array<Vector<T, N>, N>&) noexcept;
+  constexpr SquareMatrix(const std::array<Vector<T, N>, N>& columns) noexcept;
 
   constexpr auto operator<=>(const SquareMatrix&) noexcept = delete;
-  
-  template <class Self>
-  constexpr decltype(auto) operator[](this Self&& self, std::size_t i, std::size_t j) noexcept;
 
-  constexpr SquareMatrix operator*(const SquareMatrix&) const noexcept;
-  constexpr Vector<T, N> operator*(const Vector<T, N>&) const noexcept;
+  template <class Self>
+  constexpr decltype(auto) operator[](this Self&& self, std::size_t row, std::size_t col) noexcept;
+
+  constexpr SquareMatrix& operator+=(const SquareMatrix& rhs) noexcept;
+  constexpr SquareMatrix& operator-=(const SquareMatrix& rhs) noexcept;
+
+  constexpr SquareMatrix& operator*=(T scalar) noexcept;
+  constexpr SquareMatrix& operator/=(T scalar) noexcept requires FloatingArithmetic<T>;
+
+  constexpr SquareMatrix operator*(const SquareMatrix& rhs) const noexcept;
+  constexpr Vector<T, N> operator*(const Vector<T, N>& v) const noexcept;
 
   static constexpr SquareMatrix zero() noexcept;
   static constexpr SquareMatrix identity() noexcept;
+
   constexpr SquareMatrix transpose() const noexcept;
   constexpr T determinant() const noexcept requires FloatingArithmetic<T>;
+  constexpr SquareMatrix inverse() const noexcept requires FloatingArithmetic<T>;
 
 private:
-  std::array<T, N * N> m_elements{};
+  std::array<T, N* N> m_elements{};
 };
+
 
 export using Mat2f = SquareMatrix<Float, 2>;
 export using Mat3f = SquareMatrix<Float, 3>;
@@ -36,6 +45,30 @@ export using Mat4f = SquareMatrix<Float, 4>;
 export using Mat2d = SquareMatrix<Float64, 2>;
 export using Mat3d = SquareMatrix<Float64, 3>;
 export using Mat4d = SquareMatrix<Float64, 4>;
+
+export
+{
+  template<Arithmetic T, std::size_t N> requires Arity234<N>
+  constexpr SquareMatrix<T, N> operator+(SquareMatrix<T, N> lhs, const SquareMatrix<T, N>& rhs) noexcept;
+
+  template<Arithmetic T, std::size_t N> requires Arity234<N>
+  constexpr SquareMatrix<T, N> operator-(SquareMatrix<T, N> lhs, const SquareMatrix<T, N>& rhs) noexcept;
+
+  template<Arithmetic T, std::size_t N> requires Arity234<N>
+  constexpr SquareMatrix<T, N> operator-(SquareMatrix<T, N> m) noexcept;
+
+  template<Arithmetic T, std::size_t N> requires Arity234<N>
+  constexpr SquareMatrix<T, N> operator*(SquareMatrix<T, N> m, T scalar) noexcept;
+
+  template<Arithmetic T, std::size_t N> requires Arity234<N>
+  constexpr SquareMatrix<T, N> operator*(T scalar, SquareMatrix<T, N> m) noexcept;
+
+  template<FloatingArithmetic T, std::size_t N> requires Arity234<N>
+  constexpr SquareMatrix<T, N> operator/(SquareMatrix<T, N> m, T scalar) noexcept;
+
+  template<Arithmetic T, std::size_t N> requires Arity234<N>
+  constexpr T maxAbsElementDiff(const SquareMatrix<T, N>& a, const SquareMatrix<T, N>& b) noexcept;
+};
 
 template<Arithmetic T, std::size_t N> requires Arity234<N>
 constexpr SquareMatrix<T, N>::SquareMatrix() noexcept 
@@ -61,6 +94,44 @@ template <class Self>
 constexpr decltype(auto) SquareMatrix<T, N>::operator[](this Self&& self, std::size_t i, std::size_t j) noexcept 
 {
   return std::forward_like<Self>(self.m_elements)[i * N + j];
+}
+
+template<Arithmetic T, std::size_t N> requires Arity234<N>
+constexpr SquareMatrix<T, N>& SquareMatrix<T, N>::operator+=(const SquareMatrix& rhs) noexcept
+{
+  for (std::size_t row{}; row < N; ++row)
+    for (std::size_t col{}; col < N; ++col)
+      (*this)[row, col] = (*this)[row, col] + rhs[row, col];
+
+  return *this;
+}
+
+template<Arithmetic T, std::size_t N> requires Arity234<N>
+constexpr SquareMatrix<T, N>& SquareMatrix<T, N>::operator-=(const SquareMatrix& rhs) noexcept
+{
+  for (std::size_t row{}; row < N; ++row)
+    for (std::size_t col{}; col < N; ++col)
+      (*this)[row, col] = (*this)[row, col] - rhs[row, col];
+
+  return *this;
+}
+
+template<Arithmetic T, std::size_t N> requires Arity234<N>
+constexpr SquareMatrix<T, N>& SquareMatrix<T, N>::operator*=(T scalar) noexcept
+{
+  for (std::size_t row{}; row < N; ++row)
+    for (std::size_t col{}; col < N; ++col)
+      (*this)[row, col] = (*this)[row, col] * scalar;
+
+  return *this;
+}
+
+template<Arithmetic T, std::size_t N> requires Arity234<N>
+constexpr SquareMatrix<T, N>& SquareMatrix<T, N>::operator/=(T scalar) noexcept requires FloatingArithmetic<T>
+{
+  const T invScalar{ T{ 1 } / scalar };
+
+  return (*this *= invScalar);
 }
 
 template<Arithmetic T, std::size_t N> requires Arity234<N>
@@ -207,4 +278,150 @@ constexpr T SquareMatrix<T, N>::determinant() const noexcept requires FloatingAr
 
     return det;
   }
+}
+
+template<Arithmetic T, std::size_t N> requires Arity234<N>
+constexpr SquareMatrix<T, N> SquareMatrix<T, N>::inverse() const noexcept requires FloatingArithmetic<T>
+{
+  if constexpr (N == 2)
+  {
+    const T det{ determinant() };
+    const T invDet{ T{ 1 } / det };
+
+    const T a{ (*this)[0, 0] }, b{ (*this)[0, 1] };
+    const T c{ (*this)[1, 0] }, d{ (*this)[1, 1] };
+
+    return SquareMatrix{ std::array<Vector<T, 2>, 2>{
+      Vector<T, 2>{  d * invDet, -c * invDet },
+      Vector<T, 2>{ -b * invDet,  a * invDet }
+    } };
+  }
+  else if constexpr (N == 3)
+  {
+    const T det{ determinant() };
+    const T invDet{ T{ 1 } / det };
+
+    const T a00{ (*this)[0, 0] }, a01{ (*this)[0, 1] }, a02{ (*this)[0, 2] };
+    const T a10{ (*this)[1, 0] }, a11{ (*this)[1, 1] }, a12{ (*this)[1, 2] };
+    const T a20{ (*this)[2, 0] }, a21{ (*this)[2, 1] }, a22{ (*this)[2, 2] };
+
+    const T c00{ differenceOfProducts(a11, a22, a12, a21) };
+    const T c01{ differenceOfProducts(a02, a21, a01, a22) };
+    const T c02{ differenceOfProducts(a01, a12, a02, a11) };
+
+    const T c10{ differenceOfProducts(a12, a20, a10, a22) };
+    const T c11{ differenceOfProducts(a00, a22, a02, a20) };
+    const T c12{ differenceOfProducts(a02, a10, a00, a12) };
+
+    const T c20{ differenceOfProducts(a10, a21, a11, a20) };
+    const T c21{ differenceOfProducts(a01, a20, a00, a21) };
+    const T c22{ differenceOfProducts(a00, a11, a01, a10) };
+
+    return SquareMatrix{ std::array<Vector<T, 3>, 3>{
+      Vector<T, 3>{ c00 * invDet, c10 * invDet, c20 * invDet },
+      Vector<T, 3>{ c01 * invDet, c11 * invDet, c21 * invDet },
+      Vector<T, 3>{ c02 * invDet, c12 * invDet, c22 * invDet }
+    } };
+  }
+  else
+  {
+    static_assert(N == 4);
+
+    const T det{ determinant() };
+    const T invDet{ T{ 1 } / det };
+
+    SquareMatrix adj{ SquareMatrix::zero() };
+
+    for (std::size_t row{}; row < 4; ++row)
+    {
+      for (std::size_t col{}; col < 4; ++col)
+      {
+        SquareMatrix<T, 3> minor{ SquareMatrix<T, 3>::zero() };
+
+        std::size_t minorRow{};
+        for (std::size_t r{}; r < 4; ++r)
+        {
+          if (r == row) continue;
+
+          std::size_t minorCol{};
+          for (std::size_t c{}; c < 4; ++c)
+          {
+            if (c == col) continue;
+            minor[minorRow, minorCol] = (*this)[r, c];
+            ++minorCol;
+          }
+
+          ++minorRow;
+        }
+
+        const T cofactor{ ((row + col) & 1) ? -minor.determinant() : minor.determinant() };
+        adj[col, row] = cofactor;
+      }
+    }
+
+    adj *= invDet;
+
+    return adj;
+  }
+}
+
+// Free functions
+
+template<Arithmetic T, std::size_t N> requires Arity234<N>
+constexpr SquareMatrix<T, N> operator+(SquareMatrix<T, N> lhs, const SquareMatrix<T, N>& rhs) noexcept
+{
+  lhs += rhs;
+  return lhs;
+}
+
+template<Arithmetic T, std::size_t N> requires Arity234<N>
+constexpr SquareMatrix<T, N> operator-(SquareMatrix<T, N> lhs, const SquareMatrix<T, N>& rhs) noexcept
+{
+  lhs -= rhs;
+  return lhs;
+}
+
+template<Arithmetic T, std::size_t N> requires Arity234<N>
+constexpr SquareMatrix<T, N> operator-(SquareMatrix<T, N> m) noexcept
+{
+  m *= T{ -1 };
+  return m;
+}
+
+template<Arithmetic T, std::size_t N> requires Arity234<N>
+constexpr SquareMatrix<T, N> operator*(SquareMatrix<T, N> m, T scalar) noexcept
+{
+  m *= scalar;
+  return m;
+}
+
+template<Arithmetic T, std::size_t N> requires Arity234<N>
+constexpr SquareMatrix<T, N> operator*(T scalar, SquareMatrix<T, N> m) noexcept
+{
+  m *= scalar;
+  return m;
+}
+
+template<FloatingArithmetic T, std::size_t N> requires Arity234<N>
+constexpr SquareMatrix<T, N> operator/(SquareMatrix<T, N> m, T scalar) noexcept
+{
+  m /= scalar;
+  return m;
+}
+
+template<Arithmetic T, std::size_t N> requires Arity234<N>
+constexpr T maxAbsElementDiff(const SquareMatrix<T, N>& a, const SquareMatrix<T, N>& b) noexcept
+{
+  T maxDelta{};
+
+  for (std::size_t row{}; row < N; ++row)
+  {
+    for (std::size_t col{}; col < N; ++col)
+    {
+      const T delta{ std::abs(a[row, col] - b[row, col]) };
+      maxDelta = std::max(maxDelta, delta);
+    }
+  }
+
+  return maxDelta;
 }

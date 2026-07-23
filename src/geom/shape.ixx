@@ -7,7 +7,7 @@ import indus.core.geom.transform;
 import indus.core.geom.bounds;
 import indus.core.geom.ray;
 
-import indus.geom.surface_interaction;
+import indus.geom.surfaceinteraction;
 import indus.geom.intersection_constructs;
 
 export class Shape

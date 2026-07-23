@@ -201,8 +201,10 @@ std::pair<ProgressBarComponent, HUDLayoutContext> SFMLHUD::buildStripProgressBar
 
   HUDLayoutContext ctx{ { padding, barY }, barWidth, m_HUDFont };
 
-  const float progress{ clampUnit(frameSnapshot.progressUnitNormalized) };
-  const int percentInt{ static_cast<int>(progress * 100.0f + 0.5f) };
+  const bool isComplete{ frameSnapshot.progressUnitNormalized >= 1.0f };
+  const float rawProgress{ clampUnit(frameSnapshot.progressUnitNormalized) };
+  const float progress{ isComplete ? rawProgress : std::min(rawProgress, 0.999f) };
+  const int percentInt{ isComplete ? 100 : std::min(99, static_cast<int>(progress * 100.0f)) };
   const std::string percentText{ std::to_string(percentInt) + "%" };
 
   const ProgressBarStyle style
@@ -340,9 +342,11 @@ std::vector<std::unique_ptr<HUDComponent>> SFMLHUD::buildRenderConfigComponents(
 
 std::unique_ptr<HUDComponent> SFMLHUD::buildDetailedProgressBarComponent(const FrameSnapshot& frame) const
 {
-  const float p{ clampUnit(frame.progressUnitNormalized) };
+  const bool isComplete{ frame.progressUnitNormalized >= 1.0f };
+  const float rawProgress{ clampUnit(frame.progressUnitNormalized) };
+  const float p{ isComplete ? rawProgress : std::min(rawProgress, 0.999f) };
 
-  const int pctInt{ static_cast<int>(p * 100.f + 0.5f) };
+  const int pctInt{ isComplete ? 100 : std::min(99, static_cast<int>(p * 100.f)) };
   const std::string pctText{ std::to_string(pctInt) + "%" };
 
   const ProgressBarStyle style{ m_HUDStripProps.kProgBarLength, m_HUDStripProps.kProgBarBGColor, m_HUDStripProps.kProgBarMainColor, sf::Color::White, m_HUDStripProps.kTextFontSize };

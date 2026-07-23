@@ -1,4 +1,4 @@
-export module indus.geom.surface_interaction;
+export module indus.geom.surfaceinteraction;
 
 import std;
 

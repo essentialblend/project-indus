@@ -6,6 +6,10 @@ import indus.core.types;
 import indus.core.math.fp.ii;
 import indus.core.math.algebra.iv;
 
+import indus.core.geom.transform;
+import indus.core.geom.quaternion;
+import indus.core.geom.squarematrix;
+
 export
 {
   // Pending deeper understanding
@@ -103,6 +107,87 @@ export
     }
 
     return po;
+  }
+
+  [[nodiscard]] inline Mat3f rotationMatrixFromQuaternion(Quaternion q) noexcept
+  {
+    q = normalize(q);
+
+    const Float w{ q.getScalar() };
+    const Vec3f v{ q.getVector() };
+    const Float x{ v[0] }, y{ v[1] }, z{ v[2] };
+
+    const Float xx{ x * x }, yy{ y * y }, zz{ z * z };
+    const Float xy{ x * y }, xz{ x * z }, yz{ y * z };
+    const Float wx{ w * x }, wy{ w * y }, wz{ w * z };
+
+    Mat3f R{ Mat3f::identity() };
+
+    R[0, 0] = 1 - 2 * (yy + zz);
+    R[0, 1] = 2 * (xy - wz);
+    R[0, 2] = 2 * (xz + wy);
+
+    R[1, 0] = 2 * (xy + wz);
+    R[1, 1] = 1 - 2 * (xx + zz);
+    R[1, 2] = 2 * (yz - wx);
+
+    R[2, 0] = 2 * (xz - wy);
+    R[2, 1] = 2 * (yz + wx);
+    R[2, 2] = 1 - 2 * (xx + yy);
+
+    return R;
+  }
+
+
+  [[nodiscard]] inline Transform4f makeLinearTransform(const Mat3f& linear3x3)
+  {
+    Mat4f forward{ Mat4f::identity() };
+
+    for (Idx r{}; r < 3; ++r) 
+      for (Idx c{}; c < 3; ++c) 
+        forward[r, c] = linear3x3[r, c];
+
+    const Mat3f inv3{ linear3x3.inverse() };
+
+    Mat4f inverse4{ Mat4f::identity() };
+
+    for (Idx r{}; r < 3; ++r)
+      for (Idx c{}; c < 3; ++c)
+        inverse4[r, c] = inv3[r, c];
+
+    return Transform4f{ forward, inverse4 };
+  }
+
+  [[nodiscard]] inline Transform4f makeRotationTransform(const Quaternion& q)
+  {
+    const Mat3f R{ rotationMatrixFromQuaternion(q) };
+    const Mat3f Rt{ R.transpose() };
+    
+    Mat4f forward{ Mat4f::identity() };
+    Mat4f inverse{ Mat4f::identity() };
+    
+    for (Idx r{}; r < 3; ++r) for (Idx c{}; c < 3; ++c)
+    {
+      forward[r, c] = R[r, c];
+      inverse[r, c] = Rt[r, c];
+    }
+
+    return Transform4f{ forward, inverse };
+  }
+
+
+  [[nodiscard]] Bounds3f transformBounds(const Transform4f& transformToApply, const Bounds3f& inputBounds) noexcept
+  {
+    Bounds3f transformedBounds{};
+
+    for (int cornerIndex{}; cornerIndex < 8; ++cornerIndex)
+    {
+      const Point3f cornerPoint{ inputBounds.getCorner(cornerIndex) };
+      const Point3f transformedCorner{ transformToApply(cornerPoint) };
+      transformedBounds = Bounds3f::getUnion(transformedBounds, transformedCorner);
+    }
+
+    return transformedBounds;
   }
 }
 
