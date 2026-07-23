@@ -15,7 +15,7 @@ import indus.sampler.base;
 
 import indus.utilities.parallel;
 
-// Camera and Sampler are held by reference, assume their lifetimes exceed the integrator (they’re owned by the engine).
+// Camera and Sampler are held by reference; their lifetimes must exceed the integrator.
 
 export class ImageTileIntegrator : public Integrator 
 {
@@ -34,7 +34,7 @@ protected:
   CameraBase& m_camera;
   Sampler& m_samplerPrototype;
 
-  UInt64 m_snapshotSeq{ 0 };
+  std::atomic<UInt64> m_snapshotSeq{ 0 };
 
 
 private:
@@ -74,7 +74,8 @@ void ImageTileIntegrator::render(const Scene& scene, std::stop_token stopToken)
   
   m_renderStats = StatsAccumulator::finalize();
   m_renderStats.spp = static_cast<UInt64>(samplesPerPixel);
-  FrameSnapshot snap{ std::move(img), Float{ 1.0 }, ++m_snapshotSeq, m_renderStats };
+  const UInt64 snapshotSequence{ m_snapshotSeq.fetch_add(1, std::memory_order_relaxed) + 1 };
+  FrameSnapshot snap{ std::move(img), Float{ 1.0 }, snapshotSequence, m_renderStats };
   
   if (m_displayConsumer) m_displayConsumer(std::move(snap));
 }
@@ -91,7 +92,8 @@ void ImageTileIntegrator::publishSnapshot()
 {
   const auto img{ m_camera.getFilm().toImageU8(ColorEncoding::sRGB, Float{ 1 }) };
 
-  FrameSnapshot snap{ std::move(img), getCurrentProgress(), ++m_snapshotSeq };
+  const UInt64 snapshotSequence{ m_snapshotSeq.fetch_add(1, std::memory_order_relaxed) + 1 };
+  FrameSnapshot snap{ std::move(img), getCurrentProgress(), snapshotSequence };
 
   if (m_displayConsumer) m_displayConsumer(std::move(snap));
 }
@@ -149,7 +151,8 @@ void ImageTileIntegrator::notifySampleDone()
   {
     const Float p{ m_totalSamples ? static_cast<Float>(done) / static_cast<Float>(m_totalSamples) : Float{ 0 } };
     
-    FrameSnapshot snap{ Image{}, p, ++m_snapshotSeq };
+    const UInt64 snapshotSequence{ m_snapshotSeq.fetch_add(1, std::memory_order_relaxed) + 1 };
+    FrameSnapshot snap{ Image{}, p, snapshotSequence };
 
     if (m_displayConsumer) m_displayConsumer(std::move(snap));
   }

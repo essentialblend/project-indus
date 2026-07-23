@@ -13,27 +13,38 @@ public:
   std::optional<FrameSnapshot> tryConsume() noexcept;
 
 private:
-  FrameSnapshot m_frameSnapshotBuffer[2]{};
-  std::atomic<UInt64> version{};
+  std::mutex m_mutex{};
+  std::optional<FrameSnapshot> m_pendingImage{};
+  std::optional<FrameSnapshot> m_pendingProgress{};
 };
 
 void FrameMailbox::publishFrameSnapshot(FrameSnapshot frameSnapshot) noexcept
 {
-  const UInt64 next{ version.load(std::memory_order_relaxed) + 1 };
-  const std::size_t idx{ static_cast<std::size_t>(next & 1u) };
+  std::scoped_lock lock{ m_mutex };
 
-  m_frameSnapshotBuffer[idx] = std::move(frameSnapshot);
-  
-  version.store(next, std::memory_order_release);
+  if (!frameSnapshot.image.getP8().empty())
+    m_pendingImage = std::move(frameSnapshot);
+  else
+    m_pendingProgress = std::move(frameSnapshot);
 }
 
 std::optional<FrameSnapshot> FrameMailbox::tryConsume() noexcept
 {
-  const UInt64 k{ version.load(std::memory_order_acquire) };
+  std::scoped_lock lock{ m_mutex };
 
-  if (k == 0) return std::nullopt;
-  
-  const std::size_t idx{ static_cast<std::size_t>(k & 1u) };
+  if (m_pendingImage)
+  {
+    std::optional<FrameSnapshot> snapshot{ std::move(m_pendingImage) };
+    m_pendingImage.reset();
+    return snapshot;
+  }
 
-  return m_frameSnapshotBuffer[idx];
+  if (m_pendingProgress)
+  {
+    std::optional<FrameSnapshot> snapshot{ std::move(m_pendingProgress) };
+    m_pendingProgress.reset();
+    return snapshot;
+  }
+
+  return std::nullopt;
 }
