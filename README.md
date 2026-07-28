@@ -14,23 +14,25 @@ Indus, at its core, is a learning and research project rather than a production 
 
 ## Render gallery
 
-### Showcase render
-
-[![Indus showcase render of a procedurally generated sphere scene with motion blur and depth of field](docs/images/indus-showcase-motion-blur.png)](docs/images/indus-showcase-motion-blur.png)
-
-*Current showcase render — 1920 × 1080 at 169 samples per pixel (2 h 28 min 19 s on CPU). The scene brings together stratified sampling with Gaussian reconstruction, thin-lens depth of field, animated-primitive motion blur, GGX coated diffuse and dielectric materials, transformed primitives, and SAH BVH acceleration.*
-
-### Progressive rendering
-
-[![Animated Indus progressive renderer preview cycling between its HUD views](docs/images/indus-showcase-progrender.gif)](docs/images/indus-showcase-progrender.gif)
-
-*Progressive preview — Indus schedules sample waves of `1, 1, 2, 4, 8, ...`, publishes the current accumulated film after each wave, and updates the SFML display through a frame mailbox. The capture also cycles between the render configuration and live statistics HUDs.*
-
-### Renderer HUD
-
-[![Indus render configuration and statistics HUDs](docs/images/indus-showcase-hud.png)](docs/images/indus-showcase-hud.png)
-
-*Render configuration and statistics HUDs — the configuration view reports the active integrator, sampler, RNG, camera, film, and filter settings; the statistics view exposes ray counts, BVH traversal quality, intersection work, memory use, system information, timing, and progress.*
+<table>
+  <tr>
+    <td width="33%" valign="top">
+      <a href="docs/images/indus-showcase-motion-blur.png"><img src="docs/images/indus-showcase-motion-blur.png" width="100%" alt="Indus showcase render with motion blur and depth of field"></a><br>
+      <strong>Showcase render</strong><br>
+      <sub>1920 &times; 1080, 169 spp. Coated diffuse and dielectric materials, Gaussian reconstruction, depth of field, animated motion blur, transformed primitives, and SAH BVH acceleration.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <a href="docs/images/indus-showcase-progrender.gif"><img src="docs/images/indus-showcase-progrender.gif" width="100%" alt="Animated Indus progressive renderer preview"></a><br>
+      <strong>Progressive rendering</strong><br>
+      <sub>Sample waves of 1, 1, 2, 4, 8, ... update the SFML preview through a frame mailbox while the capture cycles between HUD views.</sub>
+    </td>
+    <td width="33%" valign="top">
+      <a href="docs/images/indus-showcase-hud.png"><img src="docs/images/indus-showcase-hud.png" width="100%" alt="Indus render configuration and statistics HUDs"></a><br>
+      <strong>Renderer HUD</strong><br>
+      <sub>Configuration and live statistics for the active renderer, including progress, timing, rays, intersections, BVH traversal, and memory use.</sub>
+    </td>
+  </tr>
+</table>
 
 ## At a glance
 
