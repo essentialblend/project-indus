@@ -19,7 +19,7 @@ export class RGBFilm final : public FilmBase
 public:
   explicit RGBFilm(const Point2i& fullRes, const Bounds2i& crop, Float diagMM, std::unique_ptr<Filter> filmFilter, const PixelSensor& pixelSensor) noexcept;
 
-  void addSample(const Point2f& pFilm, const ColorRGB& L, Float weight) noexcept override;
+  void addSample(const Point2i& pPixel, const ColorRGB& L, Float weight) noexcept override;
 
   void addSplat(const Point2f& pFilm, const ColorRGB& L) noexcept override;
 
@@ -64,16 +64,14 @@ RGBFilm::RGBFilm(const Point2i& fullRes, const Bounds2i& crop, Float diagMM, std
   if (m_filterIntegral == Float{}) m_filterIntegral = Float{ 1 };
 }
 
-void RGBFilm::addSample(const Point2f& pFilm, const ColorRGB& L, Float weight) noexcept
+void RGBFilm::addSample(const Point2i& pPixel, const ColorRGB& L, Float weight) noexcept
 {
-  const Point2i p{ static_cast<int>(pFilm[0]), static_cast<int>(pFilm[1]) };
-
-  if (!inFilmBounds(p, getPixelBounds())) return;
+  if (!inFilmBounds(pPixel, getPixelBounds())) return;
 
   const Float m{ std::max({ L[0], L[1], L[2] }) };
   const Float clampScale{ (m > m_maxComponentValue) ? (m_maxComponentValue / m) : Float{ 1 } };
 
-  const Idx idx{ pixelIndex(p) };
+  const Idx idx{ pixelIndex(pPixel) };
 
   Pixel& px{ m_pixels[idx] };
 

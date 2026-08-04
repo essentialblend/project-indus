@@ -34,6 +34,7 @@ void RayIntegrator::evaluatePixelSample(Point2i pPixel, [[maybe_unused]] Int sam
 
   const auto fs{ filter.getFilterSampleAtOffset(uPixel) };
 
+  // Offset the camera sample, but accumulate into the pixel being evaluated.
   const Point2f pFilm{ Float(pPixel[0]) + fs.pOffset[0] + Float{ 0.5 }, Float(pPixel[1]) + fs.pOffset[1] + Float{ 0.5 } };
 
   CameraSample cs{ pFilm, uLens, uTime };
@@ -48,5 +49,5 @@ void RayIntegrator::evaluatePixelSample(Point2i pPixel, [[maybe_unused]] Int sam
 
   const auto LEffective{ L * renderSpaceRay.weight * (Float{ 1 } / renderSpaceRay.exposureScale) };
 
-  film.addSample(pFilm, LEffective, fs.weightOverPDF);
+  film.addSample(pPixel, LEffective, fs.weightOverPDF);
 }

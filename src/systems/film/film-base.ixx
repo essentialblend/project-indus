@@ -26,7 +26,7 @@ public:
   virtual Image toImageU8(ColorEncoding colorEncoding, Float splatScale = 1) const noexcept = 0;
   virtual Image toImageF32() const noexcept = 0;
 
-  virtual void addSample(const Point2f& pFilm, const ColorRGB& L, Float weight) noexcept = 0;
+  virtual void addSample(const Point2i& pPixel, const ColorRGB& L, Float weight) noexcept = 0;
 
   virtual void addSplat(const Point2f& pFilm, const ColorRGB& L) noexcept = 0;
 
