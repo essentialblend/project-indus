@@ -75,12 +75,18 @@ std::optional<BSDFSample> CoatedDiffuseBxDF::sample(const Vec3f& unitW_oLocal, c
 
   const FresnelDielectric fresnel{ Float{ 1 }, m_coatEta };
   const Float wCoat{ fresnel.evaluate(cosOut) };
+  const Float wBase{ Float{ 1 } - wCoat };
 
   Vec3f unitW_iLocal{};
 
-  if (uniformSample[0] < wCoat && wCoat > Float{})
+  if (uniformSample[0] < wCoat)
   {
-    Vec3f W_h{ sampleGGXHalfVector(uniformSample, microfacetAlphaFromRoughness(m_coatRoughness)) };
+    if (!(wCoat > Float{})) return std::nullopt;
+
+    // Remap the selected coat interval before sampling the lobe.
+    const Float remappedX{ std::min(uniformSample[0] / wCoat, oneMinusEpsFloat) };
+    const Point2f lobeSample{ remappedX, uniformSample[1] };
+    Vec3f W_h{ sampleGGXHalfVector(lobeSample, microfacetAlphaFromRoughness(m_coatRoughness)) };
 
     if (!isFinite(W_h) || W_h[2] <= Float{}) return std::nullopt;
 
@@ -94,7 +100,12 @@ std::optional<BSDFSample> CoatedDiffuseBxDF::sample(const Vec3f& unitW_oLocal, c
   }
   else 
   {
-    Vec3f W_i{ normalize(genCosineWeightedHemisphereVec(uniformSample)) };
+    if (!(wBase > Float{})) return std::nullopt;
+
+    // Remap the selected base interval before sampling the lobe.
+    const Float remappedX{ std::min((uniformSample[0] - wCoat) / wBase, oneMinusEpsFloat) };
+    const Point2f lobeSample{ remappedX, uniformSample[1] };
+    Vec3f W_i{ normalize(genCosineWeightedHemisphereVec(lobeSample)) };
     
     if (!isFinite(W_i)) return std::nullopt;
     if (cosineThetaLocal(unitW_oLocal) < Float{}) W_i[2] *= Float{ -1 };
