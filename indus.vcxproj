@@ -27,6 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\benchmark\benchmark.ixx" />
     <ClCompile Include="src\core\color\colorspace.ixx" />
     <ClCompile Include="src\core\geom\quaternion.ixx" />
     <ClCompile Include="src\core\math\math-float-constants.ixx" />

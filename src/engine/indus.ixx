@@ -8,6 +8,7 @@ import indus.core.math.algebra.iv;
 
 import indus.geom.sphere;
 import indus.geom.bvh_aggregate;
+import indus.geom.list_aggregate;
 import indus.geom.primitive;
 
 import indus.film.base;
@@ -82,7 +83,6 @@ Indus::Indus(const IndusConfig& cfg) noexcept : m_cfg{ cfg } {}
 void Indus::setupEngine()
 {
   auto& engineSystemsFactory{ EngineSystemsFactory::getInstance() };
-  const auto& hardwareThreads{ std::thread::hardware_concurrency() };
 
   m_film = engineSystemsFactory.makeFilm(m_cfg.filmCfg);
   m_camera = engineSystemsFactory.makeCamera(m_cfg.camCfg, *m_film);
@@ -90,7 +90,8 @@ void Indus::setupEngine()
 
   m_integrator = engineSystemsFactory.makeIntegrator(m_cfg.integratorCfg, *m_camera, *m_sampler);
 
-  m_integrator->setDisplayConsumer(createDisplayConsumer());
+  if (!m_cfg.headless)
+    m_integrator->setDisplayConsumer(createDisplayConsumer());
 
   const Point2f matteBallPosition{ 0.75, -1.25 };
   const Point2f dielectricBallPosition{ 0, 0 };
@@ -100,19 +101,54 @@ void Indus::setupEngine()
   m_renderScene = std::make_unique<Scene>(sceneRootAggregate);
 
   m_engineBuildInfo = engineSystemsFactory.makeDefaultEngineBuildInformation();
-  m_engineBuildInfo.runtimeThreads = hardwareThreads != 0u ? hardwareThreads : 1u;
+  m_engineBuildInfo.runtimeThreads = static_cast<UInt32>(m_engineThreadPool->getSize());
 
   ImmutableEngineSystems immutables{ *m_film, *m_camera, *m_sampler, *m_integrator, *m_renderScene };
 
-  m_displaySink = engineSystemsFactory.makeDisplaySink(immutables, m_cfg.displaySinkCfg, m_HUDTimer, m_engineBuildInfo, m_cfg.filmCfg);
+  if (!m_cfg.headless)
+    m_displaySink = engineSystemsFactory.makeDisplaySink(immutables, m_cfg.displaySinkCfg, m_HUDTimer, m_engineBuildInfo, m_cfg.filmCfg);
 
   StatsAccumulator::setFilmBytes(static_cast<UInt64>(m_film->getFilmResolution()[0]) * (m_film->getFilmResolution()[1]) * sizeof(Pixel));
 }
 
 void Indus::runEngine()
 {
-  initializeParallelSystems(std::max(1u, std::thread::hardware_concurrency()));
+  const std::size_t hardwareThreads{ std::max(1u, std::thread::hardware_concurrency()) };
+  initializeParallelSystems(m_cfg.runtimeThreads == 0 ? hardwareThreads : m_cfg.runtimeThreads);
   setupEngine();
+
+  if (m_cfg.headless)
+  {
+    m_HUDTimer.startTimer();
+    m_integrator->render(*m_renderScene, std::stop_token{});
+    m_HUDTimer.stopTimer();
+
+    const RenderStats& stats{ m_integrator->getRenderStats() };
+    const Image image{ m_film->toImageU8(ColorEncoding::sRGB, Float{ 1 }) };
+    constexpr UInt64 fnvOffsetBasis{ 14695981039346656037ull };
+    constexpr UInt64 fnvPrime{ 1099511628211ull };
+    UInt64 imageHash{ fnvOffsetBasis };
+    for (const UInt8 byte : image.getP8())
+    {
+      imageHash ^= byte;
+      imageHash *= fnvPrime;
+    }
+
+    std::cout
+      << "BENCHMARK aggregate=" << m_renderScene->getSceneRoot()->toString()
+      << " workers=" << m_engineThreadPool->getSize()
+      << " resolution=" << m_cfg.filmCfg.resolution[0] << 'x' << m_cfg.filmCfg.resolution[1]
+      << " spp=" << m_cfg.samplerCfg.samplesPerPixel
+      << " time_ms=" << m_HUDTimer.getMillisec()
+      << " rays=" << stats.raysTotal
+      << " primitive_tests=" << stats.rayPrimitiveTests
+      << " image_hash=" << std::hex << imageHash << std::dec << '\n';
+
+    if (m_cfg.writeImage)
+      m_film->writeImage(m_cfg.samplerCfg.samplesPerPixel, m_HUDTimer);
+
+    return;
+  }
 
   renderScene();
   runGUI();
@@ -300,6 +336,9 @@ std::shared_ptr<Primitive> Indus::makeShirleyBook1BVHRoot(const Transform4f& ren
       addFallingSphere(restCenter, restCenter[1] + deltaY, radius, std::move(material));
     }
   }
+
+  if (m_cfg.aggregateType == AggregateType::List)
+    return std::make_shared<ListAggregate>(std::move(primitives));
 
   return std::make_shared<BVHAggregate>(std::move(primitives), 4, BVHSplitMethod::SAH);
 }

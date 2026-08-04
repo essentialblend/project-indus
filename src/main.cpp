@@ -1,6 +1,7 @@
 ﻿import indus.engine;
+import indus.benchmark;
 
-int main()
+int main(int argc, char** argv)
 {
 	// Define the configuration object, parameterize various engine systems
 	IndusConfig engineCfg{};
@@ -42,6 +43,8 @@ int main()
 	// ... and finally, the DisplaySink
 	engineCfg.displaySinkCfg.sinkType = SinkType::SFML;
 	engineCfg.displaySinkCfg.windowResolution = { filmCfg.resolution[0] / 2, filmCfg.resolution[1] / 2 };
+
+	Benchmark::configure(argc, argv, engineCfg);
 
 	// Run Indus. Currently, immediately one-shot renders a hard-coded scene
 	Indus engine{ engineCfg };

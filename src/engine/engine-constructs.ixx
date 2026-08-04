@@ -36,6 +36,12 @@ export
     SFML
   };
 
+  enum class AggregateType
+  {
+    SAHBVH,
+    List
+  };
+
   struct IntegratorConfig final
   {
     Idx maxDepth{};
@@ -55,6 +61,10 @@ export
     SamplerConfig samplerCfg{};
     IntegratorConfig integratorCfg{};
     DisplaySinkConfig displaySinkCfg{};
+    std::size_t runtimeThreads{};
+    AggregateType aggregateType{ AggregateType::SAHBVH };
+    bool headless{ false };
+    bool writeImage{ true };
   };
 
   struct PhysicalUnits final

@@ -263,7 +263,10 @@ architecture.
 - RGB transport only; no spectral representation, participating media, or denoising.
 - A procedural scene compiled into the engine rather than a scene description format.
 - Windows/MSVC-only project configuration and local, untracked dependencies.
-- No automated test suite, benchmark harness, or CI pipeline yet.
+- No automated test suite or CI pipeline yet.
+- A headless performance mode is available for controlled scheduler and
+  accelerator comparisons; see [`docs/performance-benchmarks.md`](docs/performance-benchmarks.md)
+  for methodology, commands, and measured results.
 
 These are active boundaries, not features hidden elsewhere in the code.
 
